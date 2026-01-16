@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.workflow.LoadAndConcurrencyTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T02:27:01.083Z" hostname="royada-desktop" time="0.495">
-  <properties/>
-  <testcase name="should_respect_bounded_concurrency()" classname="io.tugrandsolutions.flowforge.workflow.LoadAndConcurrencyTest" time="0.357"/>
-  <testcase name="should_not_starve_with_many_tasks_and_low_concurrency()" classname="io.tugrandsolutions.flowforge.workflow.LoadAndConcurrencyTest" time="0.137"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.workflow.PolicyIntegrationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T02:27:01.587Z" hostname="royada-desktop" time="0.114">
-  <properties/>
-  <testcase name="should_fail_on_timeout_verified_by_monitor()" classname="io.tugrandsolutions.flowforge.workflow.PolicyIntegrationTest" time="0.105"/>
-  <testcase name="should_retry_task_on_failure()" classname="io.tugrandsolutions.flowforge.workflow.PolicyIntegrationTest" time="0.009"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

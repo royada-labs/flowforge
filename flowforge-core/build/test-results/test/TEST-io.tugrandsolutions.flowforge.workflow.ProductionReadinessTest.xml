@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.tugrandsolutions.flowforge.workflow.ProductionReadinessTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T03:19:56.439Z" hostname="royada-desktop" time="0.201">
+  <properties/>
+  <testcase name="point_C_verify_per_task_timeout_behavior()" classname="io.tugrandsolutions.flowforge.workflow.ProductionReadinessTest" time="0.195"/>
+  <testcase name="point_A_verify_report_available_before_completion()" classname="io.tugrandsolutions.flowforge.workflow.ProductionReadinessTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

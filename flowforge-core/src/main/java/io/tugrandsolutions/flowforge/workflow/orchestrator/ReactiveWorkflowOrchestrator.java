@@ -57,6 +57,12 @@ public final class ReactiveWorkflowOrchestrator {
     private final int maxConcurrency;
     private final boolean ownsStateScheduler;
 
+    // Timing tracking for observability
+    private final java.util.concurrent.ConcurrentHashMap<TaskId, Long> taskStartTimes = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<TaskId, java.time.Duration> taskDurations = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<TaskId, Throwable> taskErrors = new java.util.concurrent.ConcurrentHashMap<>();
+    private final AtomicInteger maxInFlightObserved = new AtomicInteger(0);
+
     public ReactiveWorkflowOrchestrator() {
         this(
                 Schedulers.boundedElastic(),
@@ -111,13 +117,43 @@ public final class ReactiveWorkflowOrchestrator {
         monitor.onWorkflowStart(instance);
 
         return executeEventDriven(instance, initialInput)
+                .materialize()
+                .doOnNext(signal -> {
+                    // Build execution report synchronously within the flow
+                    io.tugrandsolutions.flowforge.workflow.report.ExecutionReport report = buildExecutionReport(
+                            instance);
+                    monitor.onWorkflowComplete(instance, report);
+                })
+                .dematerialize()
+                .doOnCancel(() -> {
+                    io.tugrandsolutions.flowforge.workflow.report.ExecutionReport report = buildExecutionReport(
+                            instance);
+                    monitor.onWorkflowComplete(instance, report);
+                })
                 .doFinally(sig -> {
-                    monitor.onWorkflowComplete(instance);
                     if (ownsStateScheduler) {
                         stateScheduler.dispose();
                     }
                 })
                 .thenReturn(context);
+    }
+
+    /**
+     * Executes the workflow with a global timeout.
+     * If the workflow does not complete within the specified duration, the returned
+     * Mono
+     * will emit a {@link java.util.concurrent.TimeoutException} and the workflow
+     * execution
+     * will be cancelled.
+     *
+     * @param plan         workflow plan
+     * @param initialInput initial input
+     * @param timeout      global timeout
+     * @return Mono completing with execution context or error
+     */
+    public Mono<ReactiveExecutionContext> execute(WorkflowExecutionPlan plan, Object initialInput,
+            java.time.Duration timeout) {
+        return execute(plan, initialInput).timeout(timeout);
     }
 
     sealed protected interface Event permits TaskDone {
@@ -220,6 +256,13 @@ public final class ReactiveWorkflowOrchestrator {
             // 2) Worker loop: execute tasks concurrently, publish completion events
             Disposable workSub = workSink.asFlux()
                     .flatMap(node -> {
+                        // Record start time for duration tracking
+                        taskStartTimes.put(node.id(), System.nanoTime());
+
+                        // Track max in-flight
+                        int currentInFlight = inFlight.get();
+                        maxInFlightObserved.updateAndGet(max -> Math.max(max, currentInFlight));
+
                         monitor.onTaskStart(instance, node.id());
 
                         // Strict TaskResult contract enforcement:
@@ -277,25 +320,65 @@ public final class ReactiveWorkflowOrchestrator {
     }
 
     private void applyResult(WorkflowInstance instance, TaskNode node, TaskResult result) {
+        // Calculate duration
+        Long startNanos = taskStartTimes.remove(node.id());
+        java.time.Duration duration = java.time.Duration.ZERO;
+        if (startNanos != null) {
+            long endNanos = System.nanoTime();
+            duration = java.time.Duration.ofNanos(endNanos - startNanos);
+            taskDurations.put(node.id(), duration);
+        }
+
         if (result instanceof TaskResult.Success success) {
             // Persist output for downstream consumption and for tests.
             instance.context().put(node.id(), success.output());
             instance.markCompleted(node);
-            monitor.onTaskSuccess(instance, node.id());
+            monitor.onTaskSuccess(instance, node.id(), duration);
             return;
         }
         if (result instanceof TaskResult.Skipped) {
             instance.markSkipped(node);
-            monitor.onTaskSkipped(instance, node.id());
+            monitor.onTaskSkipped(instance, node.id(), duration);
             return;
         }
         if (result instanceof TaskResult.Failure failure) {
+            taskErrors.put(node.id(), failure.error());
             instance.markFailed(node);
-            monitor.onTaskFailure(instance, node.id(), failure.error());
+            monitor.onTaskFailure(instance, node.id(), failure.error(), duration);
             return;
         }
 
+        IllegalStateException unknownError = new IllegalStateException("Unknown TaskResult: " + result);
+        taskErrors.put(node.id(), unknownError);
         instance.markFailed(node);
-        monitor.onTaskFailure(instance, node.id(), new IllegalStateException("Unknown TaskResult: " + result));
+        monitor.onTaskFailure(instance, node.id(), unknownError, duration);
+    }
+
+    private io.tugrandsolutions.flowforge.workflow.report.ExecutionReport buildExecutionReport(
+            WorkflowInstance instance) {
+        java.util.Map<TaskId, TaskStatus> finalStatuses = new java.util.HashMap<>();
+        int completed = 0, failed = 0, skipped = 0;
+
+        for (TaskNode node : instance.plan().nodes()) {
+            TaskStatus status = instance.status(node);
+            finalStatuses.put(node.id(), status);
+
+            if (status == TaskStatus.COMPLETED)
+                completed++;
+            else if (status == TaskStatus.FAILED)
+                failed++;
+            else if (status == TaskStatus.SKIPPED)
+                skipped++;
+        }
+
+        return new io.tugrandsolutions.flowforge.workflow.report.ExecutionReport(
+                finalStatuses,
+                new java.util.HashMap<>(taskDurations),
+                new java.util.HashMap<>(taskErrors),
+                instance.plan().nodes().size(),
+                completed,
+                failed,
+                skipped,
+                maxInFlightObserved.get());
     }
 }
