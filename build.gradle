@@ -1,0 +1,28 @@
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = project.group
+    version = project.version
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(
+                    project.findProperty('javaVersion') as int
+            )
+        }
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}

@@ -1,0 +1,26 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api platform('io.projectreactor:reactor-bom:2025.0.2')
+    api 'io.projectreactor:reactor-core'
+    api 'org.slf4j:slf4j-api:2.0.13'
+
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.14.2'
+    testImplementation 'io.projectreactor:reactor-test'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.0.2'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
+}
