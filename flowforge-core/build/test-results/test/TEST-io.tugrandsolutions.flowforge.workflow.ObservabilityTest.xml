@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.tugrandsolutions.flowforge.workflow.ObservabilityTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-01-16T20:43:37.703Z" hostname="royada-desktop" time="0.057">
+  <properties/>
+  <testcase name="monitor_should_receive_one_terminal_event_per_task()" classname="io.tugrandsolutions.flowforge.workflow.ObservabilityTest" time="0.003"/>
+  <testcase name="report_should_reflect_final_statuses_and_counts()" classname="io.tugrandsolutions.flowforge.workflow.ObservabilityTest" time="0.002"/>
+  <testcase name="monitor_should_capture_durations_non_negative()" classname="io.tugrandsolutions.flowforge.workflow.ObservabilityTest" time="0.052"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

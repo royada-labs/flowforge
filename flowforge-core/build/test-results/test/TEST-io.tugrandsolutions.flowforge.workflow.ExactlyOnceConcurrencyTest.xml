@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.tugrandsolutions.flowforge.workflow.ExactlyOnceConcurrencyTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-16T20:43:36.840Z" hostname="royada-desktop" time="0.155">
+  <properties/>
+  <testcase name="should_execute_each_task_exactly_once_under_parallel_scheduler()" classname="io.tugrandsolutions.flowforge.workflow.ExactlyOnceConcurrencyTest" time="0.155"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -9,6 +9,20 @@
         </processorPath>
         <module name="flowforge.flowforge-core.main" />
       </profile>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-configuration-processor/4.0.1/a6d77ad038728f5497b218458a0c99c50a19b605/spring-boot-configuration-processor-4.0.1.jar" />
+        </processorPath>
+        <module name="flowforge.flowforge-spring-boot-autoconfigure.main" />
+      </profile>
     </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="flowforge.flowforge-spring-boot-autoconfigure" options="-parameters" />
+      <module name="flowforge.flowforge-spring-boot-autoconfigure.main" options="-parameters" />
+      <module name="flowforge.flowforge-spring-boot-autoconfigure.test" options="-parameters" />
+    </option>
   </component>
 </project>

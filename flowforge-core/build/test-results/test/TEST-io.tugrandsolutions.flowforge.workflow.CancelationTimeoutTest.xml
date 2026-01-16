@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.tugrandsolutions.flowforge.workflow.CancelationTimeoutTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T20:43:36.561Z" hostname="royada-desktop" time="0.277">
+  <properties/>
+  <testcase name="should_support_convenience_timeout_overload()" classname="io.tugrandsolutions.flowforge.workflow.CancelationTimeoutTest" time="0.166"/>
+  <testcase name="should_stop_execution_on_cancellation()" classname="io.tugrandsolutions.flowforge.workflow.CancelationTimeoutTest" time="0.11"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

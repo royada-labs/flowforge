@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/flowforge-core/flowforge.flowforge-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/flowforge-core/flowforge.flowforge-core.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/flowforge-spring-boot-autoconfigure/flowforge.flowforge-spring-boot-autoconfigure.main.iml" filepath="$PROJECT_DIR$/.idea/modules/flowforge-spring-boot-autoconfigure/flowforge.flowforge-spring-boot-autoconfigure.main.iml" />
     </modules>
   </component>
 </project>

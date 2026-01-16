@@ -9,6 +9,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/flowforge-core" />
+            <option value="$PROJECT_DIR$/flowforge-spring-boot-autoconfigure" />
             <option value="$PROJECT_DIR$/flowforge-spring-boot-starter" />
           </set>
         </option>
