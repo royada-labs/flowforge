@@ -1,12 +1,11 @@
 package io.tugrandsolutions.flowforge.workflow.instance;
 
+import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.graph.TaskNode;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -15,25 +14,21 @@ public final class WorkflowInstance {
     private final WorkflowExecutionPlan plan;
     private final ReactiveExecutionContext context;
 
-    private final Map<TaskNode, TaskStatus> statusMap =
-            new ConcurrentHashMap<>();
+    // Definitivo: status por ID, no por instancia de TaskNode
+    private final Map<TaskId, TaskStatus> statusMap = new ConcurrentHashMap<>();
 
-    public WorkflowInstance(
-            WorkflowExecutionPlan plan,
-            ReactiveExecutionContext context
-    ) {
+    public WorkflowInstance(WorkflowExecutionPlan plan, ReactiveExecutionContext context) {
         this.plan = Objects.requireNonNull(plan, "plan");
         this.context = Objects.requireNonNull(context, "context");
-
         initialize();
     }
 
     private void initialize() {
         for (TaskNode node : plan.nodes()) {
-            statusMap.put(node, TaskStatus.PENDING);
+            statusMap.put(node.id(), TaskStatus.PENDING);
         }
         for (TaskNode root : plan.roots()) {
-            statusMap.put(root, TaskStatus.READY);
+            statusMap.put(root.id(), TaskStatus.READY);
         }
     }
 
@@ -42,40 +37,51 @@ public final class WorkflowInstance {
     }
 
     public TaskStatus status(TaskNode node) {
-        return statusMap.get(node);
+        return statusMap.get(node.id());
     }
 
     public Set<TaskNode> readyTasks() {
-        return statusMap.entrySet().stream()
-                .filter(e -> e.getValue() == TaskStatus.READY)
-                .map(Map.Entry::getKey)
+        return plan.nodes().stream()
+                .filter(n -> statusMap.get(n.id()) == TaskStatus.READY)
                 .collect(Collectors.toUnmodifiableSet());
     }
 
     public void markRunning(TaskNode node) {
-        statusMap.put(node, TaskStatus.RUNNING);
+        statusMap.put(node.id(), TaskStatus.RUNNING);
     }
 
     public void markCompleted(TaskNode node) {
-        statusMap.put(node, TaskStatus.COMPLETED);
+        statusMap.put(node.id(), TaskStatus.COMPLETED);
         updateDependents(node);
     }
 
     public void markFailed(TaskNode node) {
-        System.out.println("FAILED: " + node.id() + " optional=" + node.descriptor().optional());
+        // Quita el println (tests no lo necesitan)
         if (node.descriptor().optional()) {
-            // El fallo de una tarea optional se trata como "skipped" para desbloquear el grafo
             markSkipped(node);
             return;
         }
-        statusMap.put(node, TaskStatus.FAILED);
+        statusMap.put(node.id(), TaskStatus.FAILED);
         handleFailure(node);
+    }
+
+    public void markSkipped(TaskNode node) {
+        statusMap.put(node.id(), TaskStatus.SKIPPED);
+        updateDependents(node);
+    }
+
+    public boolean tryMarkRunning(TaskNode node) {
+        TaskStatus updated = statusMap.compute(node.id(), (id, current) -> {
+            if (current == TaskStatus.READY) return TaskStatus.RUNNING;
+            return current;
+        });
+        return updated == TaskStatus.RUNNING;
     }
 
     private void updateDependents(TaskNode completed) {
         for (TaskNode dependent : completed.dependents()) {
             if (canRun(dependent)) {
-                statusMap.put(dependent, TaskStatus.READY);
+                statusMap.put(dependent.id(), TaskStatus.READY);
             }
         }
     }
@@ -83,39 +89,19 @@ public final class WorkflowInstance {
     private boolean canRun(TaskNode node) {
         return node.dependencies().stream()
                 .allMatch(dep -> {
-                    TaskStatus s = statusMap.get(dep);
+                    TaskStatus s = statusMap.get(dep.id());
                     return s == TaskStatus.COMPLETED || s == TaskStatus.SKIPPED;
                 });
     }
 
     private void handleFailure(TaskNode failed) {
-        // aquí SOLO llegan fallos requeridos
         for (TaskNode dependent : failed.dependents()) {
-            statusMap.put(dependent, TaskStatus.FAILED);
-            // (opcional) si quieres propagación transitiva, llama recursivamente
+            statusMap.put(dependent.id(), TaskStatus.FAILED);
         }
     }
+
     public boolean isFinished() {
         return statusMap.values().stream()
-                .allMatch(s ->
-                        s == TaskStatus.COMPLETED ||
-                                s == TaskStatus.FAILED ||
-                                s == TaskStatus.SKIPPED
-                );
-    }
-
-    public void markSkipped(TaskNode node) {
-        statusMap.put(node, TaskStatus.SKIPPED);
-        updateDependents(node);
-    }
-
-    public boolean tryMarkRunning(TaskNode node) {
-        TaskStatus updated = statusMap.compute(node, (n, current) -> {
-            if (current == TaskStatus.READY) {
-                return TaskStatus.RUNNING;
-            }
-            return current;
-        });
-        return updated == TaskStatus.RUNNING;
+                .allMatch(s -> s == TaskStatus.COMPLETED || s == TaskStatus.FAILED || s == TaskStatus.SKIPPED);
     }
 }

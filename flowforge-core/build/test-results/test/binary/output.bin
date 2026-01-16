@@ -1,1 +1,1 @@
-'FAILED: TaskId(value=B) optional=false
+>[WorkflowStart, TaskStart:A, TaskSuccess:A, WorkflowComplete]
