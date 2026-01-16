@@ -4,12 +4,14 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.task.TaskResult;
 import io.tugrandsolutions.flowforge.workflow.InMemoryReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.graph.TaskNode;
 import io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.tugrandsolutions.flowforge.workflow.input.TaskInputResolver;
+import io.tugrandsolutions.flowforge.workflow.instance.TaskStatus;
 import io.tugrandsolutions.flowforge.workflow.instance.WorkflowInstance;
 import io.tugrandsolutions.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.monitor.WorkflowMonitor;
@@ -168,9 +170,38 @@ public final class ReactiveWorkflowOrchestrator {
                             // Encola cualquier READY desbloqueado (esto puede aumentar inFlight)
                             emitReady.run();
 
-                            // Termina SOLO si no queda trabajo en vuelo ni tareas READY
+                            // Dead-end detection: if no tasks ready, no tasks in flight, but workflow not
+                            // finished
                             boolean noMoreReady = instance.readyTasks().isEmpty();
-                            if (instance.isFinished() || (noMoreReady && inFlight.get() == 0)) {
+                            boolean noInFlight = inFlight.get() == 0;
+
+                            if (noMoreReady && noInFlight && !instance.isFinished()) {
+                                // Dead-end state - workflow cannot progress
+                                Set<TaskId> pendingTasks = instance.plan().nodes().stream()
+                                        .filter(node -> {
+                                            TaskStatus status = instance.status(node);
+                                            return status != TaskStatus.COMPLETED
+                                                    && status != TaskStatus.FAILED
+                                                    && status != TaskStatus.SKIPPED;
+                                        })
+                                        .map(TaskNode::id)
+                                        .collect(java.util.stream.Collectors.toSet());
+
+                                DeadEndException deadEnd = new DeadEndException(
+                                        "Workflow reached dead-end state. No tasks ready, no tasks running, " +
+                                                "but workflow not finished. Pending tasks: " + pendingTasks,
+                                        pendingTasks);
+
+                                if (terminated.compareAndSet(false, true)) {
+                                    done.tryEmitError(deadEnd);
+                                    workSink.tryEmitComplete();
+                                    stateSink.tryEmitComplete();
+                                }
+                                return;
+                            }
+
+                            // Termina SOLO si no queda trabajo en vuelo ni tareas READY
+                            if (instance.isFinished() || (noMoreReady && noInFlight)) {
                                 if (terminated.compareAndSet(false, true)) {
                                     done.tryEmitEmpty();
                                     workSink.tryEmitComplete();
@@ -191,12 +222,20 @@ public final class ReactiveWorkflowOrchestrator {
                     .flatMap(node -> {
                         monitor.onTaskStart(instance, node.id());
 
-                        return inputResolver.resolveInput(instance, node, initialInput)
+                        // Strict TaskResult contract enforcement:
+                        // 1. Mono.defer() catches sync exceptions during task execution
+                        // 2. .switchIfEmpty() after executeWithResult handles tasks returning
+                        // Mono.empty()
+                        // 3. .onErrorResume() converts any error to TaskResult.Failure
+                        return Mono.defer(() -> inputResolver.resolveInput(instance, node, initialInput)
                                 .defaultIfEmpty(NULL_SENTINEL)
                                 .flatMap(input -> {
                                     Object actualInput = (input == NULL_SENTINEL) ? null : input;
                                     return node.executeWithResult(actualInput, instance.context());
-                                })
+                                }))
+                                .switchIfEmpty(Mono.just(new TaskResult.Failure(
+                                        new IllegalStateException("Task produced no result: " + node.id()))))
+
                                 .onErrorResume(err -> Mono.just(new TaskResult.Failure(err)))
                                 .subscribeOn(taskScheduler)
                                 .doOnNext(

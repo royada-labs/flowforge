@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.workflow.SemanticsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-01-16T01:45:10.024Z" hostname="royada-desktop" time="0.11">
+<testsuite name="io.tugrandsolutions.flowforge.workflow.SemanticsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-01-16T02:27:01.701Z" hostname="royada-desktop" time="0.111">
   <properties/>
-  <testcase name="type_mismatch_should_fail_gracefully()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.003"/>
-  <testcase name="multiple_roots_should_execute()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.002"/>
+  <testcase name="type_mismatch_should_fail_gracefully()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.004"/>
+  <testcase name="multiple_roots_should_execute()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.001"/>
   <testcase name="mixed_dependencies_should_block_if_required_fails()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.001"/>
-  <testcase name="mixed_dependencies_should_handle_optional_failure_and_required_success()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.002"/>
+  <testcase name="mixed_dependencies_should_handle_optional_failure_and_required_success()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.001"/>
   <testcase name="topological_execution_order_should_be_respected()" classname="io.tugrandsolutions.flowforge.workflow.SemanticsTest" time="0.102"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T01:45:09.906Z" hostname="royada-desktop" time="0.005">
+<testsuite name="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T02:27:01.578Z" hostname="royada-desktop" time="0.004">
   <properties/>
   <testcase name="optional_task_failure_should_be_skipped_and_dependents_should_run()" classname="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" time="0.003"/>
   <testcase name="non_optional_task_failure_should_block_dependents()" classname="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" time="0.001"/>

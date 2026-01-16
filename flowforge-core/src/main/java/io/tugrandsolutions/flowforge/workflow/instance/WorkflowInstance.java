@@ -1,13 +1,15 @@
 package io.tugrandsolutions.flowforge.workflow.instance;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.graph.TaskNode;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public final class WorkflowInstance {
 
@@ -34,6 +36,10 @@ public final class WorkflowInstance {
 
     public ReactiveExecutionContext context() {
         return context;
+    }
+
+    public WorkflowExecutionPlan plan() {
+        return plan;
     }
 
     public TaskStatus status(TaskNode node) {
@@ -72,7 +78,8 @@ public final class WorkflowInstance {
 
     public boolean tryMarkRunning(TaskNode node) {
         TaskStatus updated = statusMap.compute(node.id(), (id, current) -> {
-            if (current == TaskStatus.READY) return TaskStatus.RUNNING;
+            if (current == TaskStatus.READY)
+                return TaskStatus.RUNNING;
             return current;
         });
         return updated == TaskStatus.RUNNING;

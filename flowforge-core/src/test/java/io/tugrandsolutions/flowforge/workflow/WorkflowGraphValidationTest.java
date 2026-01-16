@@ -1,15 +1,19 @@
 package io.tugrandsolutions.flowforge.workflow;
 
-import io.tugrandsolutions.flowforge.task.BasicTask;
-import io.tugrandsolutions.flowforge.task.Task;
-import io.tugrandsolutions.flowforge.task.TaskId;
-import io.tugrandsolutions.flowforge.workflow.plan.WorkflowPlanBuilder;
-import reactor.core.publisher.Mono;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+import io.tugrandsolutions.flowforge.task.BasicTask;
+import io.tugrandsolutions.flowforge.task.Task;
+import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.workflow.plan.InvalidPlanException;
+import io.tugrandsolutions.flowforge.workflow.plan.WorkflowPlanBuilder;
+import reactor.core.publisher.Mono;
 
 class WorkflowGraphValidationTest {
 
@@ -20,13 +24,11 @@ class WorkflowGraphValidationTest {
     void should_fail_when_cycle_exists() {
         List<Task<?, ?>> tasks = List.of(
                 new TaskA_DependsOnB(),
-                new TaskB_DependsOnA()
-        );
+                new TaskB_DependsOnA());
 
-        IllegalStateException ex = assertThrows(
-                IllegalStateException.class,
-                () -> WorkflowPlanBuilder.build(tasks)
-        );
+        InvalidPlanException ex = assertThrows(
+                InvalidPlanException.class,
+                () -> WorkflowPlanBuilder.build(tasks));
 
         assertTrue(ex.getMessage().toLowerCase().contains("cycle"));
     }
@@ -36,13 +38,11 @@ class WorkflowGraphValidationTest {
         TaskId missing = new TaskId("MISSING");
 
         List<Task<?, ?>> tasks = List.of(
-                new TaskWithMissingDependency(missing)
-        );
+                new TaskWithMissingDependency(missing));
 
-        IllegalStateException ex = assertThrows(
-                IllegalStateException.class,
-                () -> WorkflowPlanBuilder.build(tasks)
-        );
+        InvalidPlanException ex = assertThrows(
+                InvalidPlanException.class,
+                () -> WorkflowPlanBuilder.build(tasks));
 
         String msg = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
         assertTrue(msg.contains("missing") || msg.contains("not found"),

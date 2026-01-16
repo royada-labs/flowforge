@@ -1,12 +1,12 @@
 package io.tugrandsolutions.flowforge.workflow.plan;
 
-import io.tugrandsolutions.flowforge.task.Task;
-import io.tugrandsolutions.flowforge.task.TaskDescriptor;
-import io.tugrandsolutions.flowforge.workflow.graph.WorkflowGraph;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+
+import io.tugrandsolutions.flowforge.task.Task;
+import io.tugrandsolutions.flowforge.task.TaskDescriptor;
+import io.tugrandsolutions.flowforge.workflow.graph.WorkflowGraph;
 
 public final class WorkflowPlanBuilder {
 
@@ -20,6 +20,9 @@ public final class WorkflowPlanBuilder {
         List<TaskDescriptor> descriptors = tasks.stream()
                 .map(TaskDescriptor::new)
                 .toList();
+
+        // Validate plan before building graph
+        WorkflowPlanValidator.validate(descriptors);
 
         WorkflowGraph graph = WorkflowGraph.build(descriptors);
 
