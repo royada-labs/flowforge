@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-16T22:48:52.335Z" hostname="royada-desktop" time="0.123">
+<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T00:08:45.542Z" hostname="royada-desktop" time="0.01">
   <properties/>
-  <testcase name="should_register_flow_task_component_beans()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" time="0.123"/>
+  <testcase name="should_register_flow_task_component_beans()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" time="0.01"/>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[[Test worker] WARN org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker -  COMMONS-LOGGING Bean 'taskHandlerRegistry' of type [io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [taskScanner]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE.
-]]></system-err>
+  <system-err><![CDATA[]]></system-err>
 </testsuite>

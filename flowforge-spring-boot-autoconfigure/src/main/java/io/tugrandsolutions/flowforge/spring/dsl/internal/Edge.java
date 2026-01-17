@@ -1,4 +1,8 @@
 package io.tugrandsolutions.flowforge.spring.dsl.internal;
 
-public class Edge {
+public record Edge(String from, String to) {
+    public Edge {
+        if (from == null || from.isBlank()) throw new IllegalArgumentException("from");
+        if (to == null || to.isBlank()) throw new IllegalArgumentException("to");
+    }
 }

@@ -2,48 +2,40 @@ package io.tugrandsolutions.flowforge.spring.bootstrap;
 
 import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
 import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
-import org.jspecify.annotations.NonNull;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.ApplicationContext;
 import io.tugrandsolutions.flowforge.task.Task;
-import org.springframework.context.ApplicationContextAware;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
-public final class TaskScanner
-        implements BeanPostProcessor, ApplicationContextAware {
+public final class TaskScanner implements BeanFactoryPostProcessor {
 
-    private ApplicationContext applicationContext;
     private final TaskHandlerRegistry registry;
-    private final FlowTaskAdapterFactory adapterFactory =
-            new FlowTaskAdapterFactory();
+    private final FlowTaskAdapterFactory adapterFactory;
 
     public TaskScanner(TaskHandlerRegistry registry) {
+        this(registry, new FlowTaskAdapterFactory());
+    }
+
+    TaskScanner(TaskHandlerRegistry registry, FlowTaskAdapterFactory adapterFactory) {
         this.registry = registry;
+        this.adapterFactory = adapterFactory;
     }
 
     @Override
-    public void setApplicationContext(@NonNull ApplicationContext applicationContext)
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
             throws BeansException {
-        this.applicationContext = applicationContext;
-    }
 
-    @Override
-    public Object postProcessAfterInitialization(
-            @NonNull Object bean,
-            @NonNull String beanName
-    ) throws BeansException {
+        for (String beanName : beanFactory.getBeanDefinitionNames()) {
 
-        FlowTask annotation =
-                applicationContext.findAnnotationOnBean(beanName, FlowTask.class);
+            // CLAVE: esto detecta @FlowTask tanto en clase como en método @Bean
+            FlowTask annotation = beanFactory.findAnnotationOnBean(beanName, FlowTask.class);
+            if (annotation == null) {
+                continue;
+            }
 
-        if (annotation == null) {
-            return bean;
+            Object bean = beanFactory.getBean(beanName); // instancia SOLO los anotados
+            Task<?, ?> task = adapterFactory.adapt(bean, annotation);
+            registry.register(task);
         }
-
-        Task<?, ?> task = adapterFactory.adapt(bean, annotation);
-
-        registry.register(task);
-
-        return bean;
     }
 }

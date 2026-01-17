@@ -19,7 +19,7 @@ public class FlowForgeAutoConfiguration {
     }
 
     @Bean
-    public TaskScanner taskScanner(TaskHandlerRegistry registry) {
+    static TaskScanner taskScanner(TaskHandlerRegistry registry) {
         return new TaskScanner(registry);
     }
 
@@ -32,5 +32,12 @@ public class FlowForgeAutoConfiguration {
     @Bean
     public WorkflowPlanRegistrar workflowPlanRegistrar(MutableWorkflowPlanRegistry registry) {
         return new WorkflowPlanRegistrar(registry);
+    }
+
+    @Bean
+    public io.tugrandsolutions.flowforge.spring.dsl.FlowDsl flowDsl(
+            io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry taskRegistry
+    ) {
+        return new io.tugrandsolutions.flowforge.spring.dsl.DefaultFlowDsl(taskRegistry);
     }
 }
