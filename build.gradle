@@ -12,6 +12,14 @@ allprojects {
 }
 
 subprojects {
+
+    // EXCLUSIÓN TOTAL: este módulo es tooling interno, no librería publicable
+    if (project.name == "flowforge-stress-harness") {
+        // No aplicar java-library ni maven-publish aquí.
+        // (El módulo se configura a sí mismo con Spring Boot)
+        return
+    }
+
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 

@@ -56,7 +56,6 @@ public final class ReactiveWorkflowOrchestrator {
     private final WorkflowMonitor monitor;
     private final TaskInputResolver inputResolver;
     private final int maxConcurrency;
-    private final boolean ownsStateScheduler;
 
     // Timing tracking for observability
     private final java.util.concurrent.ConcurrentHashMap<TaskId, Long> taskStartTimes = new java.util.concurrent.ConcurrentHashMap<>();
@@ -83,8 +82,7 @@ public final class ReactiveWorkflowOrchestrator {
                 Schedulers.newSingle("wf-state"),
                 monitor,
                 inputResolver,
-                Math.max(2, Runtime.getRuntime().availableProcessors()),
-                true);
+                Math.max(2, Runtime.getRuntime().availableProcessors()));
     }
 
     public ReactiveWorkflowOrchestrator(
@@ -93,22 +91,11 @@ public final class ReactiveWorkflowOrchestrator {
             WorkflowMonitor monitor,
             TaskInputResolver inputResolver,
             int maxConcurrency) {
-        this(taskScheduler, stateScheduler, monitor, inputResolver, maxConcurrency, false);
-    }
-
-    private ReactiveWorkflowOrchestrator(
-            Scheduler taskScheduler,
-            Scheduler stateScheduler,
-            WorkflowMonitor monitor,
-            TaskInputResolver inputResolver,
-            int maxConcurrency,
-            boolean ownsStateScheduler) {
         this.taskScheduler = taskScheduler;
         this.stateScheduler = stateScheduler;
         this.monitor = monitor;
         this.inputResolver = inputResolver;
         this.maxConcurrency = maxConcurrency;
-        this.ownsStateScheduler = ownsStateScheduler;
     }
 
     public Mono<ReactiveExecutionContext> execute(String workflowId, WorkflowExecutionPlan plan, Object initialInput) {
@@ -136,12 +123,8 @@ public final class ReactiveWorkflowOrchestrator {
                             instance);
                     monitor.onWorkflowComplete(instance, report);
                 })
-                .doFinally(sig -> {
-                    if (ownsStateScheduler) {
-                        stateScheduler.dispose();
-                    }
-                })
                 .thenReturn(context);
+
     }
 
     /**

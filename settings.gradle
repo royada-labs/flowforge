@@ -12,5 +12,8 @@ pluginManagement {
 
 rootProject.name = 'flowforge'
 
-include 'flowforge-core', 'flowforge-spring-boot-starter', 'flowforge-spring-boot-autoconfigure'
+include 'flowforge-core',
+        'flowforge-spring-boot-starter',
+        'flowforge-spring-boot-autoconfigure',
+        'flowforge-stress-harness'
 

@@ -9,3 +9,7 @@ management:
   endpoint:
     prometheus:
       enabled: true
+
+logging:
+  level:
+    io.tugrandsolutions.flowforge.workflow.monitor: WARN

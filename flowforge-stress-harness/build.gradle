@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    // Tu starter (autoconfig + core)
+    implementation project(':flowforge-spring-boot-starter')
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.hdrhistogram:HdrHistogram:2.2.2'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Seguro adicional: si alguien aplicara maven-publish por error en el futuro,
+// deshabilita tasks publish en este módulo (no debería ser necesario si blindaste el root).
+tasks.matching { it.name.toLowerCase().startsWith("publish") }.configureEach {
+    enabled = false
+}

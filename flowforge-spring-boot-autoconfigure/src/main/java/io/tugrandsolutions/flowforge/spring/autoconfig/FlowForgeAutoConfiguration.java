@@ -58,16 +58,25 @@ public class FlowForgeAutoConfiguration {
         return new AsyncLoggingWorkflowMonitor();
     }
 
+    @Bean(destroyMethod = "dispose")
+    @ConditionalOnMissingBean(name = "flowForgeScheduler")
+    public reactor.core.scheduler.Scheduler flowForgeScheduler() {
+        return Schedulers.newSingle("flowforge");
+    }
+
     @Bean
     @ConditionalOnMissingBean
     public io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator(
-            ObjectProvider<WorkflowMonitor> monitorProvider) {
+            ObjectProvider<WorkflowMonitor> monitorProvider,
+            reactor.core.scheduler.Scheduler flowForgeScheduler) {
         WorkflowMonitor monitor = monitorProvider.getIfAvailable(NoOpWorkflowMonitor::new);
 
         return new io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator(
-                Schedulers.boundedElastic(),
+                Schedulers.boundedElastic(), // Tasks use global elastic
+                flowForgeScheduler, // State uses dedicated single thread
                 monitor,
-                new DefaultTaskInputResolver());
+                new DefaultTaskInputResolver(),
+                Math.max(2, Runtime.getRuntime().availableProcessors()));
     }
 
     @Bean

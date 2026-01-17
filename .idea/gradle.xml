@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$/flowforge-core" />
             <option value="$PROJECT_DIR$/flowforge-spring-boot-autoconfigure" />
             <option value="$PROJECT_DIR$/flowforge-spring-boot-starter" />
+            <option value="$PROJECT_DIR$/flowforge-stress-harness" />
           </set>
         </option>
       </GradleProjectSettings>

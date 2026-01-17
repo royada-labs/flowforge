@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T05:01:22.212Z" hostname="royada-desktop" time="0.011">
-  <properties/>
-  <testcase name="should_register_workflow_plan_from_annotated_bean()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarTest" time="0.011"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
