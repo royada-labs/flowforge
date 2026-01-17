@@ -13,6 +13,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
 
     java {
         toolchain {
@@ -24,5 +25,33 @@ subprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+
+                groupId = 'io.tugrandsolutions.flowforge'
+                artifactId = project.name
+                version = project.version
+            }
+        }
+
+        repositories {
+            maven {
+                name = "nexus"
+
+                url = version.endsWith('SNAPSHOT')
+                        ? uri("https://nexus.royadahome.com/repository/maven-snapshots/")
+                        : uri("https://nexus.royadahome.com/repository/maven-releases/")
+
+                credentials {
+                    username = findProperty("nexusUser") ?: System.getenv("NEXUS_USER")
+                    password = findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
+                }
+            }
+        }
+
     }
 }

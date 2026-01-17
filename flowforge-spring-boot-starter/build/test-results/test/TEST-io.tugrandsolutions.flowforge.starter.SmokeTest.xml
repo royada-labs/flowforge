@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.starter.SmokeTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T01:38:37.522Z" hostname="royada-desktop" time="0.498">
+<testsuite name="io.tugrandsolutions.flowforge.starter.SmokeTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T02:58:54.825Z" hostname="royada-desktop" time="0.43">
   <properties/>
-  <testcase name="contextLoadsAndWorkflowExecutes()" classname="io.tugrandsolutions.flowforge.starter.SmokeTest" time="0.498"/>
+  <testcase name="contextLoadsAndWorkflowExecutes()" classname="io.tugrandsolutions.flowforge.starter.SmokeTest" time="0.43"/>
   <system-out><![CDATA[
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -12,9 +12,9 @@
 
  :: Spring Boot ::                (v4.0.1)
 
-2026-01-16T21:38:37.240-04:00  INFO 145223 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : Starting SmokeTest using Java 17.0.17 with PID 145223 (started by rolando in /home/rolando/Proyectos/flowforge/flowforge-spring-boot-starter)
-2026-01-16T21:38:37.242-04:00  INFO 145223 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : No active profile set, falling back to 1 default profile: "default"
-2026-01-16T21:38:37.518-04:00  INFO 145223 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : Started SmokeTest in 0.396 seconds (process running for 0.957)
+2026-01-16T22:58:54.535-04:00  INFO 172249 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : Starting SmokeTest using Java 17.0.17 with PID 172249 (started by rolando in /home/rolando/Proyectos/flowforge/flowforge-spring-boot-starter)
+2026-01-16T22:58:54.537-04:00  INFO 172249 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : No active profile set, falling back to 1 default profile: "default"
+2026-01-16T22:58:54.822-04:00  INFO 172249 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : Started SmokeTest in 0.411 seconds (process running for 0.963)
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
