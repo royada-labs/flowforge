@@ -53,4 +53,15 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
                                 .timeout(timeout)
                                 .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
         }
+
+        @Override
+        public Mono<Object> executeResult(String workflowId, Object input) {
+                WorkflowExecutionPlan plan = planRegistry.find(workflowId)
+                                .orElseThrow(() -> new UnknownWorkflowException(workflowId));
+
+                return orchestrator.execute(workflowId, plan, input)
+                                .map(ctx -> io.tugrandsolutions.flowforge.workflow.result.WorkflowResultSelector
+                                                .select(plan, ctx))
+                                .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
+        }
 }
