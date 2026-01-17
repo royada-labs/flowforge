@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarDslIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T00:08:45.553Z" hostname="royada-desktop" time="0.01">
+<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarDslIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T01:38:26.801Z" hostname="royada-desktop" time="0.009">
   <properties/>
-  <testcase name="should_register_workflow_plan_from_flow_dsl_workflow_bean()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarDslIntegrationTest" time="0.01"/>
+  <testcase name="should_register_workflow_plan_from_flow_dsl_workflow_bean()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarDslIntegrationTest" time="0.009"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

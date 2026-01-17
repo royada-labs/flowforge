@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.workflow.LifecycleAndMonitoringTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T20:43:36.996Z" hostname="royada-desktop" time="0.211">
-  <properties/>
-  <testcase name="cancellation_should_stop_execution()" classname="io.tugrandsolutions.flowforge.workflow.LifecycleAndMonitoringTest" time="0.203"/>
-  <testcase name="monitor_events_should_be_ordered()" classname="io.tugrandsolutions.flowforge.workflow.LifecycleAndMonitoringTest" time="0.007"/>
-  <system-out><![CDATA[[WorkflowStart, TaskStart:A, TaskSuccess:A, WorkflowComplete]
-]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.dsl.FlowDslTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-01-17T00:08:45.574Z" hostname="royada-desktop" time="0.002">
+<testsuite name="io.tugrandsolutions.flowforge.spring.dsl.FlowDslTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-01-17T01:38:26.824Z" hostname="royada-desktop" time="0.002">
   <properties/>
   <testcase name="should_build_fork_join_plan()" classname="io.tugrandsolutions.flowforge.spring.dsl.FlowDslTest" time="0.001"/>
   <testcase name="should_build_linear_plan()" classname="io.tugrandsolutions.flowforge.spring.dsl.FlowDslTest" time="0.0"/>

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-01-16T20:43:37.761Z" hostname="royada-desktop" time="0.004">
-  <properties/>
-  <testcase name="optional_task_failure_should_be_skipped_and_dependents_should_run()" classname="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" time="0.002"/>
-  <testcase name="non_optional_task_failure_should_block_dependents()" classname="io.tugrandsolutions.flowforge.workflow.OptionalFailurePropagationTest" time="0.001"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

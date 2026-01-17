@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.FlowForgeClientIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T01:38:26.520Z" hostname="royada-desktop" time="0.235">
+  <properties/>
+  <testcase name="should_execute_registered_workflow_by_id()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.FlowForgeClientIntegrationTest" time="0.235"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

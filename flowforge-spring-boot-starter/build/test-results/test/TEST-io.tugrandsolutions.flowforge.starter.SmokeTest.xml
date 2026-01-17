@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.tugrandsolutions.flowforge.starter.SmokeTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T01:38:37.522Z" hostname="royada-desktop" time="0.498">
+  <properties/>
+  <testcase name="contextLoadsAndWorkflowExecutes()" classname="io.tugrandsolutions.flowforge.starter.SmokeTest" time="0.498"/>
+  <system-out><![CDATA[
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.1)
+
+2026-01-16T21:38:37.240-04:00  INFO 145223 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : Starting SmokeTest using Java 17.0.17 with PID 145223 (started by rolando in /home/rolando/Proyectos/flowforge/flowforge-spring-boot-starter)
+2026-01-16T21:38:37.242-04:00  INFO 145223 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : No active profile set, falling back to 1 default profile: "default"
+2026-01-16T21:38:37.518-04:00  INFO 145223 --- [    Test worker] i.t.flowforge.starter.SmokeTest          : Started SmokeTest in 0.396 seconds (process running for 0.957)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
