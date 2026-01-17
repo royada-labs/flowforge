@@ -29,7 +29,7 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
                 WorkflowExecutionPlan plan = planRegistry.find(workflowId)
                                 .orElseThrow(() -> new UnknownWorkflowException(workflowId));
 
-                return orchestrator.execute(plan, input)
+                return orchestrator.execute(workflowId, plan, input)
                                 .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
         }
 
@@ -38,7 +38,19 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
                 WorkflowExecutionPlan plan = planRegistry.find(workflowId)
                                 .orElseThrow(() -> new UnknownWorkflowException(workflowId));
 
-                return orchestrator.execute(plan, input, timeout)
+                // We need to support timeout on the orchestrator as well if we want full
+                // parity,
+                // otherwise we can just use the Mono.timeout() operator manually here,
+                // but orchestrator.execute(plan, input, timeout) is what was used.
+                // Let's check if orchestrator has an overload for (id, plan, input, timeout).
+
+                // Assuming we didn't add the overload in ReactiveWorkflowOrchestrator yet for
+                // (id, plan, input, timeout).
+                // Let's check ReactiveWorkflowOrchestrator again or just use operator chain
+                // since the orchestrator overload just does .timeout() anyway.
+                // But to keep consistency with the previous pattern:
+                return orchestrator.execute(workflowId, plan, input)
+                                .timeout(timeout)
                                 .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
         }
 }

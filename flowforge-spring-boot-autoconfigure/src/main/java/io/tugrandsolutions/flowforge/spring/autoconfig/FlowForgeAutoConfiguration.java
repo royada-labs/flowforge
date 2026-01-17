@@ -1,7 +1,9 @@
 package io.tugrandsolutions.flowforge.spring.autoconfig;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 import io.tugrandsolutions.flowforge.spring.api.FlowForgeClient;
@@ -12,6 +14,11 @@ import io.tugrandsolutions.flowforge.spring.registry.DefaultWorkflowPlanRegistry
 import io.tugrandsolutions.flowforge.spring.registry.MutableWorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
 import io.tugrandsolutions.flowforge.spring.registry.WorkflowPlanRegistry;
+import io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver;
+import io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor;
+import io.tugrandsolutions.flowforge.workflow.monitor.NoOpWorkflowMonitor;
+import io.tugrandsolutions.flowforge.workflow.monitor.WorkflowMonitor;
+import reactor.core.scheduler.Schedulers;
 
 @AutoConfiguration
 public class FlowForgeAutoConfiguration {
@@ -46,8 +53,21 @@ public class FlowForgeAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator() {
-        return new io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator();
+    @ConditionalOnProperty(name = "flowforge.monitor.enabled", havingValue = "true", matchIfMissing = true)
+    public WorkflowMonitor loggingWorkflowMonitor() {
+        return new AsyncLoggingWorkflowMonitor();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator(
+            ObjectProvider<WorkflowMonitor> monitorProvider) {
+        WorkflowMonitor monitor = monitorProvider.getIfAvailable(NoOpWorkflowMonitor::new);
+
+        return new io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator(
+                Schedulers.boundedElastic(),
+                monitor,
+                new DefaultTaskInputResolver());
     }
 
     @Bean

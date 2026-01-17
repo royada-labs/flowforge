@@ -1,17 +1,21 @@
 package io.tugrandsolutions.flowforge.workflow.monitor;
 
-import io.tugrandsolutions.flowforge.task.TaskId;
-import io.tugrandsolutions.flowforge.workflow.instance.WorkflowInstance;
+import java.time.Clock;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Clock;
-import java.util.Objects;
-import java.util.concurrent.*;
+import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.workflow.instance.WorkflowInstance;
 
 public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoCloseable {
-    private static final Logger log =
-            LoggerFactory.getLogger(AsyncLoggingWorkflowMonitor.class);
+    private static final Logger log = LoggerFactory.getLogger(AsyncLoggingWorkflowMonitor.class);
 
     private final Clock clock;
     private final ExecutorService executor;
@@ -38,7 +42,11 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         long now = clock.millis();
         workflowStart.put(instanceKey(instance), now);
 
-        submit(() -> log.info("Workflow started: instance={} at={}", instanceKey(instance), now));
+        submit(() -> {
+            String msg = String.format("Workflow started: workflowId=%s instance=%s at=%d",
+                    instance.workflowId(), instanceKey(instance), now);
+            log(msg);
+        });
     }
 
     @Override
@@ -48,7 +56,11 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         Long start = workflowStart.remove(key); // CLEANUP to avoid leaks
         long durationMs = (start == null) ? -1L : (now - start);
 
-        submit(() -> log.info("Workflow completed: instance={} durationMs={}", key, durationMs));
+        submit(() -> {
+            String msg = String.format("Workflow completed: workflowId=%s instance=%s durationMs=%d",
+                    instance.workflowId(), key, durationMs);
+            log(msg);
+        });
 
         // Optional extra cleanup: remove any dangling task keys for this instance
         // (only needed if you expect abrupt cancellation without task events)
@@ -62,7 +74,11 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         long now = clock.millis();
         taskStart.put(tKey, now);
 
-        submit(() -> log.info("Task started: instance={} taskId={} at={}", iKey, taskId, now));
+        submit(() -> {
+            String msg = String.format("Task started: workflowId=%s instance=%s taskId=%s at=%d",
+                    instance.workflowId(), iKey, taskId, now);
+            log(msg);
+        });
     }
 
     @Override
@@ -84,8 +100,7 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
             WorkflowInstance instance,
             TaskId taskId,
             String outcome,
-            Throwable error
-    ) {
+            Throwable error) {
         Object iKey = instanceKey(instance);
         TaskKey tKey = new TaskKey(iKey, taskId);
         long now = clock.millis();
@@ -93,14 +108,38 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         long durationMs = (start == null) ? -1L : (now - start);
 
         submit(() -> {
+            String msg;
             if (error == null) {
-                log.info("Task finished: instance={} taskId={} outcome={} durationMs={}",
-                        iKey, taskId, outcome, durationMs);
+                msg = String.format("Task finished: workflowId=%s instance=%s taskId=%s outcome=%s durationMs=%d",
+                        instance.workflowId(), iKey, taskId, outcome, durationMs);
             } else {
-                log.warn("Task finished: instance={} taskId={} outcome={} durationMs={} error={}",
-                        iKey, taskId, outcome, durationMs, error.toString(), error);
+                msg = String.format(
+                        "Task finished: workflowId=%s instance=%s taskId=%s outcome=%s durationMs=%d error=%s",
+                        instance.workflowId(), iKey, taskId, outcome, durationMs, error.toString());
+            }
+
+            if (error != null) {
+                if (log.isDebugEnabled()) {
+                    log.error(appendThread(msg), error);
+                } else {
+                    log.warn(msg, error); // Use warn for task failures by default
+                }
+            } else {
+                log(msg);
             }
         });
+    }
+
+    private void log(String message) {
+        if (log.isDebugEnabled()) {
+            log.debug(appendThread(message));
+        } else {
+            log.info(message);
+        }
+    }
+
+    private String appendThread(String message) {
+        return message + " thread=" + Thread.currentThread().getName();
     }
 
     private void submit(Runnable runnable) {
@@ -124,5 +163,6 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         executor.shutdown();
     }
 
-    private record TaskKey(Object instanceKey, TaskId taskId) { }
+    private record TaskKey(Object instanceKey, TaskId taskId) {
+    }
 }

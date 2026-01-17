@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.FlowForgeClientIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T02:58:53.408Z" hostname="royada-desktop" time="0.231">
+<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.FlowForgeClientIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T04:39:04.928Z" hostname="royada-desktop" time="0.267">
   <properties/>
-  <testcase name="should_execute_registered_workflow_by_id()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.FlowForgeClientIntegrationTest" time="0.231"/>
+  <testcase name="should_execute_registered_workflow_by_id()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.FlowForgeClientIntegrationTest" time="0.267"/>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
+  <system-err><![CDATA[[flowforge-monitor] INFO io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor - Workflow started: workflowId=apiScore instance=36707189 at=1768624745136
+[flowforge-monitor] INFO io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor - Task started: workflowId=apiScore instance=36707189 taskId=TaskId(value=A) at=1768624745176
+[flowforge-monitor] INFO io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor - Task finished: workflowId=apiScore instance=36707189 taskId=TaskId(value=A) outcome=SUCCESS durationMs=8
+[flowforge-monitor] INFO io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor - Task started: workflowId=apiScore instance=36707189 taskId=TaskId(value=B) at=1768624745185
+[flowforge-monitor] INFO io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor - Task finished: workflowId=apiScore instance=36707189 taskId=TaskId(value=B) outcome=SUCCESS durationMs=1
+[flowforge-monitor] INFO io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor - Workflow completed: workflowId=apiScore instance=36707189 durationMs=50
+]]></system-err>
 </testsuite>

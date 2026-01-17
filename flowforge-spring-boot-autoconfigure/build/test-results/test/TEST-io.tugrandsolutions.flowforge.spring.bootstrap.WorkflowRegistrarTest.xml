@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T02:58:53.693Z" hostname="royada-desktop" time="0.008">
+<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T04:39:05.273Z" hostname="royada-desktop" time="0.014">
   <properties/>
-  <testcase name="should_register_workflow_plan_from_annotated_bean()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarTest" time="0.008"/>
+  <testcase name="should_register_workflow_plan_from_annotated_bean()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowRegistrarTest" time="0.014"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

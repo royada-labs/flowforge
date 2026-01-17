@@ -13,6 +13,7 @@ import io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.tugrandsolutions.flowforge.workflow.input.TaskInputResolver;
 import io.tugrandsolutions.flowforge.workflow.instance.TaskStatus;
 import io.tugrandsolutions.flowforge.workflow.instance.WorkflowInstance;
+import io.tugrandsolutions.flowforge.workflow.instance.WorkflowRunMetadata;
 import io.tugrandsolutions.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.monitor.WorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
@@ -110,9 +111,14 @@ public final class ReactiveWorkflowOrchestrator {
         this.ownsStateScheduler = ownsStateScheduler;
     }
 
-    public Mono<ReactiveExecutionContext> execute(WorkflowExecutionPlan plan, Object initialInput) {
+    public Mono<ReactiveExecutionContext> execute(String workflowId, WorkflowExecutionPlan plan, Object initialInput) {
+        return execute(WorkflowRunMetadata.of(workflowId), plan, initialInput);
+    }
+
+    public Mono<ReactiveExecutionContext> execute(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
+            Object initialInput) {
         ReactiveExecutionContext context = new InMemoryReactiveExecutionContext();
-        WorkflowInstance instance = new WorkflowInstance(plan, context);
+        WorkflowInstance instance = new WorkflowInstance(metadata, plan, context);
 
         monitor.onWorkflowStart(instance);
 
@@ -136,6 +142,15 @@ public final class ReactiveWorkflowOrchestrator {
                     }
                 })
                 .thenReturn(context);
+    }
+
+    /**
+     * @deprecated Use {@link #execute(String, WorkflowExecutionPlan, Object)}
+     *             instead.
+     */
+    @Deprecated
+    public Mono<ReactiveExecutionContext> execute(WorkflowExecutionPlan plan, Object initialInput) {
+        return execute("UNKNOWN", plan, initialInput);
     }
 
     /**

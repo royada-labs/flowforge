@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T02:58:53.642Z" hostname="royada-desktop" time="0.012">
+<testsuite name="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-17T04:39:05.201Z" hostname="royada-desktop" time="0.021">
   <properties/>
-  <testcase name="should_register_flow_task_component_beans()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" time="0.012"/>
+  <testcase name="should_register_flow_task_component_beans()" classname="io.tugrandsolutions.flowforge.spring.bootstrap.TaskScannerComponentTest" time="0.021"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

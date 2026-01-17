@@ -13,16 +13,28 @@ import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 
 public final class WorkflowInstance {
 
+    private final WorkflowRunMetadata metadata;
     private final WorkflowExecutionPlan plan;
     private final ReactiveExecutionContext context;
 
     // Definitivo: status por ID, no por instancia de TaskNode
     private final Map<TaskId, TaskStatus> statusMap = new ConcurrentHashMap<>();
 
-    public WorkflowInstance(WorkflowExecutionPlan plan, ReactiveExecutionContext context) {
+    public WorkflowInstance(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
+            ReactiveExecutionContext context) {
+        this.metadata = Objects.requireNonNull(metadata, "metadata");
         this.plan = Objects.requireNonNull(plan, "plan");
         this.context = Objects.requireNonNull(context, "context");
         initialize();
+    }
+
+    public WorkflowInstance(String workflowId, WorkflowExecutionPlan plan, ReactiveExecutionContext context) {
+        this(WorkflowRunMetadata.of(workflowId), plan, context);
+    }
+
+    // Legacy constructor for tests/backwards compatibility (uses "UNKNOWN" or null)
+    public WorkflowInstance(WorkflowExecutionPlan plan, ReactiveExecutionContext context) {
+        this("UNKNOWN", plan, context);
     }
 
     private void initialize() {
@@ -32,6 +44,14 @@ public final class WorkflowInstance {
         for (TaskNode root : plan.roots()) {
             statusMap.put(root.id(), TaskStatus.READY);
         }
+    }
+
+    public WorkflowRunMetadata metadata() {
+        return metadata;
+    }
+
+    public String workflowId() {
+        return metadata.workflowId();
     }
 
     public ReactiveExecutionContext context() {
