@@ -82,7 +82,8 @@ class LoadAndConcurrencyTest {
 
               // Sleep to hold the slot
               return Mono.delay(Duration.ofMillis(50))
-                  .doFinally(sig -> activeExecutions.decrementAndGet())
+                  .doOnTerminate(() -> activeExecutions.decrementAndGet())
+                  .doOnCancel(() -> activeExecutions.decrementAndGet())
                   .thenReturn("done");
             });
           }
