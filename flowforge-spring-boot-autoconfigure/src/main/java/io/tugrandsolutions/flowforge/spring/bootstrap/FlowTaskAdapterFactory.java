@@ -2,7 +2,7 @@ package io.tugrandsolutions.flowforge.spring.bootstrap;
 
 import io.tugrandsolutions.flowforge.spring.adapter.FlowTaskAdapter;
 import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
-import io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler;
+import io.tugrandsolutions.flowforge.api.FlowTaskHandler;
 import io.tugrandsolutions.flowforge.task.Task;
 import io.tugrandsolutions.flowforge.task.TaskId;
 

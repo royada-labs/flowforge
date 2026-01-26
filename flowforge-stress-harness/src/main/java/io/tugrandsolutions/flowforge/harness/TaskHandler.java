@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler;
+import io.tugrandsolutions.flowforge.api.FlowTaskHandler;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 

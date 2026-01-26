@@ -1,19 +1,22 @@
 package io.tugrandsolutions.flowforge.spring.autoconfig;
 
+import io.tugrandsolutions.flowforge.spring.dsl.DefaultFlowDsl;
+import io.tugrandsolutions.flowforge.spring.dsl.FlowDsl;
+import io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
-import io.tugrandsolutions.flowforge.spring.api.FlowForgeClient;
+import io.tugrandsolutions.flowforge.api.FlowForgeClient;
 import io.tugrandsolutions.flowforge.spring.bootstrap.TaskScanner;
 import io.tugrandsolutions.flowforge.spring.bootstrap.WorkflowPlanRegistrar;
-import io.tugrandsolutions.flowforge.spring.impl.DefaultFlowForgeClient;
+import io.tugrandsolutions.flowforge.impl.DefaultFlowForgeClient;
 import io.tugrandsolutions.flowforge.spring.registry.DefaultWorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.spring.registry.MutableWorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
-import io.tugrandsolutions.flowforge.spring.registry.WorkflowPlanRegistry;
+import io.tugrandsolutions.flowforge.registry.WorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.tugrandsolutions.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.monitor.NoOpWorkflowMonitor;
@@ -46,9 +49,8 @@ public class FlowForgeAutoConfiguration {
     }
 
     @Bean
-    public io.tugrandsolutions.flowforge.spring.dsl.FlowDsl flowDsl(
-            io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry taskRegistry) {
-        return new io.tugrandsolutions.flowforge.spring.dsl.DefaultFlowDsl(taskRegistry);
+    public FlowDsl flowDsl(TaskHandlerRegistry taskRegistry) {
+        return new DefaultFlowDsl(taskRegistry);
     }
 
     @Bean
@@ -66,12 +68,12 @@ public class FlowForgeAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator(
+    public ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator(
             ObjectProvider<WorkflowMonitor> monitorProvider,
             reactor.core.scheduler.Scheduler flowForgeScheduler) {
         WorkflowMonitor monitor = monitorProvider.getIfAvailable(NoOpWorkflowMonitor::new);
 
-        return new io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator(
+        return new ReactiveWorkflowOrchestrator(
                 Schedulers.boundedElastic(), // Tasks use global elastic
                 flowForgeScheduler, // State uses dedicated single thread
                 monitor,
@@ -82,7 +84,7 @@ public class FlowForgeAutoConfiguration {
     @Bean
     FlowForgeClient flowForgeClient(
             WorkflowPlanRegistry workflowPlanRegistry,
-            io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator orchestrator) {
+            ReactiveWorkflowOrchestrator orchestrator) {
         return new DefaultFlowForgeClient(workflowPlanRegistry, orchestrator);
     }
 }

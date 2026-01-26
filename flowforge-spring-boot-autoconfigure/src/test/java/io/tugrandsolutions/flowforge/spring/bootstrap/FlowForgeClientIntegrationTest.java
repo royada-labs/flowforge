@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
 import io.tugrandsolutions.flowforge.spring.annotations.FlowWorkflow;
-import io.tugrandsolutions.flowforge.spring.api.FlowForgeClient;
+import io.tugrandsolutions.flowforge.api.FlowForgeClient;
 import io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.tugrandsolutions.flowforge.spring.dsl.FlowDsl;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
@@ -55,7 +55,7 @@ class FlowForgeClientIntegrationTest {
         }
 
         @FlowTask(id = "A")
-        public static class TaskA implements io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler<Object, Object> {
+        public static class TaskA implements io.tugrandsolutions.flowforge.api.FlowTaskHandler<Object, Object> {
             @Override
             public Mono<Object> execute(Object input, ReactiveExecutionContext ctx) {
                 return Mono.just(input);
@@ -63,7 +63,7 @@ class FlowForgeClientIntegrationTest {
         }
 
         @FlowTask(id = "B")
-        public static class TaskB implements io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler<Object, Object> {
+        public static class TaskB implements io.tugrandsolutions.flowforge.api.FlowTaskHandler<Object, Object> {
             @Override
             public Mono<Object> execute(Object input, ReactiveExecutionContext ctx) {
                 return Mono.just("B:" + input);

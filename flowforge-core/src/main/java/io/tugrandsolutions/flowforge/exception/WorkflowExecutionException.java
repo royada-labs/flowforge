@@ -1,4 +1,4 @@
-package io.tugrandsolutions.flowforge.spring.exception;
+package io.tugrandsolutions.flowforge.exception;
 
 public class WorkflowExecutionException extends RuntimeException {
   private final String workflowId;

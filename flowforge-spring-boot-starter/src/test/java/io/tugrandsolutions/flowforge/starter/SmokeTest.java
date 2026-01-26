@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
 import io.tugrandsolutions.flowforge.spring.annotations.FlowWorkflow;
-import io.tugrandsolutions.flowforge.spring.api.FlowForgeClient;
-import io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler;
+import io.tugrandsolutions.flowforge.api.FlowForgeClient;
+import io.tugrandsolutions.flowforge.api.FlowTaskHandler;
 import io.tugrandsolutions.flowforge.spring.dsl.FlowDsl;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;

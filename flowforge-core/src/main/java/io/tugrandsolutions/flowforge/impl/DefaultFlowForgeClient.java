@@ -1,12 +1,12 @@
-package io.tugrandsolutions.flowforge.spring.impl;
+package io.tugrandsolutions.flowforge.impl;
 
 import java.time.Duration;
 import java.util.Objects;
 
-import io.tugrandsolutions.flowforge.spring.api.FlowForgeClient;
-import io.tugrandsolutions.flowforge.spring.exception.UnknownWorkflowException;
-import io.tugrandsolutions.flowforge.spring.exception.WorkflowExecutionException;
-import io.tugrandsolutions.flowforge.spring.registry.WorkflowPlanRegistry;
+import io.tugrandsolutions.flowforge.api.FlowForgeClient;
+import io.tugrandsolutions.flowforge.exception.UnknownWorkflowException;
+import io.tugrandsolutions.flowforge.exception.WorkflowExecutionException;
+import io.tugrandsolutions.flowforge.registry.WorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;

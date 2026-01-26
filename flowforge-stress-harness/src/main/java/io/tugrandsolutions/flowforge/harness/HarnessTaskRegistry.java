@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
-import io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler;
+import io.tugrandsolutions.flowforge.api.FlowTaskHandler;
 
 @Configuration
 public class HarnessTaskRegistry {

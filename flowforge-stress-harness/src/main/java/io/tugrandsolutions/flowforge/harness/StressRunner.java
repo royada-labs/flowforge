@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.tugrandsolutions.flowforge.spring.api.FlowForgeClient;
+import io.tugrandsolutions.flowforge.api.FlowForgeClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;

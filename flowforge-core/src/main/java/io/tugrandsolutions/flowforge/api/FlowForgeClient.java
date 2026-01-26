@@ -1,4 +1,4 @@
-package io.tugrandsolutions.flowforge.spring.api;
+package io.tugrandsolutions.flowforge.api;
 
 import java.time.Duration;
 

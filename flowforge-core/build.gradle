@@ -6,6 +6,7 @@ dependencies {
     api platform('io.projectreactor:reactor-bom:2025.0.2')
     api 'io.projectreactor:reactor-core'
     api 'org.slf4j:slf4j-api:2.0.13'
+    api 'com.github.spotbugs:spotbugs-annotations:4.9.8'
 
     compileOnly 'org.projectlombok:lombok:1.18.42'
     annotationProcessor 'org.projectlombok:lombok:1.18.42'

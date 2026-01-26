@@ -2,12 +2,10 @@ package io.tugrandsolutions.flowforge.spring.bootstrap;
 
 import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
 import io.tugrandsolutions.flowforge.spring.annotations.FlowWorkflow;
-import io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler;
+import io.tugrandsolutions.flowforge.api.FlowTaskHandler;
 import io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
-import io.tugrandsolutions.flowforge.spring.dsl.DefaultFlowDsl;
 import io.tugrandsolutions.flowforge.spring.dsl.FlowDsl;
-import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
-import io.tugrandsolutions.flowforge.spring.registry.WorkflowPlanRegistry;
+import io.tugrandsolutions.flowforge.registry.WorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.graph.TaskNode;

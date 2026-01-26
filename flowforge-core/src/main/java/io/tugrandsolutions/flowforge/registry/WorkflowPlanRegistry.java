@@ -1,4 +1,4 @@
-package io.tugrandsolutions.flowforge.spring.registry;
+package io.tugrandsolutions.flowforge.registry;
 
 import java.util.Collection;
 import java.util.Optional;

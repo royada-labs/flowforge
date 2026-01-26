@@ -1,10 +1,8 @@
 package io.tugrandsolutions.flowforge.spring.bootstrap;
 
-import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
 import io.tugrandsolutions.flowforge.spring.annotations.FlowWorkflow;
-import io.tugrandsolutions.flowforge.spring.api.FlowTaskHandler;
 import io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
-import io.tugrandsolutions.flowforge.spring.registry.WorkflowPlanRegistry;
+import io.tugrandsolutions.flowforge.registry.WorkflowPlanRegistry;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;
