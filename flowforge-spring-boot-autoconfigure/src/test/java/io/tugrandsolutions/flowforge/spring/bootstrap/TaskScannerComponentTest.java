@@ -35,7 +35,7 @@ class TaskScannerComponentTest {
                             ctx.getBean(TaskHandlerRegistry.class);
 
                     Task<?, ?> task =
-                            registry.find(new TaskId("component-A")).orElseThrow();
+                            registry.find(new TaskId("component-A")).orElseThrow().get();
 
                     assertEquals(new TaskId("component-A"), task.id());
                     assertFalse(task.optional());

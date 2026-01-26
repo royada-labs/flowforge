@@ -7,31 +7,28 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import io.tugrandsolutions.flowforge.task.Task;
+
 
 public final class TaskHandlerRegistry {
 
-    private final Map<TaskId, Task<?, ?>> tasks =
-            new ConcurrentHashMap<>();
+    private final Map<TaskId, TaskProvider<?, ?>> providers = new ConcurrentHashMap<>();
 
-    public void register(Task<?, ?> task) {
-        Task<?, ?> previous = tasks.putIfAbsent(task.id(), task);
+    public void register(TaskProvider<?, ?> provider) {
+        TaskProvider<?, ?> previous = providers.putIfAbsent(provider.id(), provider);
         if (previous != null) {
-            throw new IllegalStateException(
-                    "Duplicate FlowTask id: " + task.id()
-            );
+            throw new IllegalStateException("Duplicate FlowTask id: " + provider.id());
         }
     }
 
-    public Optional<Task<?, ?>> find(TaskId id) {
-        return Optional.ofNullable(tasks.get(id));
+    public Optional<TaskProvider<?, ?>> find(TaskId id) {
+        return Optional.ofNullable(providers.get(id));
     }
 
-    public Collection<Task<?, ?>> snapshot() {
-        return Collections.unmodifiableCollection(tasks.values());
+    public Collection<TaskProvider<?, ?>> snapshot() {
+        return Collections.unmodifiableCollection(providers.values());
     }
 
     public boolean contains(TaskId id) {
-        return tasks.containsKey(id);
+        return providers.containsKey(id);
     }
 }

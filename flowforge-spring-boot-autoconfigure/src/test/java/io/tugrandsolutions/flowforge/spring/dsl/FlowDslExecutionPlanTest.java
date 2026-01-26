@@ -1,6 +1,7 @@
 package io.tugrandsolutions.flowforge.spring.dsl;
 
 import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
+import io.tugrandsolutions.flowforge.spring.registry.TaskProvider;
 import io.tugrandsolutions.flowforge.task.Task;
 import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
@@ -19,9 +20,9 @@ class FlowDslExecutionPlanTest {
     @Test
     void linear_A_then_B_then_C() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
-        reg.register(noop("A"));
-        reg.register(noop("B"));
-        reg.register(noop("C"));
+        reg.register(providerNoop("A"));
+        reg.register(providerNoop("B"));
+        reg.register(providerNoop("C"));
 
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
@@ -42,9 +43,9 @@ class FlowDslExecutionPlanTest {
     @Test
     void fork_A_to_B_and_C() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
-        reg.register(noop("A"));
-        reg.register(noop("B"));
-        reg.register(noop("C"));
+        reg.register(providerNoop("A"));
+        reg.register(providerNoop("B"));
+        reg.register(providerNoop("C"));
 
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
@@ -65,10 +66,10 @@ class FlowDslExecutionPlanTest {
     @Test
     void fork_join_A_to_BC_then_D() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
-        reg.register(noop("A"));
-        reg.register(noop("B"));
-        reg.register(noop("C"));
-        reg.register(noop("D"));
+        reg.register(providerNoop("A"));
+        reg.register(providerNoop("B"));
+        reg.register(providerNoop("C"));
+        reg.register(providerNoop("D"));
 
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
@@ -94,11 +95,11 @@ class FlowDslExecutionPlanTest {
     @Test
     void fork_with_sequences_A_to_B_to_C_and_D_then_E() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
-        reg.register(noop("A"));
-        reg.register(noop("B"));
-        reg.register(noop("C"));
-        reg.register(noop("D"));
-        reg.register(noop("E"));
+        reg.register(providerNoop("A"));
+        reg.register(providerNoop("B"));
+        reg.register(providerNoop("C"));
+        reg.register(providerNoop("D"));
+        reg.register(providerNoop("E"));
 
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
@@ -128,7 +129,6 @@ class FlowDslExecutionPlanTest {
     /* ========================= */
 
     private static TaskNode node(WorkflowExecutionPlan plan, String id) {
-        // Ajusta aquí si tu API del plan es distinta (pero tú dijiste que tienes core completo)
         return plan.getNode(new TaskId(id))
                 .orElseThrow(() -> new AssertionError("Missing node: " + id));
     }
@@ -152,6 +152,18 @@ class FlowDslExecutionPlanTest {
                 .map(n -> n.id().getValue())
                 .collect(Collectors.toSet());
         assertEquals(expectedDependents, deps, "dependents mismatch for " + nodeId);
+    }
+
+    private static TaskProvider<Object, Object> providerNoop(String id) {
+        TaskId taskId = new TaskId(id);
+        return new TaskProvider<>() {
+            @Override public TaskId id() { return taskId; }
+
+            @Override
+            public Task<Object, Object> get() {
+                return noop(id);
+            }
+        };
     }
 
     private static Task<Object, Object> noop(String id) {

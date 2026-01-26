@@ -1,6 +1,7 @@
 package io.tugrandsolutions.flowforge.spring.dsl.internal;
 
 import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
+import io.tugrandsolutions.flowforge.spring.registry.TaskProvider;
 import io.tugrandsolutions.flowforge.task.Task;
 import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
@@ -23,9 +24,9 @@ public final class FlowPlanMaterializer {
         Map<String, Task<?, ?>> baseTasksById = new LinkedHashMap<>();
         for (String id : graph.nodes()) {
             TaskId taskId = new TaskId(id);
-            Task<?, ?> t = registry.find(taskId)
+            TaskProvider<?, ?> provider = registry.find(taskId)
                     .orElseThrow(() -> new IllegalStateException("Unknown task id: " + id));
-            baseTasksById.put(id, t);
+            baseTasksById.put(id, provider.get());
         }
 
         // 2) compute workflow dependencies from edges

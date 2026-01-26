@@ -10,10 +10,19 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-final class FlowTaskAdapterFactory {
+public final class FlowTaskAdapterFactory {
 
+    public boolean supports(Class<?> beanType) {
+        // Ajusta exactamente a lo que adapt(...) soporta HOY.
+        // Lo más probable por tus tests: FlowTaskHandler (Spring API o core API).
+        return FlowTaskHandler.class.isAssignableFrom(beanType)
+                // Si todavía existe el alias spring.api:
+                || FlowTaskHandler.class.isAssignableFrom(beanType)
+                // Si también soportas Task directo:
+                || Task.class.isAssignableFrom(beanType);
+    }
     @SuppressWarnings("unchecked")
-    Task<?, ?> adapt(Object bean, FlowTask ann) {
+    public Task<?, ?> adapt(Object bean, FlowTask ann) {
 
         if (!(bean instanceof FlowTaskHandler<?, ?> handler)) {
             throw new IllegalStateException(

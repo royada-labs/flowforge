@@ -36,9 +36,9 @@ class TaskScannerTest {
                             ctx.getBean(TaskHandlerRegistry.class);
 
                     io.tugrandsolutions.flowforge.task.Task<?, ?> taskA =
-                            registry.find(new TaskId("A")).orElseThrow();
+                            registry.find(new TaskId("A")).orElseThrow().get();
                     Task<?, ?> taskB =
-                            registry.find(new TaskId("B")).orElseThrow();
+                            registry.find(new TaskId("B")).orElseThrow().get();
 
                     assertFalse(taskA.optional());
                     assertEquals(Set.of(), taskA.dependencies());
@@ -76,7 +76,7 @@ class TaskScannerTest {
                             "Context should fail when @FlowTask bean is not a handler"
                     );
                     assertTrue(
-                            failure.getMessage().contains("implements FlowTaskHandler"),
+                            failure.getMessage().contains("implement FlowTaskHandler"),
                             failure.getMessage()
                     );
                 });
