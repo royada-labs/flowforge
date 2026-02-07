@@ -210,6 +210,23 @@ public final class ReactiveWorkflowOrchestrator {
                             boolean noInFlight = inFlight.get() == 0;
 
                             if (noMoreReady && noInFlight && !instance.isFinished()) {
+                                // Prioritize reporting meaningful failures over generic DeadEndException
+                                java.util.Optional<Throwable> fatalError = taskErrors.entrySet().stream()
+                                        .filter(e -> instance.plan().getNode(e.getKey())
+                                                .map(n -> instance.status(n) == TaskStatus.FAILED)
+                                                .orElse(false))
+                                        .map(java.util.Map.Entry::getValue)
+                                        .findFirst();
+
+                                if (fatalError.isPresent()) {
+                                    if (terminated.compareAndSet(false, true)) {
+                                        done.tryEmitError(fatalError.get());
+                                        workSink.tryEmitComplete();
+                                        stateSink.tryEmitComplete();
+                                    }
+                                    return;
+                                }
+
                                 // Dead-end state - workflow cannot progress
                                 Set<TaskId> pendingTasks = instance.plan().nodes().stream()
                                         .filter(node -> {
