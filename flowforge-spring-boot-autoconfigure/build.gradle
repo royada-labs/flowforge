@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
 dependencies {
     api project(':flowforge-core')
@@ -9,12 +9,12 @@ dependencies {
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     testImplementation("org.springframework.boot:spring-boot-test")
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.14.2'
-    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.reactor.test)
+    testImplementation(libs.assertj.core)
 
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.0.2'
-    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
-    testImplementation("org.assertj:assertj-core")
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.slf4j.simple)
 }
 
 bootJar {

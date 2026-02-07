@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
 
 dependencies {
@@ -10,7 +10,7 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'org.hdrhistogram:HdrHistogram:2.2.2'
+    implementation(libs.hdrhistogram)
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

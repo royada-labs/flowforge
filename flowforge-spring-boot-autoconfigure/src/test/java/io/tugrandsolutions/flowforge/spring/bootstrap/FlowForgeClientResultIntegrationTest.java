@@ -15,7 +15,7 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -75,6 +75,7 @@ public class FlowForgeClientResultIntegrationTest {
 
     @Bean
     @FlowWorkflow(id = "parallel")
+    @SuppressWarnings("unchecked")
     public WorkflowExecutionPlan parallelPlan(FlowDsl dsl) {
       // A -> (B, C)
       return dsl.start("A")

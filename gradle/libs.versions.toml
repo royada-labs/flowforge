@@ -1,0 +1,42 @@
+[versions]
+springBoot = "4.0.2"
+springDependencyManagement = "1.1.7"
+
+reactorBom = "2025.0.2"
+slf4j = "2.0.13"
+spotbugsAnnotations = "4.9.8"
+lombok = "1.18.42"
+junitJupiter = "5.14.2"
+junitPlatformLauncher = "6.0.2"
+assertj = "3.27.0"
+hdrhistogram = "2.2.2"
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+
+[libraries]
+# BOMs / platforms
+reactor-bom = { module = "io.projectreactor:reactor-bom", version.ref = "reactorBom" }
+spring-boot-dependencies-bom = {module = "org.springframework.boot:spring-boot-dependencies",version.ref = "springBoot"}
+
+# Reactor
+reactor-core = { module = "io.projectreactor:reactor-core" } # versión viene del BOM
+reactor-test = { module = "io.projectreactor:reactor-test" } # versión viene del BOM
+
+# Logging
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+# SpotBugs
+spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugsAnnotations" }
+
+# Lombok
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junitJupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatformLauncher" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
+hdrhistogram = { module = "org.hdrhistogram:HdrHistogram", version.ref = "hdrhistogram"}

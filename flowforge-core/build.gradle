@@ -3,19 +3,21 @@ plugins {
 }
 
 dependencies {
-    api platform('io.projectreactor:reactor-bom:2025.0.2')
-    api 'io.projectreactor:reactor-core'
-    api 'org.slf4j:slf4j-api:2.0.13'
-    api 'com.github.spotbugs:spotbugs-annotations:4.9.8'
+    api(platform(libs.reactor.bom))
+    api(libs.reactor.core)
 
-    compileOnly 'org.projectlombok:lombok:1.18.42'
-    annotationProcessor 'org.projectlombok:lombok:1.18.42'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.14.2'
-    testImplementation 'io.projectreactor:reactor-test'
+    api(libs.slf4j.api)
+    api(libs.spotbugs.annotations)
 
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.0.2'
-    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
-    testImplementation("org.assertj:assertj-core:3.27.0")
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.reactor.test)
+    testImplementation(libs.assertj.core)
+
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.slf4j.simple)
 }
 
 test {
