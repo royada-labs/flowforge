@@ -12,22 +12,39 @@ allprojects {
 }
 
 subprojects {
+    if (project.name == "flowforge-bom") {
+        apply plugin: 'java-platform'
+    } else {
+        // Todos los demás módulos (incluyendo stress-harness) son Java
+        apply plugin: 'java'
+        if (project.name != "flowforge-stress-harness") {
+            apply plugin: 'java-library'
+        }
+    }
+    
+    // Aplicamos el BOM a todos los módulos que no sean el propio BOM
+    if (project.name != "flowforge-bom") {
+        dependencies {
+            implementation platform(libs.spring.boot.dependencies.bom)
+            annotationProcessor platform(libs.spring.boot.dependencies.bom)
+            testAnnotationProcessor platform(libs.spring.boot.dependencies.bom)
+        }
+    }
 
-    // EXCLUSIÓN TOTAL: este módulo es tooling interno, no librería publicable
+    // EXCLUSIÓN de publicación para stress-harness
     if (project.name == "flowforge-stress-harness") {
-        // No aplicar java-library ni maven-publish aquí.
-        // (El módulo se configura a sí mismo con Spring Boot)
         return
     }
 
-    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(
-                    project.findProperty('javaVersion') as int
-            )
+    if (project.name != "flowforge-bom") {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(
+                        project.findProperty('javaVersion') as int
+                )
+            }
         }
     }
 
@@ -38,7 +55,11 @@ subprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                from components.java
+                if (project.name == "flowforge-bom") {
+                    from components.javaPlatform
+                } else {
+                    from components.java
+                }
 
                 groupId = 'io.tugrandsolutions.flowforge'
                 artifactId = project.name
@@ -60,6 +81,5 @@ subprojects {
                 }
             }
         }
-
     }
 }
