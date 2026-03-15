@@ -4,7 +4,7 @@ springDependencyManagement = "1.1.7"
 
 # slf4j, lombok, junit, assertj, hdrhistogram, reactor vienen del BOM de Spring Boot
 spotbugsAnnotations = "4.9.8"
-jsonSchemaValidator = "3.0.0"
+jsonSchemaValidator = "3.0.1"
 hdrhistogram = "2.2.2"
 
 [plugins]
