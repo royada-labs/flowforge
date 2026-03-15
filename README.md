@@ -26,7 +26,7 @@ Add the starter dependency to your project:
 ### Gradle
 
 ```gradle
-implementation("io.tugrandsolutions.flowforge:flowforge-spring-boot-starter:0.1.0")
+implementation("io.tugrandsolutions.flowforge:flowforge-spring-boot-starter:0.2.0")
 ```
 
 ### Maven
@@ -35,7 +35,7 @@ implementation("io.tugrandsolutions.flowforge:flowforge-spring-boot-starter:0.1.
 <dependency>
   <groupId>io.tugrandsolutions.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
