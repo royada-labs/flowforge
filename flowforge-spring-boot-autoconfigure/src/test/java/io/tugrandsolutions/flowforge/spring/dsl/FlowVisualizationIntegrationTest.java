@@ -7,7 +7,6 @@ import io.tugrandsolutions.flowforge.validation.FlowValidationException;
 import io.tugrandsolutions.flowforge.validation.FlowValidationResult;
 import io.tugrandsolutions.flowforge.visualization.FlowVisualization;
 import io.tugrandsolutions.flowforge.visualization.FlowVisualizer;
-import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -15,8 +14,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import reactor.core.publisher.Mono;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,11 +36,6 @@ class FlowVisualizationIntegrationTest {
             var flow = dsl.startTyped(start);
             flow.builder().then(end, flow.node());
             WorkflowExecutionPlan plan = flow.builder().build();
-
-            // We need the type metadata from the graph to get types in the visualization
-            // Since graph is internal to DefaultFlowBuilder, in a real tool,
-            // we'd probably expose it or use the validation result if it carried them.
-            // For now, let's verify visualizer works with just plan and empty types.
 
             FlowVisualization viz = FlowVisualizer.visualize(plan, FlowValidationResult.of(java.util.List.of()));
 

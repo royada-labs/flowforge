@@ -3,8 +3,10 @@ package io.tugrandsolutions.flowforge.workflow.plan;
 import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.workflow.graph.TaskNode;
 import io.tugrandsolutions.flowforge.workflow.graph.WorkflowGraph;
+import io.tugrandsolutions.flowforge.validation.TypeMetadata;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -40,5 +42,9 @@ public final class WorkflowExecutionPlan {
 
     public Collection<TaskNode> nodes() {
         return graph.nodes();
+    }
+
+    public Map<String, TypeMetadata> typeMetadata() {
+        return graph.typeMetadata();
     }
 }

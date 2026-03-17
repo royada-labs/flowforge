@@ -1,12 +1,15 @@
 package io.tugrandsolutions.flowforge.workflow.plan;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import io.tugrandsolutions.flowforge.task.Task;
 import io.tugrandsolutions.flowforge.task.TaskDescriptor;
 import io.tugrandsolutions.flowforge.workflow.graph.WorkflowGraph;
+import io.tugrandsolutions.flowforge.validation.TypeMetadata;
 
 public final class WorkflowPlanBuilder {
 
@@ -15,6 +18,10 @@ public final class WorkflowPlanBuilder {
     }
 
     public static WorkflowExecutionPlan build(Collection<? extends Task<?, ?>> tasks) {
+        return build(tasks, Collections.emptyMap());
+    }
+
+    public static WorkflowExecutionPlan build(Collection<? extends Task<?, ?>> tasks, Map<String, TypeMetadata> typeMetadata) {
         Objects.requireNonNull(tasks, "tasks");
 
         List<TaskDescriptor> descriptors = tasks.stream()
@@ -24,7 +31,7 @@ public final class WorkflowPlanBuilder {
         // Validate plan before building graph
         WorkflowPlanValidator.validate(descriptors);
 
-        WorkflowGraph graph = WorkflowGraph.build(descriptors);
+        WorkflowGraph graph = WorkflowGraph.build(descriptors, typeMetadata);
 
         return WorkflowExecutionPlan.from(graph);
     }

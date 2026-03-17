@@ -44,8 +44,7 @@ public final class FlowPlanMaterializer {
                 .collect(Collectors.toList());
 
         // 4) Build plan using core builder
-        // CHANGE THIS LINE if your core builder has a different name/signature.
-        return io.tugrandsolutions.flowforge.workflow.plan.WorkflowPlanBuilder.build(scopedTasks);
+        return io.tugrandsolutions.flowforge.workflow.plan.WorkflowPlanBuilder.build(scopedTasks, graph.typeMetadata());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

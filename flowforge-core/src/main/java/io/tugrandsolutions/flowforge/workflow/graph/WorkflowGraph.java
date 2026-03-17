@@ -2,6 +2,7 @@ package io.tugrandsolutions.flowforge.workflow.graph;
 
 import io.tugrandsolutions.flowforge.task.TaskDescriptor;
 import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.validation.TypeMetadata;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,12 +10,18 @@ import java.util.stream.Collectors;
 public final class WorkflowGraph {
 
     private final Map<TaskId, TaskNode> nodes;
+    private final Map<String, TypeMetadata> typeMetadata;
 
-    private WorkflowGraph(Map<TaskId, TaskNode> nodes) {
+    private WorkflowGraph(Map<TaskId, TaskNode> nodes, Map<String, TypeMetadata> typeMetadata) {
         this.nodes = Map.copyOf(nodes);
+        this.typeMetadata = Map.copyOf(typeMetadata != null ? typeMetadata : Collections.emptyMap());
     }
 
     public static WorkflowGraph build(Collection<TaskDescriptor> tasks) {
+        return build(tasks, Collections.emptyMap());
+    }
+
+    public static WorkflowGraph build(Collection<TaskDescriptor> tasks, Map<String, TypeMetadata> typeMetadata) {
         Objects.requireNonNull(tasks, "tasks");
 
         Map<TaskId, TaskNode> nodeMap = new HashMap<>();
@@ -48,7 +55,11 @@ public final class WorkflowGraph {
         // 3. Validar ciclos
         detectCycles(nodeMap.values());
 
-        return new WorkflowGraph(nodeMap);
+        return new WorkflowGraph(nodeMap, typeMetadata);
+    }
+
+    public Map<String, TypeMetadata> typeMetadata() {
+        return typeMetadata;
     }
 
     public Collection<TaskNode> nodes() {

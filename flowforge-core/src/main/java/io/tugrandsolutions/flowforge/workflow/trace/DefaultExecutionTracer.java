@@ -1,0 +1,85 @@
+package io.tugrandsolutions.flowforge.workflow.trace;
+
+import io.tugrandsolutions.flowforge.validation.TypeMetadata;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
+/**
+ * Thread-safe implementation of {@link ExecutionTracer} using concurrent collections.
+ */
+public final class DefaultExecutionTracer implements ExecutionTracer {
+
+    private final long workflowStartTime;
+    private final Map<String, TypeMetadata> typeInfo;
+    
+    // Internal mutable state for tasks in flight
+    private final Map<String, TaskStartInfo> taskStarts = new ConcurrentHashMap<>();
+    private final List<TaskExecutionTrace> completedTraces = new CopyOnWriteArrayList<>();
+
+    public DefaultExecutionTracer(Map<String, TypeMetadata> typeInfo) {
+        this.workflowStartTime = System.currentTimeMillis();
+        this.typeInfo = Map.copyOf(typeInfo != null ? typeInfo : Collections.emptyMap());
+    }
+
+    @Override
+    public void onTaskStart(String taskId) {
+        taskStarts.put(taskId, new TaskStartInfo(
+                System.currentTimeMillis(),
+                Thread.currentThread().getName()
+        ));
+    }
+
+    @Override
+    public void onTaskSuccess(String taskId, Object output) {
+        recordCompletion(taskId, ExecutionStatus.SUCCESS, null);
+    }
+
+    @Override
+    public void onTaskSkipped(String taskId) {
+        recordCompletion(taskId, ExecutionStatus.SKIPPED, null);
+    }
+
+    @Override
+    public void onTaskError(String taskId, Throwable error) {
+        recordCompletion(taskId, ExecutionStatus.ERROR, error != null ? error.getMessage() : "Unknown error");
+    }
+
+    private void recordCompletion(String taskId, ExecutionStatus status, String errorMessage) {
+        TaskStartInfo startInfo = taskStarts.get(taskId);
+        long endTime = System.currentTimeMillis();
+        long startTime = startInfo != null ? startInfo.startTime : endTime;
+        String threadName = startInfo != null ? startInfo.threadName : Thread.currentThread().getName();
+
+        TypeMetadata types = typeInfo.get(taskId);
+        String inputType = types != null ? types.inputType().getSimpleName() : "Unknown";
+        String outputType = types != null ? types.outputType().getSimpleName() : "Unknown";
+
+        completedTraces.add(new TaskExecutionTrace(
+                taskId,
+                status,
+                startTime,
+                endTime,
+                endTime - startTime,
+                threadName,
+                errorMessage,
+                inputType,
+                outputType
+        ));
+    }
+
+    @Override
+    public ExecutionTrace build() {
+        return new ExecutionTrace(
+                completedTraces.stream()
+                        .sorted(Comparator.comparingLong(TaskExecutionTrace::startTime))
+                        .collect(Collectors.toList()),
+                workflowStartTime,
+                System.currentTimeMillis()
+        );
+    }
+
+    private record TaskStartInfo(long startTime, String threadName) {}
+}

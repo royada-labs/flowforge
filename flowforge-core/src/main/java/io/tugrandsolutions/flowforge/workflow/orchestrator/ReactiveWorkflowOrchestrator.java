@@ -17,6 +17,11 @@ import io.tugrandsolutions.flowforge.workflow.instance.WorkflowRunMetadata;
 import io.tugrandsolutions.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.monitor.WorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
+import io.tugrandsolutions.flowforge.workflow.trace.ExecutionTrace;
+import io.tugrandsolutions.flowforge.workflow.trace.ExecutionTracer;
+import io.tugrandsolutions.flowforge.workflow.trace.NoOpExecutionTracer;
+import io.tugrandsolutions.flowforge.validation.TypeMetadata;
+import io.tugrandsolutions.flowforge.workflow.report.ExecutionReport;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -104,27 +109,36 @@ public final class ReactiveWorkflowOrchestrator {
 
     public Mono<ReactiveExecutionContext> execute(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
             Object initialInput) {
+        return execute(metadata, plan, initialInput, new NoOpExecutionTracer());
+    }
+
+    public Mono<ReactiveExecutionContext> execute(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
+            Object initialInput, ExecutionTracer tracer) {
         ReactiveExecutionContext context = new InMemoryReactiveExecutionContext();
         WorkflowInstance instance = new WorkflowInstance(metadata, plan, context);
 
         monitor.onWorkflowStart(instance);
 
-        return executeEventDriven(instance, initialInput)
+        return executeEventDriven(instance, initialInput, tracer)
                 .materialize()
                 .doOnNext(signal -> {
                     // Build execution report synchronously within the flow
-                    io.tugrandsolutions.flowforge.workflow.report.ExecutionReport report = buildExecutionReport(
-                            instance);
+                    ExecutionReport report = buildExecutionReport(instance);
                     monitor.onWorkflowComplete(instance, report);
                 })
                 .dematerialize()
                 .doOnCancel(() -> {
-                    io.tugrandsolutions.flowforge.workflow.report.ExecutionReport report = buildExecutionReport(
-                            instance);
+                    ExecutionReport report = buildExecutionReport(instance);
                     monitor.onWorkflowComplete(instance, report);
                 })
                 .thenReturn(context);
+    }
 
+    public Mono<ExecutionTrace> executeWithTrace(WorkflowExecutionPlan plan, Object initialInput,
+                                                 java.util.Map<String, TypeMetadata> typeMetadata) {
+        ExecutionTracer tracer = new io.tugrandsolutions.flowforge.workflow.trace.DefaultExecutionTracer(typeMetadata);
+        return execute(WorkflowRunMetadata.of("TRACE-RUN-" + java.util.UUID.randomUUID()), plan, initialInput, tracer)
+                .then(Mono.fromCallable(tracer::build));
     }
 
     /**
@@ -160,7 +174,7 @@ public final class ReactiveWorkflowOrchestrator {
     private record TaskDone(TaskNode node, TaskResult result) implements Event {
     }
 
-    private Mono<Void> executeEventDriven(WorkflowInstance instance, Object initialInput) {
+    private Mono<Void> executeEventDriven(WorkflowInstance instance, Object initialInput, ExecutionTracer tracer) {
         return Mono.defer(() -> {
             if (instance.isFinished()) {
                 return Mono.empty();
@@ -196,7 +210,7 @@ public final class ReactiveWorkflowOrchestrator {
                         }
 
                         if (ev instanceof TaskDone td) {
-                            applyResult(instance, td.node(), td.result());
+                            applyResult(instance, td.node(), td.result(), tracer);
 
                             // Este task ya no está en vuelo
                             inFlight.decrementAndGet();
@@ -279,6 +293,7 @@ public final class ReactiveWorkflowOrchestrator {
                         maxInFlightObserved.updateAndGet(max -> Math.max(max, currentInFlight));
 
                         monitor.onTaskStart(instance, node.id());
+                        tracer.onTaskStart(node.id().getValue());
 
                         // Strict TaskResult contract enforcement:
                         // 1. Mono.defer() catches sync exceptions during task execution
@@ -334,7 +349,7 @@ public final class ReactiveWorkflowOrchestrator {
         });
     }
 
-    private void applyResult(WorkflowInstance instance, TaskNode node, TaskResult result) {
+    private void applyResult(WorkflowInstance instance, TaskNode node, TaskResult result, ExecutionTracer tracer) {
         // Calculate duration
         Long startNanos = taskStartTimes.remove(node.id());
         java.time.Duration duration = java.time.Duration.ZERO;
@@ -349,17 +364,20 @@ public final class ReactiveWorkflowOrchestrator {
             instance.context().put(node.id(), success.output());
             instance.markCompleted(node);
             monitor.onTaskSuccess(instance, node.id(), duration);
+            tracer.onTaskSuccess(node.id().getValue(), success.output());
             return;
         }
         if (result instanceof TaskResult.Skipped) {
             instance.markSkipped(node);
             monitor.onTaskSkipped(instance, node.id(), duration);
+            tracer.onTaskSkipped(node.id().getValue());
             return;
         }
         if (result instanceof TaskResult.Failure failure) {
             taskErrors.put(node.id(), failure.error());
             instance.markFailed(node);
             monitor.onTaskFailure(instance, node.id(), failure.error(), duration);
+            tracer.onTaskError(node.id().getValue(), failure.error());
             return;
         }
 
