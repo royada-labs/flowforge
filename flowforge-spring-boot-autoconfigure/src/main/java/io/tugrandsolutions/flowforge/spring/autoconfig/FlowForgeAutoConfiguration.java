@@ -70,14 +70,17 @@ public class FlowForgeAutoConfiguration {
     @ConditionalOnMissingBean
     public ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator(
             ObjectProvider<WorkflowMonitor> monitorProvider,
+            ObjectProvider<io.tugrandsolutions.flowforge.workflow.trace.ExecutionTracerFactory> tracerFactoryProvider,
             reactor.core.scheduler.Scheduler flowForgeScheduler) {
         WorkflowMonitor monitor = monitorProvider.getIfAvailable(NoOpWorkflowMonitor::new);
+        io.tugrandsolutions.flowforge.workflow.trace.ExecutionTracerFactory tracerFactory = tracerFactoryProvider.getIfAvailable();
 
         return new ReactiveWorkflowOrchestrator(
-                Schedulers.boundedElastic(), // Tasks use global elastic
-                flowForgeScheduler, // State uses dedicated single thread
+                Schedulers.boundedElastic(),
+                flowForgeScheduler,
                 monitor,
                 new DefaultTaskInputResolver(),
+                tracerFactory,
                 Math.max(2, Runtime.getRuntime().availableProcessors()));
     }
 

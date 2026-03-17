@@ -12,6 +12,7 @@ public final class ExecutionTrace {
     private final List<TaskExecutionTrace> tasks;
     private final long startTime;
     private final long endTime;
+    private final String traceId;
 
     /**
      * Creates a new execution trace.
@@ -21,14 +22,28 @@ public final class ExecutionTrace {
      * @param endTime   epoch timestamp of workflow completion/failure
      */
     public ExecutionTrace(List<TaskExecutionTrace> tasks, long startTime, long endTime) {
+        this(tasks, startTime, endTime, "");
+    }
+
+    /**
+     * Creates a new execution trace.
+     *
+     * @param tasks     list of task traces; must not be null
+     * @param startTime epoch timestamp of workflow start
+     * @param endTime   epoch timestamp of workflow completion/failure
+     * @param traceId   unique identifier for distributed tracing; must not be null
+     */
+    public ExecutionTrace(List<TaskExecutionTrace> tasks, long startTime, long endTime, String traceId) {
         this.tasks = List.copyOf(Objects.requireNonNull(tasks, "tasks"));
         this.startTime = startTime;
         this.endTime = endTime;
+        this.traceId = Objects.requireNonNull(traceId != null ? traceId : "", "traceId must be non-null");
     }
 
     public List<TaskExecutionTrace> tasks() { return tasks; }
     public long startTime() { return startTime; }
     public long endTime() { return endTime; }
+    public String traceId() { return traceId; }
     public long durationMs() { return endTime - startTime; }
 
     /**
@@ -41,6 +56,7 @@ public final class ExecutionTrace {
         sb.append("{\n");
         sb.append("  \"startTime\": ").append(startTime).append(",\n");
         sb.append("  \"endTime\": ").append(endTime).append(",\n");
+        sb.append("  \"traceId\": \"").append(traceId).append("\",\n");
         sb.append("  \"tasks\": [\n");
         for (int i = 0; i < tasks.size(); i++) {
             TaskExecutionTrace task = tasks.get(i);
@@ -71,6 +87,7 @@ public final class ExecutionTrace {
         StringBuilder sb = new StringBuilder();
         sb.append("Flow Execution Trace\n");
         sb.append("--------------------\n");
+        sb.append("Trace ID: ").append(traceId).append("\n");
         for (TaskExecutionTrace task : tasks) {
             sb.append(String.format("%-20s %-10s %5dms",
                     task.taskId(), task.status(), task.durationMs()));

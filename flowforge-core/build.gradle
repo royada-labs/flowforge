@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    api(platform(libs.opentelemetry.bom))
+    api(libs.opentelemetry.api)
     api(libs.reactor.core)
 
     api(libs.slf4j.api)
@@ -14,6 +16,8 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.reactor.test)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.opentelemetry.sdk)
+    testImplementation(libs.opentelemetry.sdk.testing)
 
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.slf4j.simple)

@@ -1,1 +1,2 @@
 io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration
+io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeOpenTelemetryAutoConfiguration

@@ -12,7 +12,8 @@ import java.util.stream.Collectors;
  */
 public final class DefaultExecutionTracer implements ExecutionTracer {
 
-    private final long workflowStartTime;
+    private long workflowStartTime;
+    private String traceId = "";
     private final Map<String, TypeMetadata> typeInfo;
     
     // Internal mutable state for tasks in flight
@@ -20,8 +21,29 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
     private final List<TaskExecutionTrace> completedTraces = new CopyOnWriteArrayList<>();
 
     public DefaultExecutionTracer(Map<String, TypeMetadata> typeInfo) {
-        this.workflowStartTime = System.currentTimeMillis();
         this.typeInfo = Map.copyOf(typeInfo != null ? typeInfo : Collections.emptyMap());
+    }
+
+    @Override
+    public void onWorkflowStart(String workflowId, String executionId) {
+        this.workflowStartTime = System.currentTimeMillis();
+        // Use executionId as traceId if none other is provided by external tools
+        this.traceId = executionId;
+    }
+
+    @Override
+    public void onWorkflowSuccess() {
+        // No-op for internal trace
+    }
+
+    @Override
+    public void onWorkflowError(Throwable error) {
+        // No-op for internal trace
+    }
+
+    @Override
+    public void onWorkflowCanceled() {
+        // No-op for internal trace
     }
 
     @Override
@@ -77,7 +99,8 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
                         .sorted(Comparator.comparingLong(TaskExecutionTrace::startTime))
                         .collect(Collectors.toList()),
                 workflowStartTime,
-                System.currentTimeMillis()
+                System.currentTimeMillis(),
+                traceId
         );
     }
 

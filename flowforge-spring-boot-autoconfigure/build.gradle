@@ -6,12 +6,18 @@ plugins {
 dependencies {
     api project(':flowforge-core')
     api 'org.springframework.boot:spring-boot-autoconfigure'
+    
+    // Observability
+    implementation platform(libs.opentelemetry.bom)
+    compileOnly 'io.opentelemetry:opentelemetry-api'
+    
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.reactor.test)
     testImplementation(libs.assertj.core)
+    testImplementation 'org.mockito:mockito-core:5.11.0'
 
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.slf4j.simple)

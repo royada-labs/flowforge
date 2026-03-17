@@ -29,6 +29,8 @@ class TracingIntegrationTest {
                 .block(java.time.Duration.ofSeconds(5));
 
         assertNotNull(trace);
+        assertNotNull(trace.traceId());
+        assertFalse(trace.traceId().isEmpty());
         assertEquals(3, trace.tasks().size());
 
         var t1 = trace.tasks().stream().filter(t -> t.taskId().equals("Step1")).findFirst().orElseThrow();

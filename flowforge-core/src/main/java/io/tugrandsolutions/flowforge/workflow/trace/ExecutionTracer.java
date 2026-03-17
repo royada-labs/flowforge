@@ -6,6 +6,31 @@ package io.tugrandsolutions.flowforge.workflow.trace;
 public interface ExecutionTracer {
 
     /**
+     * Called when the entire workflow execution begins.
+     *
+     * @param workflowId  the id of the workflow; must not be null
+     * @param executionId the unique instance id for this run; must not be null
+     */
+    void onWorkflowStart(String workflowId, String executionId);
+
+    /**
+     * Called when the workflow completes successfully.
+     */
+    void onWorkflowSuccess();
+
+    /**
+     * Called when the workflow fails with a fatal error.
+     *
+     * @param error the fatal exception
+     */
+    void onWorkflowError(Throwable error);
+
+    /**
+     * Called when the workflow execution is canceled.
+     */
+    void onWorkflowCanceled();
+
+    /**
      * Called when a task starts execution.
      *
      * @param taskId the id of the task; must not be null
