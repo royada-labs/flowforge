@@ -193,4 +193,13 @@ orchestrator.execute("myWorkflow", plan, "Hello World")
 *   **Missing Task**: Ensure all task IDs referenced in the DSL correspond to beans annotated with `@FlowTask`.
 *   **Timeout**: If a workflow hangs, ensure you are using the `timeout` overload or that your tasks have internal timeouts.
 
-This context is sufficient to understand the library's scope and implementation details.
+## 7. Licensing
+
+FlowForge is licensed under the **Apache License 2.0**.
+*   **Copyright 2026 Rolando Rodríguez González**
+*   All artifacts (JARs) include `LICENSE` and `NOTICE` files in `META-INF`.
+*   Public API classes include a standard license header.
+*   The `build.gradle` file is configured to include license metadata in Maven POMs.
+
+This context is sufficient to understand the library's scope, implementation details, and compliance requirements.
+

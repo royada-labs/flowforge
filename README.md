@@ -26,16 +26,16 @@ Add the starter dependency to your project:
 ### Gradle
 
 ```gradle
-implementation("io.tugrandsolutions.flowforge:flowforge-spring-boot-starter:0.2.0")
+implementation("io.flowforge:flowforge-spring-boot-starter:1.0.0")
 ```
 
 ### Maven
 
 ```xml
 <dependency>
-  <groupId>io.tugrandsolutions.flowforge</groupId>
+  <groupId>io.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
-  <version>0.2.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 
@@ -402,7 +402,8 @@ Focus areas:
 
 ## 📄 License
 
-MIT License
+This project is licensed under the Apache License 2.0.
+See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
 
 ---
 

@@ -1,0 +1,14 @@
+package io.flowforge.exception;
+
+public class WorkflowExecutionException extends FlowForgeException {
+  private final String workflowId;
+
+  public WorkflowExecutionException(String workflowId, Throwable cause) {
+    super("Error executing workflow: " + workflowId, cause);
+    this.workflowId = workflowId;
+  }
+
+  public String getWorkflowId() {
+    return workflowId;
+  }
+}

@@ -52,6 +52,15 @@ subprojects {
         useJUnitPlatform()
     }
 
+    tasks.withType(Jar).configureEach {
+        from(rootProject.file("LICENSE")) {
+            into("META-INF")
+        }
+        from(rootProject.file("NOTICE")) {
+            into("META-INF")
+        }
+    }
+
     publishing {
         publications {
             mavenJava(MavenPublication) {
@@ -61,9 +70,21 @@ subprojects {
                     from components.java
                 }
 
-                groupId = 'io.tugrandsolutions.flowforge'
+                groupId = 'io.flowforge'
                 artifactId = project.name
                 version = project.version
+
+                pom {
+                    name = project.name
+                    description = 'Type-safe, reactive workflow orchestration for Java'
+                    url = 'https://github.com/flowforge/flowforge'
+                    licenses {
+                        license {
+                            name = 'Apache License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                        }
+                    }
+                }
             }
         }
 
