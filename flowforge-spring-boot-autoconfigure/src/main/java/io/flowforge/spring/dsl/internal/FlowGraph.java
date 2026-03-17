@@ -71,9 +71,10 @@ public class FlowGraph {
         then(task);
     }
 
-    public void fork(List<Consumer<FlowBranch>> branches, FlowBuilder builder) {
+    public void fork(List<Consumer<FlowBranch>> branches, FlowBuilder builder, TaskReferenceResolver referenceResolver) {
         Objects.requireNonNull(branches, "branches");
         Objects.requireNonNull(builder, "builder");
+        Objects.requireNonNull(referenceResolver, "referenceResolver");
         if (branches.isEmpty()) {
             throw new IllegalArgumentException("fork requires at least 1 branch");
         }
@@ -84,7 +85,7 @@ public class FlowGraph {
             Objects.requireNonNull(consumer, "branch consumer");
 
             FlowGraph branch = new BranchOverlayGraph(this, this.tails);
-            consumer.accept(new DefaultFlowBranch(branch, builder));
+            consumer.accept(new DefaultFlowBranch(branch, builder, referenceResolver));
 
             unionTails.addAll(branch.tails());
         }
@@ -160,9 +161,10 @@ public class FlowGraph {
         }
 
         @Override
-        public void fork(List<Consumer<FlowBranch>> branches, FlowBuilder builder) {
+        public void fork(List<Consumer<FlowBranch>> branches, FlowBuilder builder, TaskReferenceResolver referenceResolver) {
             Objects.requireNonNull(branches, "branches");
             Objects.requireNonNull(builder, "builder");
+            Objects.requireNonNull(referenceResolver, "referenceResolver");
             if (branches.isEmpty()) {
                 throw new IllegalArgumentException("fork requires at least 1 branch");
             }
@@ -170,7 +172,7 @@ public class FlowGraph {
             Set<TaskId> unionTails = new LinkedHashSet<>();
             for (Consumer<FlowBranch> consumer : branches) {
                 FlowGraph nestedBranch = new BranchOverlayGraph(parent, super.tails);
-                consumer.accept(new DefaultFlowBranch(nestedBranch, builder));
+                consumer.accept(new DefaultFlowBranch(nestedBranch, builder, referenceResolver));
                 unionTails.addAll(nestedBranch.tails());
             }
             setTails(unionTails);

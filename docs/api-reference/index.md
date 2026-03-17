@@ -43,6 +43,16 @@ public interface FlowTaskHandler<I, O> {
 }
 ```
 
+`FlowTaskHandler` is optional. You can also use `@TaskHandler` classes with `@FlowTask` methods:
+
+```java
+@TaskHandler
+class CustomerTasks {
+    @FlowTask(id = "getUser")
+    Mono<User> getUser(Void in, ReactiveExecutionContext ctx) { ... }
+}
+```
+
 ---
 
 ## 5. `FlowDsl`
@@ -50,9 +60,14 @@ public interface FlowTaskHandler<I, O> {
 The fluent builder for workflows.
 
 - **`startTyped(taskDef)`**: Begins a typed flow and enables type propagation.
+- **`start(methodRef)`**: Starts from a typed method reference to an `@FlowTask` bean method.
+- **`flow(methodRef)`**: Alias of `start(methodRef)` for ultra-fluent style.
 - **`then(taskDef)`**: Adds a sequential typed dependency.
+- **`then(methodRef)`**: Adds a sequential typed dependency using method references.
 - **`fork(builders...)`**: Creates parallel branches.
+- **`parallel(methodRef...)`**: Convenience varargs for parallel branches from the current tail.
 - **`join(taskDef)`**: Synchronizes parallel branches into a single typed task.
+- **`join(methodRef)`**: Synchronizes branches using method references.
 
 ---
 
@@ -91,3 +106,9 @@ TaskDefinition<Boolean, String> INCOMPATIBLE = TaskDefinition.of("X", Boolean.cl
 dsl.startTyped(A)
    .then(INCOMPATIBLE); // compile-time type error
 ```
+
+Method reference guarantees:
+
+- `@FlowTask` metadata (task id + input/output types) is inferred and stored at startup.
+- Method references are resolved when building the workflow definition.
+- Runtime execution uses the compiled plan directly (no reflection in task execution path).

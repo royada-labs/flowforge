@@ -62,6 +62,32 @@ public class MyFlowConfig {
 }
 ```
 
+### Compose Without Manual `TaskDefinition`
+
+You can also define workflows with typed method references to `@FlowTask` bean methods.
+
+```java
+@Configuration
+public class MyFlowConfig {
+
+    @Bean
+    @FlowTask(id = "producer")
+    FlowTaskHandler<Void, Integer> producer() { ... }
+
+    @Bean
+    @FlowTask(id = "toStringTask")
+    FlowTaskHandler<Integer, String> toStringTask() { ... }
+
+    @FlowWorkflow(id = "method-ref-flow")
+    @Bean
+    WorkflowExecutionPlan myPlan(FlowDsl dsl) {
+        return dsl.flow(MyFlowConfig::producer)
+                  .then(MyFlowConfig::toStringTask)
+                  .build();
+    }
+}
+```
+
 ---
 
 ## 3. Executing the Workflow
@@ -102,3 +128,27 @@ Integer length = ctx.getOrThrow(key); // Automatically returns Integer
 ```
 
 This guarantees that if the workflow compiles, the data types in your context are correct.
+
+---
+
+## 5. `@TaskHandler` Style (No Interface Boilerplate)
+
+You can group task methods in a Spring bean annotated with `@TaskHandler` and annotate each method with `@FlowTask`.
+
+```java
+@TaskHandler
+class CustomerTasks {
+    @FlowTask(id = "producer")
+    Mono<Integer> producer(Void in, ReactiveExecutionContext ctx) { ... }
+
+    @FlowTask(id = "formatter")
+    Mono<String> formatter(Integer in, ReactiveExecutionContext ctx) { ... }
+}
+
+@Bean
+WorkflowExecutionPlan plan(FlowDsl dsl) {
+    return dsl.flow(CustomerTasks::producer)
+              .then(CustomerTasks::formatter)
+              .build();
+}
+```

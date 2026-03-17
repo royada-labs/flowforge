@@ -5,60 +5,70 @@ import org.springframework.context.annotation.Configuration;
 
 import io.flowforge.spring.annotations.FlowWorkflow;
 import io.flowforge.spring.dsl.FlowDsl;
-import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
 @Configuration
 public class HarnessWorkflows {
 
-    private static TaskDefinition<Object, Object> task(String id) {
-        return TaskDefinition.of(id, Object.class, Object.class);
-    }
-
     @FlowWorkflow(id = "SEQ_S")
     @Bean
     WorkflowExecutionPlan seqSmall(FlowDsl dsl) {
-        return dsl.startTyped(task("cpu1"))
-                .then(task("nb1"))
-                .then(task("cpu2"))
-                .then(task("finalize"))
+        return dsl.flow(HarnessTaskHandlers::cpu1)
+                .then(HarnessTaskHandlers::nb1)
+                .then(HarnessTaskHandlers::cpu2)
+                .then(HarnessTaskHandlers::finalizeTask)
                 .build();
     }
 
     @FlowWorkflow(id = "SEQ_M")
     @Bean
     WorkflowExecutionPlan seqMedium(FlowDsl dsl) {
-        return dsl.startTyped(task("cpu1"))
-                .then(task("nb6")).then(task("nb7")).then(task("nb8")).then(task("nb9")).then(task("nb10"))
-                .then(task("nb11")).then(task("nb12")).then(task("nb13")).then(task("nb14")).then(task("nb15"))
-                .then(task("nb16")).then(task("nb17")).then(task("nb18")).then(task("nb19")).then(task("nb20"))
-                .then(task("nb21")).then(task("nb22")).then(task("nb23"))
-                .then(task("finalize"))
+        return dsl.flow(HarnessTaskHandlers::cpu1)
+                .then(HarnessTaskHandlers::nb6).then(HarnessTaskHandlers::nb7).then(HarnessTaskHandlers::nb8)
+                .then(HarnessTaskHandlers::nb9).then(HarnessTaskHandlers::nb10).then(HarnessTaskHandlers::nb11)
+                .then(HarnessTaskHandlers::nb12).then(HarnessTaskHandlers::nb13).then(HarnessTaskHandlers::nb14)
+                .then(HarnessTaskHandlers::nb15).then(HarnessTaskHandlers::nb16).then(HarnessTaskHandlers::nb17)
+                .then(HarnessTaskHandlers::nb18).then(HarnessTaskHandlers::nb19).then(HarnessTaskHandlers::nb20)
+                .then(HarnessTaskHandlers::nb21).then(HarnessTaskHandlers::nb22).then(HarnessTaskHandlers::nb23)
+                .then(HarnessTaskHandlers::finalizeTask)
                 .build();
     }
 
-    @SuppressWarnings("unchecked")
     @FlowWorkflow(id = "FORK_4_JOIN")
     @Bean
     WorkflowExecutionPlan forkJoin(FlowDsl dsl) {
-        return dsl.startTyped(task("cpu1"))
+        return dsl.flow(HarnessTaskHandlers::cpu1)
                 .fork(
-                        br -> br.then(task("nb2")).then(task("cpu2")),
-                        br -> br.then(task("nb3")).then(task("cpu3")),
-                        br -> br.then(task("nb4")).then(task("cpu4")),
-                        br -> br.then(task("nb5")).then(task("cpu5"))
+                        br -> br.then(HarnessTaskHandlers::nb2).then(HarnessTaskHandlers::cpu2),
+                        br -> br.then(HarnessTaskHandlers::nb3).then(HarnessTaskHandlers::cpu3),
+                        br -> br.then(HarnessTaskHandlers::nb4).then(HarnessTaskHandlers::cpu4),
+                        br -> br.then(HarnessTaskHandlers::nb5).then(HarnessTaskHandlers::cpu5)
                 )
-                .join(task("finalize"))
+                .join(HarnessTaskHandlers::finalizeTask)
                 .build();
     }
 
     @FlowWorkflow(id = "BLOCKING_MIX")
     @Bean
     WorkflowExecutionPlan blockingMix(FlowDsl dsl) {
-        return dsl.startTyped(task("blk1"))
-                .then(task("cpu6"))
-                .then(task("blk2"))
-                .then(task("finalize"))
+        return dsl.flow(HarnessTaskHandlers::blk1)
+                .then(HarnessTaskHandlers::cpu6)
+                .then(HarnessTaskHandlers::blk2)
+                .then(HarnessTaskHandlers::finalizeTask)
+                .build();
+    }
+
+    @FlowWorkflow(id = "MID_REALISTIC")
+    @Bean
+    WorkflowExecutionPlan midRealistic(FlowDsl dsl) {
+        return dsl.flow(HarnessTaskHandlers::validateInput)
+                .fork(
+                        br -> br.then(HarnessTaskHandlers::profileService),
+                        br -> br.then(HarnessTaskHandlers::pricingService),
+                        br -> br.then(HarnessTaskHandlers::riskService)
+                )
+                .join(HarnessTaskHandlers::aggregateOffer)
+                .then(HarnessTaskHandlers::persistAudit)
                 .build();
     }
 }

@@ -18,6 +18,9 @@ public final class FlowTaskAdapterFactory {
     }
 
     public Task<?, ?> adapt(Object bean, FlowTask ann) {
+        if (bean instanceof Task<?, ?> task) {
+            return task;
+        }
 
         if (!(bean instanceof FlowTaskHandler<?, ?> rawHandler)) {
             throw new IllegalStateException(

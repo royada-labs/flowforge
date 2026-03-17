@@ -26,4 +26,32 @@ public interface FlowDsl {
      * @return a {@link TypedFlowBuilder} tracking the output type {@code O}
      */
     <I, O> TypedFlowBuilder<O> startTyped(TaskDefinition<I, O> task);
+
+    /**
+     * Alias of {@link #startTyped(TaskDefinition)} for concise DSL usage.
+     */
+    default <I, O> TypedFlowBuilder<O> start(TaskDefinition<I, O> task) {
+        return startTyped(task);
+    }
+
+    /**
+     * Starts a workflow from a typed method reference pointing to a {@code @FlowTask} bean method.
+     */
+    <B, I, O> TypedFlowBuilder<O> start(TaskMethodRef<B, I, O> methodRef);
+
+    /**
+     * Starts a workflow from a typed method reference to a {@code @TaskHandler} method.
+     */
+    <B, I, O> TypedFlowBuilder<O> start(TaskCallRef<B, I, O> methodRef);
+
+    /**
+     * Ultra-fluent alias for method-reference-based starts.
+     */
+    default <B, I, O> TypedFlowBuilder<O> flow(TaskMethodRef<B, I, O> methodRef) {
+        return start(methodRef);
+    }
+
+    default <B, I, O> TypedFlowBuilder<O> flow(TaskCallRef<B, I, O> methodRef) {
+        return start(methodRef);
+    }
 }

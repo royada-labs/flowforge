@@ -1,5 +1,6 @@
 package io.flowforge.spring.dsl;
 
+import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
@@ -24,10 +25,12 @@ public final class TypedFlowBuilder<O> {
 
     private final FlowBuilder builder;
     private final TaskDefinition<?, O> tailTask;
+    private final TaskReferenceResolver referenceResolver;
 
-    TypedFlowBuilder(FlowBuilder builder, TaskDefinition<?, O> tailTask) {
+    TypedFlowBuilder(FlowBuilder builder, TaskDefinition<?, O> tailTask, TaskReferenceResolver referenceResolver) {
         this.builder = Objects.requireNonNull(builder, "builder");
         this.tailTask = Objects.requireNonNull(tailTask, "tailTask");
+        this.referenceResolver = Objects.requireNonNull(referenceResolver, "referenceResolver");
     }
 
     /**
@@ -54,6 +57,14 @@ public final class TypedFlowBuilder<O> {
         return builder.then(nextTask);
     }
 
+    public <B, NextO> TypedFlowBuilder<NextO> then(TaskMethodRef<B, O, NextO> methodRef) {
+        return then(referenceResolver.resolve(methodRef));
+    }
+
+    public <B, NextO> TypedFlowBuilder<NextO> then(TaskCallRef<B, O, NextO> methodRef) {
+        return then(referenceResolver.resolve(methodRef));
+    }
+
     /**
      * Joins previous parallel branches into a single task.
      *
@@ -63,6 +74,14 @@ public final class TypedFlowBuilder<O> {
      */
     public <NextO> TypedFlowBuilder<NextO> join(TaskDefinition<O, NextO> joinTask) {
         return builder.join(joinTask);
+    }
+
+    public <B, NextO> TypedFlowBuilder<NextO> join(TaskMethodRef<B, O, NextO> methodRef) {
+        return join(referenceResolver.resolve(methodRef));
+    }
+
+    public <B, NextO> TypedFlowBuilder<NextO> join(TaskCallRef<B, O, NextO> methodRef) {
+        return join(referenceResolver.resolve(methodRef));
     }
 
 
@@ -79,6 +98,28 @@ public final class TypedFlowBuilder<O> {
         return this;
     }
 
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    public final <B, X> TypedFlowBuilder<O> parallel(TaskMethodRef<B, O, X>... branches) {
+        Consumer<FlowBranch>[] consumers = new Consumer[branches.length];
+        for (int i = 0; i < branches.length; i++) {
+            TaskDefinition<O, X> task = referenceResolver.resolve(branches[i]);
+            consumers[i] = b -> b.then(cast(task));
+        }
+        return fork(consumers);
+    }
+
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    public final <B, X> TypedFlowBuilder<O> parallel(TaskCallRef<B, O, X>... branches) {
+        Consumer<FlowBranch>[] consumers = new Consumer[branches.length];
+        for (int i = 0; i < branches.length; i++) {
+            TaskDefinition<O, X> task = referenceResolver.resolve(branches[i]);
+            consumers[i] = b -> b.then(cast(task));
+        }
+        return fork(consumers);
+    }
+
     /**
      * Finalizes the workflow and builds the execution plan.
      *
@@ -86,5 +127,10 @@ public final class TypedFlowBuilder<O> {
      */
     public WorkflowExecutionPlan build() {
         return builder.build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <I, X> TaskDefinition<I, X> cast(TaskDefinition<I, ?> task) {
+        return (TaskDefinition<I, X>) task;
     }
 }

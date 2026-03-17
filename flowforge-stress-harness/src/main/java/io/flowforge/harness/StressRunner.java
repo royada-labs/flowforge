@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntSupplier;
 
 import org.HdrHistogram.ConcurrentHistogram;
 import org.springframework.boot.CommandLineRunner;
@@ -38,10 +39,14 @@ public class StressRunner implements CommandLineRunner {
     public void run(String... args) {
         // Escenarios default (closed-loop por inflight).
         // Ajusta inflight/duración a tu hardware.
-        runScenario("LOW", 200, Duration.ofMinutes(2), "SEQ_S", Duration.ofSeconds(60), Schedulers.boundedElastic());
+        runScenario("LOW", 200, Duration.ofMinutes(2), "SEQ_S", Duration.ofSeconds(60),
+                Schedulers.boundedElastic(), () -> 50_000);
         runScenario("MID", 200, Duration.ofMinutes(3), "FORK_4_JOIN", Duration.ofSeconds(120),
-                Schedulers.boundedElastic());
-        runScenario("HIGH", 3000, Duration.ofMinutes(3), "BLOCKING_MIX", Duration.ofSeconds(10), Schedulers.parallel());
+                Schedulers.boundedElastic(), () -> 50_000);
+        runScenario("MID_REALISTIC", 60, Duration.ofMinutes(2), "MID_REALISTIC", Duration.ofSeconds(2),
+                Schedulers.boundedElastic(), () -> java.util.concurrent.ThreadLocalRandom.current().nextInt(2_000, 8_001));
+        runScenario("HIGH", 3000, Duration.ofMinutes(3), "BLOCKING_MIX", Duration.ofSeconds(10),
+                Schedulers.parallel(), () -> 50_000);
 
         perScenario.forEach(this::printSummary);
         printSummary("GLOBAL", globalHist);
@@ -51,7 +56,7 @@ public class StressRunner implements CommandLineRunner {
     }
 
     private void runScenario(String scenario, int targetInflight, Duration duration, String workflowId,
-            Duration timeout, Scheduler scheduler) {
+            Duration timeout, Scheduler scheduler, IntSupplier inputSupplier) {
         System.out.printf(
                 "\n=== Scenario %s | workflow=%s | targetInflight=%d | duration=%s | timeout=%s ===\n",
                 scenario, workflowId, targetInflight, duration, timeout);
@@ -79,8 +84,11 @@ public class StressRunner implements CommandLineRunner {
             while (inflight.get() < targetInflight && System.nanoTime() < endAt) {
                 inflight.incrementAndGet();
                 long start = System.nanoTime();
+                // Typed DSL roots in this harness are Void-based.
+                // Scenario variability is modeled inside task handlers.
+                Object executionInput = null;
 
-                Mono<Void> exec = flowForge.execute(workflowId, 50_000)
+                Mono<Void> exec = flowForge.execute(workflowId, executionInput)
                         .timeout(timeout) // configurable
                         .then();
 

@@ -2,6 +2,7 @@ package io.flowforge.spring.dsl;
 
 import io.flowforge.spring.dsl.internal.FlowGraph;
 import io.flowforge.spring.dsl.internal.FlowPlanMaterializer;
+import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.validation.DefaultFlowValidator;
 import io.flowforge.validation.FlowValidationException;
@@ -16,10 +17,12 @@ final class DefaultFlowBuilder implements FlowBuilder {
 
     private final FlowGraph graph;
     private final FlowPlanMaterializer materializer;
+    private final TaskReferenceResolver referenceResolver;
 
-    DefaultFlowBuilder(FlowGraph graph, FlowPlanMaterializer materializer) {
+    DefaultFlowBuilder(FlowGraph graph, FlowPlanMaterializer materializer, TaskReferenceResolver referenceResolver) {
         this.graph = Objects.requireNonNull(graph, "graph");
         this.materializer = Objects.requireNonNull(materializer, "materializer");
+        this.referenceResolver = Objects.requireNonNull(referenceResolver, "referenceResolver");
     }
 
 
@@ -31,7 +34,7 @@ final class DefaultFlowBuilder implements FlowBuilder {
     public <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
         graph.then(task);
-        return new TypedFlowBuilder<>(this, task);
+        return new TypedFlowBuilder<>(this, task, referenceResolver);
     }
 
 
@@ -39,7 +42,7 @@ final class DefaultFlowBuilder implements FlowBuilder {
     public <I, O> TypedFlowBuilder<O> join(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
         graph.join(task);
-        return new TypedFlowBuilder<>(this, task);
+        return new TypedFlowBuilder<>(this, task, referenceResolver);
     }
 
 
@@ -56,7 +59,7 @@ final class DefaultFlowBuilder implements FlowBuilder {
                 .map(b -> Objects.requireNonNull(b, "branch"))
                 .toList();
 
-        graph.fork(branchBuilders, this);
+        graph.fork(branchBuilders, this, referenceResolver);
         return this;
     }
 

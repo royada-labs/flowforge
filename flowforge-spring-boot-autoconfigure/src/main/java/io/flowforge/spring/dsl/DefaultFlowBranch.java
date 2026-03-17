@@ -1,6 +1,7 @@
 package io.flowforge.spring.dsl;
 
 import io.flowforge.spring.dsl.internal.FlowGraph;
+import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
 
 import java.util.Arrays;
@@ -12,10 +13,12 @@ public final class DefaultFlowBranch implements FlowBranch {
     private final FlowGraph branchGraph;
     private final FlowBuilder rootBuilder;
     private final FlowBuilder branchBuilder;
+    private final TaskReferenceResolver referenceResolver;
 
-    public DefaultFlowBranch(FlowGraph branchGraph, FlowBuilder builder) {
+    public DefaultFlowBranch(FlowGraph branchGraph, FlowBuilder builder, TaskReferenceResolver referenceResolver) {
         this.branchGraph = Objects.requireNonNull(branchGraph, "branchGraph");
         this.rootBuilder = Objects.requireNonNull(builder, "builder");
+        this.referenceResolver = Objects.requireNonNull(referenceResolver, "referenceResolver");
         this.branchBuilder = new BranchFlowBuilder();
     }
 
@@ -24,7 +27,17 @@ public final class DefaultFlowBranch implements FlowBranch {
     public <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
         branchGraph.then(task);
-        return new TypedFlowBuilder<>(branchBuilder, task);
+        return new TypedFlowBuilder<>(branchBuilder, task, referenceResolver);
+    }
+
+    @Override
+    public <B, I, O> TypedFlowBuilder<O> then(TaskMethodRef<B, I, O> methodRef) {
+        return then(referenceResolver.resolve(methodRef));
+    }
+
+    @Override
+    public <B, I, O> TypedFlowBuilder<O> then(TaskCallRef<B, I, O> methodRef) {
+        return then(referenceResolver.resolve(methodRef));
     }
 
     @SafeVarargs
@@ -39,7 +52,7 @@ public final class DefaultFlowBranch implements FlowBranch {
                 .map(b -> Objects.requireNonNull(b, "branch"))
                 .toList();
 
-        branchGraph.fork(branchConsumers, branchBuilder);
+        branchGraph.fork(branchConsumers, branchBuilder, referenceResolver);
         return this;
     }
 
@@ -48,7 +61,15 @@ public final class DefaultFlowBranch implements FlowBranch {
         public <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task) {
             Objects.requireNonNull(task, "task");
             branchGraph.then(task);
-            return new TypedFlowBuilder<>(this, task);
+            return new TypedFlowBuilder<>(this, task, referenceResolver);
+        }
+
+        public <B, I, O> TypedFlowBuilder<O> then(TaskMethodRef<B, I, O> methodRef) {
+            return then(referenceResolver.resolve(methodRef));
+        }
+
+        public <B, I, O> TypedFlowBuilder<O> then(TaskCallRef<B, I, O> methodRef) {
+            return then(referenceResolver.resolve(methodRef));
         }
 
         @SafeVarargs
@@ -63,7 +84,7 @@ public final class DefaultFlowBranch implements FlowBranch {
                     .map(b -> Objects.requireNonNull(b, "branch"))
                     .toList();
 
-            branchGraph.fork(branchConsumers, this);
+            branchGraph.fork(branchConsumers, this, referenceResolver);
             return this;
         }
 
@@ -71,7 +92,7 @@ public final class DefaultFlowBranch implements FlowBranch {
         public <I, O> TypedFlowBuilder<O> join(TaskDefinition<I, O> task) {
             Objects.requireNonNull(task, "task");
             branchGraph.join(task);
-            return new TypedFlowBuilder<>(this, task);
+            return new TypedFlowBuilder<>(this, task, referenceResolver);
         }
 
         @Override

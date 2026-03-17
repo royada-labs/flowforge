@@ -1,6 +1,7 @@
 package io.flowforge.spring.dsl;
 
 import io.flowforge.spring.registry.TaskHandlerRegistry;
+import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.spring.registry.TaskProvider;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskDefinition;
@@ -21,11 +22,12 @@ class FlowDslExecutionPlanTest {
     @Test
     void linear_A_then_B_then_C() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
+        TaskDefinitionRegistry defs = new TaskDefinitionRegistry();
         reg.register(providerNoop("A"));
         reg.register(providerNoop("B"));
         reg.register(providerNoop("C"));
 
-        FlowDsl dsl = new DefaultFlowDsl(reg);
+        FlowDsl dsl = new DefaultFlowDsl(reg, defs);
 
         WorkflowExecutionPlan plan = dsl
                 .startTyped(TaskDefinition.of("A", Void.class, Object.class))
@@ -44,11 +46,12 @@ class FlowDslExecutionPlanTest {
     @Test
     void fork_A_to_B_and_C() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
+        TaskDefinitionRegistry defs = new TaskDefinitionRegistry();
         reg.register(providerNoop("A"));
         reg.register(providerNoop("B"));
         reg.register(providerNoop("C"));
 
-        FlowDsl dsl = new DefaultFlowDsl(reg);
+        FlowDsl dsl = new DefaultFlowDsl(reg, defs);
 
         WorkflowExecutionPlan plan = dsl
                 .startTyped(TaskDefinition.of("A", Void.class, Object.class))
@@ -67,12 +70,13 @@ class FlowDslExecutionPlanTest {
     @Test
     void fork_join_A_to_BC_then_D() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
+        TaskDefinitionRegistry defs = new TaskDefinitionRegistry();
         reg.register(providerNoop("A"));
         reg.register(providerNoop("B"));
         reg.register(providerNoop("C"));
         reg.register(providerNoop("D"));
 
-        FlowDsl dsl = new DefaultFlowDsl(reg);
+        FlowDsl dsl = new DefaultFlowDsl(reg, defs);
 
         WorkflowExecutionPlan plan = dsl
                 .startTyped(TaskDefinition.of("A", Void.class, Object.class))
@@ -96,13 +100,14 @@ class FlowDslExecutionPlanTest {
     @Test
     void fork_with_sequences_A_to_B_to_C_and_D_then_E() {
         TaskHandlerRegistry reg = new TaskHandlerRegistry();
+        TaskDefinitionRegistry defs = new TaskDefinitionRegistry();
         reg.register(providerNoop("A"));
         reg.register(providerNoop("B"));
         reg.register(providerNoop("C"));
         reg.register(providerNoop("D"));
         reg.register(providerNoop("E"));
 
-        FlowDsl dsl = new DefaultFlowDsl(reg);
+        FlowDsl dsl = new DefaultFlowDsl(reg, defs);
 
         WorkflowExecutionPlan plan = dsl
                 .startTyped(TaskDefinition.of("A", Void.class, Object.class))

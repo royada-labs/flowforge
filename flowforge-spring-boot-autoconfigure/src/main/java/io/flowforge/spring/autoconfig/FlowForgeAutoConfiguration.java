@@ -15,6 +15,7 @@ import io.flowforge.spring.bootstrap.WorkflowPlanRegistrar;
 import io.flowforge.impl.DefaultFlowForgeClient;
 import io.flowforge.spring.registry.DefaultWorkflowPlanRegistry;
 import io.flowforge.spring.registry.MutableWorkflowPlanRegistry;
+import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.registry.WorkflowPlanRegistry;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
@@ -34,8 +35,14 @@ public class FlowForgeAutoConfiguration {
     }
 
     @Bean
-    static TaskScanner taskScanner(TaskHandlerRegistry registry) {
-        return new TaskScanner(registry);
+    @ConditionalOnMissingBean
+    public TaskDefinitionRegistry taskDefinitionRegistry() {
+        return new TaskDefinitionRegistry();
+    }
+
+    @Bean
+    static TaskScanner taskScanner(TaskHandlerRegistry registry, TaskDefinitionRegistry definitionRegistry) {
+        return new TaskScanner(registry, definitionRegistry);
     }
 
     @Bean
@@ -50,8 +57,8 @@ public class FlowForgeAutoConfiguration {
     }
 
     @Bean
-    public FlowDsl flowDsl(TaskHandlerRegistry taskRegistry) {
-        return new DefaultFlowDsl(taskRegistry);
+    public FlowDsl flowDsl(TaskHandlerRegistry taskRegistry, TaskDefinitionRegistry definitionRegistry) {
+        return new DefaultFlowDsl(taskRegistry, definitionRegistry);
     }
 
     @Bean

@@ -27,6 +27,49 @@ public class UserOnboarding {
 }
 ```
 
+Or with method references (no manual `TaskDefinition` constants):
+
+```java
+@Bean
+@FlowTask(id = "producer")
+FlowTaskHandler<Void, Integer> producer() { ... }
+
+@Bean
+@FlowTask(id = "toStringTask")
+FlowTaskHandler<Integer, String> toStringTask() { ... }
+
+@Bean
+WorkflowExecutionPlan plan(FlowDsl dsl) {
+    return dsl.flow(MyConfig::producer)
+              .then(MyConfig::toStringTask)
+              .build();
+}
+```
+
+Or with an annotated task container (no `FlowTaskHandler` interface implementation):
+
+```java
+@TaskHandler("customer")
+class CustomerTasks {
+  @FlowTask(id = "getUser")
+  Mono<User> getUser(Void in, ReactiveExecutionContext ctx) { ... }
+
+  @FlowTask(id = "getOrders")
+  Mono<OrderSummary> getOrders(User in, ReactiveExecutionContext ctx) { ... }
+
+  @FlowTask(id = "discount")
+  Mono<Discount> discount(OrderSummary in, ReactiveExecutionContext ctx) { ... }
+}
+
+@Bean
+WorkflowExecutionPlan plan(FlowDsl dsl) {
+  return dsl.flow(CustomerTasks::getUser)
+            .then(CustomerTasks::getOrders)
+            .then(CustomerTasks::discount)
+            .build();
+}
+```
+
 ---
 
 ## ✨ Key Features

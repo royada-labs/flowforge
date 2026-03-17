@@ -60,6 +60,27 @@ public class TypedOrchestration {
 **Behavior**: 
 `GET_USER` and `GET_ORDER` run in parallel after `START`. `CALC_DISCOUNT` runs when both branches complete.
 
+Method-reference equivalent with `@TaskHandler`:
+
+```java
+@TaskHandler
+class PricingTasks {
+    @FlowTask(id = "start")
+    Mono<Object> start(Void in, ReactiveExecutionContext ctx) { ... }
+    @FlowTask(id = "getUser")
+    Mono<Object> getUser(Object in, ReactiveExecutionContext ctx) { ... }
+    @FlowTask(id = "getOrder")
+    Mono<Object> getOrder(Object in, ReactiveExecutionContext ctx) { ... }
+    @FlowTask(id = "calc")
+    Mono<Double> calc(Object in, ReactiveExecutionContext ctx) { ... }
+}
+
+dsl.flow(PricingTasks::start)
+   .parallel(PricingTasks::getUser, PricingTasks::getOrder)
+   .join(PricingTasks::calc)
+   .build();
+```
+
 ---
 
 ## 3. Data Transformation Pipeline
