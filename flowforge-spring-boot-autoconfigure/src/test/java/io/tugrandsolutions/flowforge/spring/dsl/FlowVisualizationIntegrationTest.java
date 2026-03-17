@@ -33,9 +33,9 @@ class FlowVisualizationIntegrationTest {
             TaskDefinition<Void, Integer> start = TaskDefinition.of("Start", Void.class, Integer.class);
             TaskDefinition<Integer, String> end = TaskDefinition.of("End", Integer.class, String.class);
 
-            var flow = dsl.startTyped(start);
-            flow.builder().then(end, flow.node());
-            WorkflowExecutionPlan plan = flow.builder().build();
+            WorkflowExecutionPlan plan = dsl.startTyped(start)
+                    .then(end)
+                    .build();
 
             FlowVisualization viz = FlowVisualizer.visualize(plan, FlowValidationResult.of(java.util.List.of()));
 
@@ -54,12 +54,12 @@ class FlowVisualizationIntegrationTest {
             // Incompatible type: expects Boolean
             TaskDefinition<Boolean, String> end = TaskDefinition.of("End", Boolean.class, String.class);
 
-            var flow = dsl.startTyped(start);
+            TypedFlowBuilder<Integer> flow = dsl.startTyped(start);
             // Use single-param then() to bypass local fail-fast and let global validator catch it
-            flow.builder().then(end);
+            flow.untyped().then(end);
 
             try {
-                flow.builder().build();
+                flow.build();
                 fail("Should have thrown FlowValidationException");
             } catch (FlowValidationException ex) {
                 WorkflowExecutionPlan plan = ex.plan().orElseThrow();

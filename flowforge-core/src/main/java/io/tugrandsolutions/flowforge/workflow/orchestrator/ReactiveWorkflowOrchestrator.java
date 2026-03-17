@@ -198,7 +198,11 @@ public final class ReactiveWorkflowOrchestrator {
                     .flatMap(node -> {
                         session.recordTaskStart(node.id());
                         monitor.onTaskStart(session.instance(), node.id());
-                        session.tracer().onTaskStart(node.id().getValue());
+                        
+                        java.util.List<String> depIds = node.dependencies().stream()
+                                .map(d -> d.id().getValue())
+                                .toList();
+                        session.tracer().onTaskStart(node.id().getValue(), depIds);
 
                         return Mono.defer(() -> inputResolver.resolveInput(session.instance(), node, initialInput)
                                 .defaultIfEmpty(NULL_SENTINEL)

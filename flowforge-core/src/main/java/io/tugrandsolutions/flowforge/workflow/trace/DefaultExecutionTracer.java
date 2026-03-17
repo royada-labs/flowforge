@@ -47,11 +47,17 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    public void onTaskStart(String taskId) {
+    public void onTaskStart(String taskId, Collection<String> dependencyIds) {
         taskStarts.put(taskId, new TaskStartInfo(
                 System.currentTimeMillis(),
                 Thread.currentThread().getName()
         ));
+    }
+
+    @Override
+    @Deprecated
+    public void onTaskStart(String taskId) {
+        onTaskStart(taskId, Collections.emptyList());
     }
 
     @Override

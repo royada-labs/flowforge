@@ -26,12 +26,12 @@ public final class DefaultFlowDsl implements FlowDsl {
     }
 
     @Override
-    public <I, O> TypedFlowStart<O> startTyped(TaskDefinition<I, O> task) {
+    public <I, O> TypedFlowBuilder<O> startTyped(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
         FlowGraph graph = FlowGraph.start(task.idValue());
         graph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
         FlowBuilder builder = new DefaultFlowBuilder(graph, materializer);
         TypedTaskNode<O> node = new TypedTaskNode<>(task.toRef());
-        return new TypedFlowStart<>(builder, node);
+        return new TypedFlowBuilder<>(builder, node);
     }
 }

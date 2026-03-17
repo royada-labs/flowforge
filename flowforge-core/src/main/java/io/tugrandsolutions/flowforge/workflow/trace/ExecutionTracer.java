@@ -34,8 +34,20 @@ public interface ExecutionTracer {
      * Called when a task starts execution.
      *
      * @param taskId the id of the task; must not be null
+     * @deprecated Use {@link #onTaskStart(String, java.util.Collection)} instead.
      */
-    void onTaskStart(String taskId);
+    @Deprecated(since = "0.4.0", forRemoval = false)
+    default void onTaskStart(String taskId) {
+        onTaskStart(taskId, java.util.Collections.emptyList());
+    }
+
+    /**
+     * Called when a task starts execution, providing its precursor dependencies.
+     *
+     * @param taskId        the id of the task; must not be null
+     * @param dependencyIds the ids of tasks this task depends on; must not be null
+     */
+    void onTaskStart(String taskId, java.util.Collection<String> dependencyIds);
 
     /**
      * Called when a task completes successfully.

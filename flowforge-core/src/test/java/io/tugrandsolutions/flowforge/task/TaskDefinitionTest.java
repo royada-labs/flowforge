@@ -1,6 +1,6 @@
 package io.tugrandsolutions.flowforge.task;
 
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+import io.tugrandsolutions.flowforge.task.FlowKey;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

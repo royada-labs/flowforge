@@ -1,6 +1,6 @@
 package io.tugrandsolutions.flowforge.exception;
 
-public class WorkflowExecutionException extends RuntimeException {
+public class WorkflowExecutionException extends FlowForgeException {
   private final String workflowId;
 
   public WorkflowExecutionException(String workflowId, Throwable cause) {

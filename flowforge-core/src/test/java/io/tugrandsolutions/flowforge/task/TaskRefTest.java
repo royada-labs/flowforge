@@ -103,7 +103,7 @@ class TaskRefTest {
     @Test
     void toKey_should_produce_flow_key_with_same_id_and_type() {
         TaskRef<String> ref = TaskRef.of("fetchUser", String.class);
-        io.tugrandsolutions.flowforge.workflow.FlowKey<String> key = ref.toKey();
+        io.tugrandsolutions.flowforge.task.FlowKey<String> key = ref.toKey();
 
         assertEquals("fetchUser", key.taskId().getValue());
         assertEquals(String.class, key.type());

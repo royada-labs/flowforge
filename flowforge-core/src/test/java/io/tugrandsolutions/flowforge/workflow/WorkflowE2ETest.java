@@ -3,6 +3,7 @@ package io.tugrandsolutions.flowforge.workflow;
 import io.tugrandsolutions.flowforge.task.BasicTask;
 import io.tugrandsolutions.flowforge.task.Task;
 import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.task.TaskDefinition;
 import io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.tugrandsolutions.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
@@ -50,16 +51,16 @@ class WorkflowE2ETest {
         StepVerifier.create(orchestrator.execute(plan, "hello"))
                 .assertNext(ctx -> {
                     // A: length("hello") = 5
-                    assertEquals(5, ctx.get(FlowKey.of(A, Integer.class)).orElse(null));
+                    assertEquals(5, ctx.get(TaskDefinition.of(A, String.class, Integer.class).outputKey()).orElse(null));
 
                     // B: double(A) = 10
-                    assertEquals(10, ctx.get(FlowKey.of(B, Integer.class)).orElse(null));
+                    assertEquals(10, ctx.get(TaskDefinition.of(B, Integer.class, Integer.class).outputKey()).orElse(null));
 
                     // C: "len=5"
-                    assertEquals("len=5", ctx.get(FlowKey.of(C, String.class)).orElse(null));
+                    assertEquals("len=5", ctx.get(TaskDefinition.of(C, Integer.class, String.class).outputKey()).orElse(null));
 
                     // D: combine(B, C)
-                    assertEquals("B=10;C=len=5", ctx.get(FlowKey.of(D, String.class)).orElse(null));
+                    assertEquals("B=10;C=len=5", ctx.get(TaskDefinition.of(D, Map.class, String.class).outputKey()).orElse(null));
                 })
                 .verifyComplete();
     }

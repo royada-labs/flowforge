@@ -5,6 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.task.FlowKey;
+import io.tugrandsolutions.flowforge.exception.TypeMismatchException;
+import java.util.NoSuchElementException;
 
 /**
  * Thread-safe store for intermediate task results within a single workflow execution.
@@ -90,25 +93,54 @@ public interface ReactiveExecutionContext {
     /**
      * Retrieves a value using a type-safe {@link FlowKey}.
      *
-     * <p>Unlike the {@link #get(TaskId, Class)} variant, this method throws
-     * {@link ClassCastException} if the stored value is not assignable to the
-     * key's type, making type mismatches visible immediately (fail-fast).
-     *
-     * <p>Example:
-     * <pre>{@code
-     * FlowKey<UserProfile> USER = FlowKey.of("fetchUser", UserProfile.class);
-     * UserProfile profile = ctx.get(USER); // compile-time typed, runtime validated
-     * }</pre>
+     * <p>This method performs runtime type validation. If a value exists for the
+     * associated task but is not compatible with the expected type, it throws
+     * {@link TypeMismatchException} (fail-fast).
      *
      * @param key the typed key; must not be null
      * @param <T> the value type
-     * @return an {@link Optional} with the value if present and type-safe,
-     *         or empty if not found
-     * @throws ClassCastException if the stored value cannot be cast to {@code T}
+     * @return an {@link Optional} with the value if present, or empty if not found
+     * @throws TypeMismatchException if the stored value is not assignable to {@code T}
      */
     default <T> Optional<T> get(FlowKey<T> key) {
         Objects.requireNonNull(key, "key");
-        return get(key.taskId(), key.type());
+        Optional<Object> raw = get(key.taskId());
+        if (raw.isEmpty()) {
+            return Optional.empty();
+        }
+        Object value = raw.get();
+        if (value != null && !key.type().isInstance(value)) {
+            throw new TypeMismatchException(key.taskId(), key.type(), value.getClass());
+        }
+        @SuppressWarnings("unchecked")
+        T casted = (T) value;
+        return Optional.ofNullable(casted);
+    }
+
+    /**
+     * Retrieves a value using a type-safe {@link FlowKey}, throwing an exception if not found.
+     *
+     * @param key the typed key; must not be null
+     * @param <T> the value type
+     * @return the stored value
+     * @throws NoSuchElementException if no value is found for the given key
+     * @throws TypeMismatchException if the stored value is of the wrong type
+     */
+    default <T> T getOrThrow(FlowKey<T> key) {
+        return get(key).orElseThrow(() -> new NoSuchElementException("No value found for task: " + key.taskId().getValue()));
+    }
+
+    /**
+     * Retrieves a value using a type-safe {@link FlowKey}, returning a default value if not found.
+     *
+     * @param key          the typed key; must not be null
+     * @param defaultValue the value to return if nothing is found
+     * @param <T>          the value type
+     * @return the stored value or the default value
+     * @throws TypeMismatchException if the stored value is of the wrong type
+     */
+    default <T> T getOrDefault(FlowKey<T> key, T defaultValue) {
+        return get(key).orElse(defaultValue);
     }
 
     /**

@@ -60,11 +60,10 @@ class TracingIntegrationTest {
             TaskDefinition<Integer, String> s2 = TaskDefinition.of("Step2", Integer.class, String.class);
             TaskDefinition<String, Integer> s3 = TaskDefinition.of("Step3", String.class, Integer.class);
 
-            var start = dsl.startTyped(s1);
-            var step2Node = start.builder().then(s2, start.node());
-            start.builder().then(s3, step2Node);
-
-            return start.builder().build();
+            return dsl.startTyped(s1)
+                    .then(s2)
+                    .then(s3)
+                    .build();
         }
 
         @Bean @FlowTask(id = "Step1") io.tugrandsolutions.flowforge.api.FlowTaskHandler<Void, Integer> s1() {

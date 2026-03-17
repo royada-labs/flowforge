@@ -1,7 +1,7 @@
 package io.tugrandsolutions.flowforge.dsl;
 
 import io.tugrandsolutions.flowforge.task.TaskRef;
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+import io.tugrandsolutions.flowforge.task.FlowKey;
 
 import java.util.Objects;
 
@@ -48,15 +48,23 @@ public final class TypedTaskNode<T> {
     }
 
     /**
-     * Derives a {@link FlowKey} for accessing this task's output from a
+     * Derives a {@link FlowKey} for accessing this task's output from an
      * {@link io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext}.
      *
-     * <p>Convenience shorthand for {@code ref().toKey()}.
+     * <p>Convenience shorthand for {@code ref().outputKey()}.
      *
      * @return a {@code FlowKey<T>} for this task's id and output type
      */
+    public FlowKey<T> outputKey() {
+        return ref.outputKey();
+    }
+
+    /**
+     * @deprecated Use {@link #outputKey()} instead.
+     */
+    @Deprecated(since = "0.4.0", forRemoval = true)
     public FlowKey<T> toKey() {
-        return ref.toKey();
+        return outputKey();
     }
 
     @Override

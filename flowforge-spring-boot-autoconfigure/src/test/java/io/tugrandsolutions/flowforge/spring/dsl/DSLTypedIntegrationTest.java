@@ -7,7 +7,7 @@ import io.tugrandsolutions.flowforge.spring.annotations.FlowWorkflow;
 import io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.tugrandsolutions.flowforge.task.TaskId;
 import io.tugrandsolutions.flowforge.task.TaskRef;
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+import io.tugrandsolutions.flowforge.task.FlowKey;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;

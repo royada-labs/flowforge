@@ -44,6 +44,14 @@ public final class CompositeExecutionTracer implements ExecutionTracer {
     }
 
     @Override
+    public void onTaskStart(String taskId, java.util.Collection<String> dependencyIds) {
+        for (ExecutionTracer tracer : tracers) {
+            tracer.onTaskStart(taskId, dependencyIds);
+        }
+    }
+
+    @Override
+    @Deprecated
     public void onTaskStart(String taskId) {
         for (ExecutionTracer tracer : tracers) {
             tracer.onTaskStart(taskId);

@@ -1,6 +1,6 @@
 package io.tugrandsolutions.flowforge.task;
 
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+
 import java.util.Objects;
 
 /**
@@ -94,17 +94,21 @@ public final class TaskRef<T> {
 
     /**
      * Converts this task reference into a {@link FlowKey} for accessing
-     * the task's output from a
+     * the task's output from an
      * {@link io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext}.
-     *
-     * <p>This bridges the DSL domain ({@code TaskRef}) with the execution
-     * context domain ({@code FlowKey}), enabling type-safe result retrieval
-     * without manual key construction.
      *
      * @return a new {@code FlowKey<T>} with this ref's id and output type
      */
-    public FlowKey<T> toKey() {
+    public FlowKey<T> outputKey() {
         return FlowKey.of(id, outputType);
+    }
+
+    /**
+     * @deprecated Use {@link #outputKey()} instead.
+     */
+    @Deprecated(since = "0.4.0", forRemoval = true)
+    public FlowKey<T> toKey() {
+        return outputKey();
     }
 
     @Override

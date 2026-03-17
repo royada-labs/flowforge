@@ -20,6 +20,10 @@ public final class NoOpExecutionTracer implements ExecutionTracer {
     public void onWorkflowCanceled() {}
 
     @Override
+    public void onTaskStart(String taskId, java.util.Collection<String> dependencyIds) {}
+
+    @Override
+    @Deprecated
     public void onTaskStart(String taskId) {}
 
     @Override

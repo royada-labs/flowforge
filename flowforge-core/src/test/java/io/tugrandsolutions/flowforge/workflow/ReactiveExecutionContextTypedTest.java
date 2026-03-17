@@ -1,6 +1,10 @@
 package io.tugrandsolutions.flowforge.workflow;
 
 import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.task.FlowKey;
+import io.tugrandsolutions.flowforge.task.TaskDefinition;
+import io.tugrandsolutions.flowforge.exception.TypeMismatchException;
+import java.util.NoSuchElementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +31,7 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void should_put_and_get_value_with_flow_key() {
-        FlowKey<String> key = FlowKey.of("taskA", String.class);
+        FlowKey<String> key = TaskDefinition.of("taskA", Void.class, String.class).outputKey();
 
         ctx.put(key, "hello");
 
@@ -38,7 +42,7 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void should_put_and_get_integer_with_flow_key() {
-        FlowKey<Integer> key = FlowKey.of("taskB", Integer.class);
+        FlowKey<Integer> key = TaskDefinition.of("taskB", Void.class, Integer.class).outputKey();
 
         ctx.put(key, 42);
 
@@ -49,7 +53,7 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void should_return_empty_optional_when_key_not_present() {
-        FlowKey<String> key = FlowKey.of("nonExistent", String.class);
+        FlowKey<String> key = TaskDefinition.of("nonExistent", Void.class, String.class).outputKey();
 
         Optional<String> result = ctx.get(key);
 
@@ -57,17 +61,33 @@ class ReactiveExecutionContextTypedTest {
     }
 
     @Test
-    void should_return_empty_when_stored_type_does_not_match() {
+    void should_throw_mismatch_exception_when_stored_type_does_not_match() {
         // Store as raw TaskId
         TaskId id = TaskId.of("typeMismatch");
         ctx.put(id, 42); // Integer stored
 
-        FlowKey<String> stringKey = FlowKey.of(id, String.class);
-        // The underlying get(TaskId, Class) uses filter(type::isInstance) — returns empty on mismatch
-        Optional<String> result = ctx.get(stringKey);
+        FlowKey<String> stringKey = TaskDefinition.of(id, Void.class, String.class).outputKey();
 
-        assertFalse(result.isPresent(),
-                "Should return empty when stored Integer is fetched as String");
+        assertThrows(TypeMismatchException.class, () -> ctx.get(stringKey),
+                "Should throw TypeMismatchException when stored Integer is fetched as String");
+    }
+
+    @Test
+    void should_provide_getOrThrow_api() {
+        FlowKey<String> key = TaskDefinition.of("taskT", Void.class, String.class).outputKey();
+        ctx.put(key, "data");
+
+        assertEquals("data", ctx.getOrThrow(key));
+        assertThrows(NoSuchElementException.class, () -> ctx.getOrThrow(TaskDefinition.of("missing", Void.class, String.class).outputKey()));
+    }
+
+    @Test
+    void should_provide_getOrDefault_api() {
+        FlowKey<String> key = TaskDefinition.of("taskD", Void.class, String.class).outputKey();
+
+        assertEquals("fallback", ctx.getOrDefault(key, "fallback"));
+        ctx.put(key, "real");
+        assertEquals("real", ctx.getOrDefault(key, "fallback"));
     }
 
     // -----------------------------------------------------------------------
@@ -76,7 +96,7 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void should_report_completed_after_put_via_flow_key() {
-        FlowKey<String> key = FlowKey.of("taskC", String.class);
+        FlowKey<String> key = TaskDefinition.of("taskC", Void.class, String.class).outputKey();
 
         assertFalse(ctx.isCompleted(key));
 
@@ -91,7 +111,7 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void flow_key_put_should_be_visible_via_legacy_task_id_get() {
-        FlowKey<String> key = FlowKey.of("shared", String.class);
+        FlowKey<String> key = TaskDefinition.of("shared", Void.class, String.class).outputKey();
         TaskId taskId = key.taskId();
 
         ctx.put(key, "value");
@@ -105,7 +125,7 @@ class ReactiveExecutionContextTypedTest {
     @Test
     void legacy_task_id_put_should_be_visible_via_flow_key_get() {
         TaskId taskId = TaskId.of("shared2");
-        FlowKey<String> key = FlowKey.of(taskId, String.class);
+        FlowKey<String> key = TaskDefinition.of(taskId, Void.class, String.class).outputKey();
 
         ctx.put(taskId, "legacyValue");
 
@@ -117,8 +137,8 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void should_coexist_multiple_keys_with_different_ids() {
-        FlowKey<String> keyA = FlowKey.of("A", String.class);
-        FlowKey<Integer> keyB = FlowKey.of("B", Integer.class);
+        FlowKey<String> keyA = TaskDefinition.of("A", Void.class, String.class).outputKey();
+        FlowKey<Integer> keyB = TaskDefinition.of("B", Void.class, Integer.class).outputKey();
 
         ctx.put(keyA, "alpha");
         ctx.put(keyB, 99);

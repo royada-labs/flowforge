@@ -13,6 +13,8 @@ import io.tugrandsolutions.flowforge.task.BasicTask;
 import io.tugrandsolutions.flowforge.task.Task;
 import io.tugrandsolutions.flowforge.task.TaskDescriptor;
 import io.tugrandsolutions.flowforge.task.TaskId;
+import io.tugrandsolutions.flowforge.task.FlowKey;
+import io.tugrandsolutions.flowforge.task.TaskDefinition;
 import io.tugrandsolutions.flowforge.workflow.instance.WorkflowInstance;
 import io.tugrandsolutions.flowforge.workflow.monitor.WorkflowMonitor;
 import io.tugrandsolutions.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
@@ -118,11 +120,11 @@ class ProductionReadinessTest {
     WorkflowExecutionPlan plan2 = WorkflowExecutionPlan.from(
         io.tugrandsolutions.flowforge.workflow.graph.WorkflowGraph.build(List.of(dOpt, dDep)));
 
-    StepVerifier.create(new ReactiveWorkflowOrchestrator().execute(plan2, null))
-        .assertNext(ctx -> {
-          FlowKey<String> dependentKey = FlowKey.of(Dependent, String.class);
-          assertEquals("DependentRan", ctx.get(dependentKey).orElse(null));
-        })
+        StepVerifier.create(new ReactiveWorkflowOrchestrator().execute(plan2, null))
+            .assertNext(ctx -> {
+              FlowKey<String> dependentKey = TaskDefinition.of(Dependent, Object.class, String.class).outputKey();
+              assertEquals("DependentRan", ctx.get(dependentKey).orElse(null));
+            })
         .verifyComplete();
   }
 }

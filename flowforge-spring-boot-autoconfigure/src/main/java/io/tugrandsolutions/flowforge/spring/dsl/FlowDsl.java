@@ -34,41 +34,32 @@ public interface FlowDsl {
 
     /**
      * Starts a workflow definition using a fully-typed {@link TaskDefinition},
-     * returning both a builder and a typed node for the starting task's output.
+     * returning a builder tracking the output type for seamless chaining.
      *
      * <p>Example:
      * <pre>{@code
-     * TypedFlowStart<UserProfile> start = dsl.startTyped(fetchUser());
-     * TypedTaskNode<EnrichedUser> enriched = start.builder().then(enrichUser(), start.node());
-     * WorkflowExecutionPlan plan = start.builder().build();
+     * WorkflowExecutionPlan plan = dsl.startTyped(fetchUser())
+     *     .then(enrichUser())
+     *     .build();
      * }</pre>
      *
      * @param task the task definition for the starting task
      * @param <I>  the input type of the starting task
      * @param <O>  the output type of the starting task
-     * @return a {@link TypedFlowStart} containing the builder and the typed node
+     * @return a {@link TypedFlowBuilder} tracking the output type {@code O}
      */
-    default <I, O> TypedFlowStart<O> startTyped(TaskDefinition<I, O> task) {
+    default <I, O> TypedFlowBuilder<O> startTyped(TaskDefinition<I, O> task) {
         java.util.Objects.requireNonNull(task, "task");
         FlowBuilder builder = start(task.idValue());
         TypedTaskNode<O> node = new TypedTaskNode<>(task.toRef());
-        return new TypedFlowStart<>(builder, node);
+        return new TypedFlowBuilder<>(builder, node);
     }
 
     /**
-     * The result of starting a workflow with a typed {@link TaskDefinition}.
-     * Bundles the {@link FlowBuilder} for continued chaining with the
-     * {@link TypedTaskNode} representing the starting task's output.
-     *
-     * @param <O> the output type of the starting task
+     * @deprecated Use {@link #startTyped(TaskDefinition)} which returns {@link TypedFlowBuilder}.
      */
+    @Deprecated(since = "0.4.0", forRemoval = true)
     record TypedFlowStart<O>(FlowBuilder builder, TypedTaskNode<O> node) {
-        /**
-         * Creates a typed flow start.
-         *
-         * @param builder the flow builder; must not be null
-         * @param node    the typed node; must not be null
-         */
         public TypedFlowStart {
             java.util.Objects.requireNonNull(builder, "builder");
             java.util.Objects.requireNonNull(node, "node");

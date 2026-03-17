@@ -7,7 +7,7 @@ import io.tugrandsolutions.flowforge.spring.annotations.FlowTask;
 import io.tugrandsolutions.flowforge.spring.annotations.FlowWorkflow;
 import io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.tugrandsolutions.flowforge.task.TaskDefinition;
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+import io.tugrandsolutions.flowforge.task.FlowKey;
 import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;
@@ -70,9 +70,9 @@ class DSLTypedPropagationTest {
                     StepVerifier.create(client.execute("typed-pipeline", null))
                             .assertNext(execCtx -> {
                                 // Access via FlowKey derived from TaskDefinition
-                                FlowKey<Integer> producerKey = producer().toKey();
-                                FlowKey<String> transformerKey = transformer().toKey();
-                                FlowKey<String> formatterKey = formatter().toKey();
+                                FlowKey<Integer> producerKey = producer().outputKey();
+                                FlowKey<String> transformerKey = transformer().outputKey();
+                                FlowKey<String> formatterKey = formatter().outputKey();
 
                                 assertEquals(42, execCtx.get(producerKey).orElse(null));
                                 assertEquals("val=42", execCtx.get(transformerKey).orElse(null));
@@ -103,14 +103,14 @@ class DSLTypedPropagationTest {
 
                     FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-                    FlowDsl.TypedFlowStart<Integer> start = dsl.startTyped(producer());
+                    TypedFlowBuilder<Integer> start = dsl.startTyped(producer());
 
                     // Deliberately bypass generics with raw types to test runtime validation
                     TaskDefinition rawIncompatible = incompatible(); // Boolean input expected
                     TypedTaskNode rawNode = start.node();            // Integer output
 
                     assertThrows(IllegalArgumentException.class, () ->
-                            start.builder().then(rawIncompatible, rawNode)
+                            start.untyped().then(rawIncompatible, rawNode)
                     );
                 });
     }
@@ -133,7 +133,7 @@ class DSLTypedPropagationTest {
                             .assertNext(execCtx -> {
                                 // Simulate what a user would do: use the node reference they got from DSL
                                 TypedTaskNode<Integer> producerNode = new TypedTaskNode<>(producer().toRef());
-                                FlowKey<Integer> key = producerNode.toKey();
+                                FlowKey<Integer> key = producerNode.outputKey();
 
                                 Integer result = execCtx.get(key).orElse(null);
                                 assertEquals(42, result);
@@ -157,8 +157,8 @@ class DSLTypedPropagationTest {
 
                     StepVerifier.create(client.execute("mixed-pipeline", null))
                             .assertNext(execCtx -> {
-                                assertEquals(42, execCtx.get(producer().toKey()).orElse(null));
-                                assertEquals("val=42", execCtx.get(transformer().toKey()).orElse(null));
+                                assertEquals(42, execCtx.get(producer().outputKey()).orElse(null));
+                                assertEquals("val=42", execCtx.get(transformer().outputKey()).orElse(null));
                             })
                             .verifyComplete();
                 });
@@ -169,7 +169,8 @@ class DSLTypedPropagationTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void startTyped_should_return_typed_flow_start() {
+    @SuppressWarnings("deprecation")
+    void startTyped_should_return_typed_flow_builder() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, TypedPipelineConfig.class)
                 .run(ctx -> {
@@ -177,12 +178,16 @@ class DSLTypedPropagationTest {
 
                     FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-                    FlowDsl.TypedFlowStart<Integer> start = dsl.startTyped(producer());
+                    TypedFlowBuilder<Integer> start = dsl.startTyped(producer());
 
-                    assertNotNull(start.builder(), "Builder must not be null");
+                    assertNotNull(start.untyped(), "Builder must not be null");
                     assertNotNull(start.node(), "Node must not be null");
                     assertEquals("Producer", start.node().ref().idValue());
                     assertEquals(Integer.class, start.node().ref().outputType());
+                    
+                    // Verify legacy still works for now
+                    FlowDsl.TypedFlowStart<Integer> legacy = new FlowDsl.TypedFlowStart<>(start.untyped(), start.node());
+                    assertNotNull(legacy);
                 });
     }
 
@@ -203,10 +208,10 @@ class DSLTypedPropagationTest {
         @Bean
         @FlowWorkflow(id = "typed-pipeline")
         WorkflowExecutionPlan typedPipeline(FlowDsl dsl) {
-            FlowDsl.TypedFlowStart<Integer> start = dsl.startTyped(producer());
-            TypedTaskNode<String> transformed = start.builder().then(transformer(), start.node());
-            start.builder().then(formatter(), transformed);
-            return start.builder().build();
+            return dsl.startTyped(producer())
+                    .then(transformer())
+                    .then(formatter())
+                    .build();
         }
     }
 
@@ -230,9 +235,10 @@ class DSLTypedPropagationTest {
         @FlowWorkflow(id = "mixed-pipeline")
         WorkflowExecutionPlan mixedPipeline(FlowDsl dsl) {
             // Start typed, then chain with string
-            FlowDsl.TypedFlowStart<Integer> start = dsl.startTyped(producer());
-            start.builder().then("Transformer");
-            return start.builder().build();
+            return dsl.startTyped(producer())
+                    .untyped()
+                    .then("Transformer")
+                    .build();
         }
     }
 

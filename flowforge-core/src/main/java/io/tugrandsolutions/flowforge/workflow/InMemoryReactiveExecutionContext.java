@@ -21,8 +21,13 @@ public class InMemoryReactiveExecutionContext
     @SuppressWarnings("unchecked")
     public <T> Optional<T> get(TaskId taskId, Class<T> type) {
         return Optional.ofNullable(store.get(taskId))
-                .filter(type::isInstance)
+                .filter(v -> v == null || type.isInstance(v))
                 .map(v -> (T) v);
+    }
+
+    @Override
+    public Optional<Object> get(TaskId taskId) {
+        return Optional.ofNullable(store.get(taskId));
     }
 
     @Override

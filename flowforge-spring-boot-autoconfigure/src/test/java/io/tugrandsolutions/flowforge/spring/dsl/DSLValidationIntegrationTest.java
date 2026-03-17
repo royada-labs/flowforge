@@ -73,8 +73,8 @@ class DSLValidationIntegrationTest {
 
                     StepVerifier.create(client.execute("valid-pipeline", null))
                             .assertNext(execCtx -> {
-                                assertEquals(42, execCtx.get(producer().toKey()).orElse(null));
-                                assertEquals("val=42", execCtx.get(transformer().toKey()).orElse(null));
+                                assertEquals(42, execCtx.get(producer().outputKey()).orElse(null));
+                                assertEquals("val=42", execCtx.get(transformer().outputKey()).orElse(null));
                             })
                             .verifyComplete();
                 });
@@ -96,14 +96,14 @@ class DSLValidationIntegrationTest {
 
                     // Use single-param then(TaskDefinition) to bypass local check
                     // and let the global validator find the edge mismatch.
-                    FlowDsl.TypedFlowStart start = dsl.startTyped(producer());
+                    TypedFlowBuilder start = dsl.startTyped(producer());
                     TaskDefinition rawBad = badTransformer();
-                    start.builder().then(rawBad);
+                    start.untyped().then(rawBad);
 
                     // build() should throw FlowValidationException due to TYPE_MISMATCH
                     FlowValidationException ex = assertThrows(
                             FlowValidationException.class,
-                            () -> start.builder().build()
+                            () -> start.build()
                     );
 
                     assertTrue(ex.getMessage().contains("TYPE_MISMATCH"),
@@ -148,7 +148,7 @@ class DSLValidationIntegrationTest {
                     StepVerifier.create(client.execute("legacy-pipeline", null))
                             .assertNext(execCtx -> {
                                 assertEquals(42,
-                                        execCtx.get(producer().toKey()).orElse(null));
+                                        execCtx.get(producer().outputKey()).orElse(null));
                             })
                             .verifyComplete();
                 });
@@ -168,12 +168,12 @@ class DSLValidationIntegrationTest {
 
                     FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-                    FlowDsl.TypedFlowStart start = dsl.startTyped(producer());
+                    TypedFlowBuilder start = dsl.startTyped(producer());
                     TaskDefinition rawBad = badTransformer();
-                    start.builder().then(rawBad);
+                    start.untyped().then(rawBad);
 
                     try {
-                        start.builder().build();
+                        start.build();
                         fail("Should throw FlowValidationException");
                     } catch (FlowValidationException ex) {
                         String msg = ex.getMessage();
@@ -202,9 +202,9 @@ class DSLValidationIntegrationTest {
         @Bean
         @FlowWorkflow(id = "valid-pipeline")
         WorkflowExecutionPlan validPipeline(FlowDsl dsl) {
-            FlowDsl.TypedFlowStart<Integer> start = dsl.startTyped(producer());
-            start.builder().then(transformer(), start.node());
-            return start.builder().build();
+            return dsl.startTyped(producer())
+                    .then(transformer())
+                    .build();
         }
     }
 
@@ -220,8 +220,7 @@ class DSLValidationIntegrationTest {
         @Bean
         @FlowWorkflow(id = "missing-input")
         WorkflowExecutionPlan missingInputPipeline(FlowDsl dsl) {
-            FlowDsl.TypedFlowStart<String> start = dsl.startTyped(needsInput());
-            return start.builder().build();
+            return dsl.startTyped(needsInput()).build();
         }
     }
 

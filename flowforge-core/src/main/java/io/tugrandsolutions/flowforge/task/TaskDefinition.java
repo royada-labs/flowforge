@@ -1,6 +1,6 @@
 package io.tugrandsolutions.flowforge.task;
 
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+
 
 import java.util.Objects;
 
@@ -122,13 +122,21 @@ public final class TaskDefinition<I, O> {
     }
 
     /**
-     * Derives a {@link FlowKey} for accessing this task's output from a
+     * Derives a {@link FlowKey} for accessing this task's output from an
      * {@link io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext}.
      *
      * @return a new {@code FlowKey<O>} for this task's id and output type
      */
-    public FlowKey<O> toKey() {
+    public FlowKey<O> outputKey() {
         return FlowKey.of(id, outputType);
+    }
+
+    /**
+     * @deprecated Use {@link #outputKey()} instead.
+     */
+    @Deprecated(since = "0.4.0", forRemoval = true)
+    public FlowKey<O> toKey() {
+        return outputKey();
     }
 
     @Override

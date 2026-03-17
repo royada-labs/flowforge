@@ -1,23 +1,15 @@
-package io.tugrandsolutions.flowforge.workflow;
-
-import io.tugrandsolutions.flowforge.task.TaskId;
+package io.tugrandsolutions.flowforge.task;
 
 import java.util.Objects;
 
 /**
- * A type-safe key for reading values from a {@link ReactiveExecutionContext}.
+ * A type-safe key for reading values from an execution context.
  *
  * <p>A {@code FlowKey<T>} binds a task identifier to the expected output type
  * {@code T}, enabling compile-time type safety when accessing workflow results.
  *
- * <p>Example usage:
- * <pre>{@code
- * FlowKey<UserProfile> USER = FlowKey.of("fetchUser", UserProfile.class);
- *
- * // Inside a task or service:
- * ctx.put(USER, profile);
- * UserProfile p = ctx.get(USER);
- * }</pre>
+ * <p>Creation is restricted to the system (e.g., via {@code TaskDefinition.outputKey()})
+ * to ensure consistency between declarations and keys.
  *
  * <p>This class is immutable and safe for use as a static constant.
  *
@@ -28,22 +20,18 @@ public final class FlowKey<T> {
     private final TaskId taskId;
     private final Class<T> type;
 
-    private FlowKey(TaskId taskId, Class<T> type) {
+    /**
+     * Package-private constructor to prevent manual instantiation.
+     */
+    FlowKey(TaskId taskId, Class<T> type) {
         this.taskId = Objects.requireNonNull(taskId, "taskId");
         this.type = Objects.requireNonNull(type, "type");
     }
 
     /**
-     * Creates a {@code FlowKey} for the given task id and value type.
-     *
-     * @param id   the task identifier string; must not be null or blank
-     * @param type the expected output type of the task; must not be null
-     * @param <T>  the value type
-     * @return a new {@code FlowKey} instance
-     * @throws NullPointerException     if {@code id} or {@code type} is null
-     * @throws IllegalArgumentException if {@code id} is blank
+     * Package-private factory method.
      */
-    public static <T> FlowKey<T> of(String id, Class<T> type) {
+    static <T> FlowKey<T> of(String id, Class<T> type) {
         Objects.requireNonNull(id, "id");
         if (id.isBlank()) {
             throw new IllegalArgumentException("FlowKey id must not be blank");
@@ -52,14 +40,9 @@ public final class FlowKey<T> {
     }
 
     /**
-     * Creates a {@code FlowKey} from an existing {@link TaskId}.
-     *
-     * @param taskId the task identifier; must not be null
-     * @param type   the expected output type; must not be null
-     * @param <T>    the value type
-     * @return a new {@code FlowKey} instance
+     * Package-private factory method.
      */
-    public static <T> FlowKey<T> of(TaskId taskId, Class<T> type) {
+    static <T> FlowKey<T> of(TaskId taskId, Class<T> type) {
         return new FlowKey<>(taskId, type);
     }
 

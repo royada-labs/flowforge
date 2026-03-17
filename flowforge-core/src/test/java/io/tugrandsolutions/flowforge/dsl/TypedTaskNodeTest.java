@@ -2,7 +2,7 @@ package io.tugrandsolutions.flowforge.dsl;
 
 
 import io.tugrandsolutions.flowforge.task.TaskRef;
-import io.tugrandsolutions.flowforge.workflow.FlowKey;
+import io.tugrandsolutions.flowforge.task.FlowKey;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
