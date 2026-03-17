@@ -44,7 +44,7 @@ public final class WorkflowExecutionPlan {
         return graph.nodes();
     }
 
-    public Map<String, TypeMetadata> typeMetadata() {
+    public Map<TaskId, TypeMetadata> typeMetadata() {
         return graph.typeMetadata();
     }
 }

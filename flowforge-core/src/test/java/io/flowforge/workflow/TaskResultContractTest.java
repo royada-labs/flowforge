@@ -24,9 +24,10 @@ class TaskResultContractTest {
   @Test
   void should_convert_empty_task_result_to_failure_and_finish() {
     // Task returns Mono.empty()
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.empty(); // Violates contract
@@ -48,9 +49,10 @@ class TaskResultContractTest {
   @Test
   void should_convert_sync_throw_to_failure_and_finish() {
     // Task throws exception synchronously before returning Mono
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         throw new RuntimeException("Sync exception");
@@ -68,18 +70,20 @@ class TaskResultContractTest {
   @Test
   void should_not_execute_dependents_if_required_task_returns_empty() {
     // A (required, returns empty) -> B
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
     AtomicInteger bCounter = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, Object>(A) {
+        new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.empty();
           }
         },
-        new BasicTask<Object, Object>(B) {
+        new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A);
@@ -105,12 +109,13 @@ class TaskResultContractTest {
   @Test
   void should_allow_dependents_if_optional_task_returns_empty() {
     // A (optional, returns empty) -> B
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
     AtomicInteger bCounter = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, Object>(A) {
+        new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
           @Override
           public boolean optional() {
             return true;
@@ -121,7 +126,8 @@ class TaskResultContractTest {
             return Mono.empty();
           }
         },
-        new BasicTask<Object, Object>(B) {
+        new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A);
@@ -149,18 +155,20 @@ class TaskResultContractTest {
   @Test
   void should_handle_sync_exception_in_required_task() {
     // A (required, sync throw) -> B
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
     AtomicInteger bCounter = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, Object>(A) {
+        new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             throw new IllegalStateException("Boom");
           }
         },
-        new BasicTask<Object, Object>(B) {
+        new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A);
@@ -186,12 +194,13 @@ class TaskResultContractTest {
   @Test
   void should_handle_sync_exception_in_optional_task() {
     // A (optional, sync throw) -> B
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
     AtomicInteger bCounter = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, Object>(A) {
+        new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
           @Override
           public boolean optional() {
             return true;
@@ -202,7 +211,8 @@ class TaskResultContractTest {
             throw new IllegalStateException("Boom");
           }
         },
-        new BasicTask<Object, Object>(B) {
+        new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A);

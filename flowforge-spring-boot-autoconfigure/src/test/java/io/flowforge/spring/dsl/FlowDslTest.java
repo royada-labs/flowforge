@@ -4,11 +4,13 @@ import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.spring.registry.TaskProvider;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
+import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,10 +26,11 @@ class FlowDslTest {
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
         WorkflowExecutionPlan plan = dsl
-                .start("A")
-                .then("B")
-                .then("C")
+                .startTyped(TaskDefinition.of("A", Void.class, Object.class))
+                .then(TaskDefinition.of("B", Object.class, Object.class))
+                .then(TaskDefinition.of("C", Object.class, Object.class))
                 .build();
+
 
         assertNotNull(plan);
     }
@@ -43,13 +46,15 @@ class FlowDslTest {
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
         WorkflowExecutionPlan plan = dsl
-                .start("A")
+                .startTyped(TaskDefinition.of("A", Void.class, Object.class))
                 .fork(
-                        b -> b.then("B"),
-                        b -> b.then("C")
+                        b -> b.then(TaskDefinition.of("B", Object.class, Object.class)),
+                        b -> b.then(TaskDefinition.of("C", Object.class, Object.class))
                 )
-                .join("D")
+                .join(TaskDefinition.of("D", Object.class, Object.class))
                 .build();
+
+
 
         assertNotNull(plan);
     }
@@ -63,15 +68,18 @@ class FlowDslTest {
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
-                () -> dsl.start("A").then("X").build()
+                () -> dsl.startTyped(TaskDefinition.of("A", Void.class, Object.class))
+                         .then(TaskDefinition.of("X", Object.class, Object.class))
+                         .build()
         );
+
 
         assertTrue(ex.getMessage().contains("Unknown task id: X"));
     }
 
-    private static TaskProvider<Void, Object> provider(String id) {
-        TaskId taskId = new TaskId(id);
-        return new TaskProvider<>() {
+    private static TaskProvider provider(String id) {
+        TaskId taskId = TaskId.of(id);
+        return new TaskProvider() {
             @Override public TaskId id() { return taskId; }
 
             @Override
@@ -82,8 +90,12 @@ class FlowDslTest {
     }
 
     private static Task<Void, Object> task(String id) {
-        return new Task<Void, Object>() {
-            @Override public TaskId id() { return new TaskId(id); }
+        return new Task<>() {
+            @Override public TaskId id() { return TaskId.of(id); }
+            @Override public Set<TaskId> dependencies() { return Set.of(); }
+            @Override public boolean optional() { return false; }
+            @Override public Class<Void> inputType() { return Void.class; }
+            @Override public Class<Object> outputType() { return Object.class; }
             @Override public Mono<Object> execute(Void input, ReactiveExecutionContext ctx) {
                 return Mono.just("ok");
             }

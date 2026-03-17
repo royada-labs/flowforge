@@ -1,5 +1,7 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
+
 import java.util.Collections;
 
 /**
@@ -20,20 +22,16 @@ public final class NoOpExecutionTracer implements ExecutionTracer {
     public void onWorkflowCanceled() {}
 
     @Override
-    public void onTaskStart(String taskId, java.util.Collection<String> dependencyIds) {}
+    public void onTaskStart(TaskId taskId, java.util.Collection<TaskId> dependencyIds) {}
 
     @Override
-    @Deprecated
-    public void onTaskStart(String taskId) {}
+    public void onTaskSuccess(TaskId taskId, Object output) {}
 
     @Override
-    public void onTaskSuccess(String taskId, Object output) {}
+    public void onTaskSkipped(TaskId taskId) {}
 
     @Override
-    public void onTaskSkipped(String taskId) {}
-
-    @Override
-    public void onTaskError(String taskId, Throwable error) {}
+    public void onTaskError(TaskId taskId, Throwable error) {}
 
     @Override
     public ExecutionTrace build() {

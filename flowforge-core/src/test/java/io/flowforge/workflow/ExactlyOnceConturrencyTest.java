@@ -26,10 +26,10 @@ class ExactlyOnceConcurrencyTest {
     void should_execute_each_task_exactly_once_under_parallel_scheduler() {
         var counts = new ConcurrentHashMap<TaskId, AtomicInteger>();
 
-        io.flowforge.task.TaskId A = new TaskId("A");
-        TaskId B = new TaskId("B");
-        TaskId C = new TaskId("C");
-        TaskId D = new TaskId("D");
+        io.flowforge.task.TaskId A = TaskId.of("A");
+        TaskId B = TaskId.of("B");
+        TaskId C = TaskId.of("C");
+        TaskId D = TaskId.of("D");
 
         List<Task<?, ?>> tasks = List.of(
                 new CountingTask(A, Set.of(), counts, 50),
@@ -67,7 +67,8 @@ class ExactlyOnceConcurrencyTest {
                      Set<TaskId> deps,
                      ConcurrentHashMap<TaskId, AtomicInteger> counts,
                      long delayMs) {
-            super(id);
+            super(id, Object.class, Object.class);
+
             this.deps = deps;
             this.counts = counts;
             this.delayMs = delayMs;

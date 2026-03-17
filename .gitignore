@@ -1,5 +1,6 @@
 # Gradle
 .gradle/
+.gradle-local/
 build/
 **/build/
 !**/src/**/build/
@@ -52,3 +53,4 @@ $RECYCLE.BIN/
 
 # Flowforge specific (if any)
 # logs/
+build_output.txt

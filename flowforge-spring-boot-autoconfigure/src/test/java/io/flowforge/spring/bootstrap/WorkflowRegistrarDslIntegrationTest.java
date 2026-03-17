@@ -98,12 +98,13 @@ class WorkflowRegistrarDslIntegrationTest {
         @Bean
         @FlowWorkflow(id = "apiScore")
         WorkflowExecutionPlan apiScoreWorkflow(FlowDsl dsl) {
-            // start/then/build nomenclature
-            return dsl.start("A")
-                    .then("B")
-                    .then("C")
+            // start/then/build nomenclature (now typed)
+            return dsl.startTyped(io.flowforge.task.TaskDefinition.of("A", Void.class, Integer.class))
+                    .then(io.flowforge.task.TaskDefinition.of("B", Integer.class, Integer.class))
+                    .then(io.flowforge.task.TaskDefinition.of("C", Integer.class, String.class))
                     .build();
         }
+
     }
 
     @FlowTask(id = "A")

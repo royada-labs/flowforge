@@ -1,5 +1,6 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
@@ -23,9 +24,9 @@ import java.util.Collection;
 public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
 
     private final Tracer tracer;
-    private final Map<String, TypeMetadata> typeInfo;
-    private final Map<String, Span> activeSpans = new ConcurrentHashMap<>();
-    private final Map<String, SpanContext> completedContexts = new ConcurrentHashMap<>();
+    private final Map<TaskId, TypeMetadata> typeInfo;
+    private final Map<TaskId, Span> activeSpans = new ConcurrentHashMap<>();
+    private final Map<TaskId, SpanContext> completedContexts = new ConcurrentHashMap<>();
     private String workflowId;
     private Span workflowSpan;
     private String traceId = "";
@@ -33,7 +34,7 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     private static final int MAX_ATTRIBUTE_LENGTH = 128;
     private static final int MAX_ATTR_COUNT = 32;
 
-    public OpenTelemetryExecutionTracer(Tracer tracer, Map<String, TypeMetadata> typeInfo) {
+    public OpenTelemetryExecutionTracer(Tracer tracer, Map<TaskId, TypeMetadata> typeInfo) {
         this.tracer = tracer;
         this.typeInfo = Map.copyOf(typeInfo != null ? typeInfo : Collections.emptyMap());
     }
@@ -85,20 +86,20 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    public void onTaskStart(String taskId, Collection<String> dependencyIds) {
+    public void onTaskStart(TaskId taskId, Collection<TaskId> dependencyIds) {
         if (workflowSpan == null) return;
 
         Context parentContext = Context.current().with(workflowSpan);
 
-        io.opentelemetry.api.trace.SpanBuilder spanBuilder = tracer.spanBuilder("flowforge.task.execute")
+        io.opentelemetry.api.trace.SpanBuilder spanBuilder = tracer.spanBuilder("flowforge.task." + safeValue(taskId.getValue()))
                 .setParent(parentContext)
-                .setAttribute("flowforge.task.id", safeValue(taskId))
+                .setAttribute("flowforge.task.id", safeValue(taskId.getValue()))
                 .setAttribute("flowforge.workflow.id", safeValue(workflowId))
                 .setAttribute("flowforge.system", "flowforge");
 
         // Add links to dependencies for complex DAG visualization
         if (dependencyIds != null) {
-            for (String depId : dependencyIds) {
+            for (TaskId depId : dependencyIds) {
                 SpanContext depCtx = completedContexts.get(depId);
                 if (depCtx != null && depCtx.isValid()) {
                     spanBuilder.addLink(depCtx);
@@ -120,13 +121,7 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    @Deprecated
-    public void onTaskStart(String taskId) {
-        onTaskStart(taskId, Collections.emptyList());
-    }
-
-    @Override
-    public void onTaskSuccess(String taskId, Object output) {
+    public void onTaskSuccess(TaskId taskId, Object output) {
         Span span = activeSpans.remove(taskId);
         if (span != null) {
             if (span.isRecording()) {
@@ -139,7 +134,7 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    public void onTaskSkipped(String taskId) {
+    public void onTaskSkipped(TaskId taskId) {
         Span span = activeSpans.remove(taskId);
         if (span != null) {
             if (span.isRecording()) {
@@ -151,7 +146,7 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    public void onTaskError(String taskId, Throwable error) {
+    public void onTaskError(TaskId taskId, Throwable error) {
         Span span = activeSpans.remove(taskId);
         if (span != null) {
             if (span.isRecording()) {

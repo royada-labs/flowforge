@@ -60,13 +60,13 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
             TaskId taskId = TaskId.of(annotation.id());
             Supplier<Object> beanSupplier = () -> beanFactory.getBean(beanName);
 
-            registry.register(new TaskProvider<>() {
+            registry.register(new TaskProvider() {
                 @Override public TaskId id() { return taskId; }
 
                 @Override
-                public Task<Object, Object> get() {
+                public Task<?, ?> get() {
                     Object bean = beanSupplier.get();
-                    return (Task<Object, Object>) adapterFactory.adapt(bean, annotation);
+                    return adapterFactory.adapt(bean, annotation);
                 }
             });
         }

@@ -1,5 +1,6 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
 import io.flowforge.validation.TypeMetadata;
 import org.junit.jupiter.api.Test;
 
@@ -36,13 +37,13 @@ class ExecutionTraceTest {
 
     @Test
     void tracer_should_capture_events_and_build_trace() {
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, Integer.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, Integer.class)
         );
         DefaultExecutionTracer tracer = new DefaultExecutionTracer(types);
 
-        tracer.onTaskStart("A");
-        tracer.onTaskSuccess("A", 123);
+        tracer.onTaskStart(TaskId.of("A"), java.util.List.of());
+        tracer.onTaskSuccess(TaskId.of("A"), 123);
 
         ExecutionTrace trace = tracer.build();
         assertEquals(1, trace.tasks().size());

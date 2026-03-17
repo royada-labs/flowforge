@@ -76,7 +76,7 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
 
         submit(() -> {
             String msg = String.format("Task started: workflowId=%s instance=%s taskId=%s at=%d",
-                    instance.workflowId(), iKey, taskId, now);
+                    instance.workflowId(), iKey, taskId.getValue(), now);
             log(msg);
         });
     }
@@ -111,11 +111,11 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
             String msg;
             if (error == null) {
                 msg = String.format("Task finished: workflowId=%s instance=%s taskId=%s outcome=%s durationMs=%d",
-                        instance.workflowId(), iKey, taskId, outcome, durationMs);
+                        instance.workflowId(), iKey, taskId.getValue(), outcome, durationMs);
             } else {
                 msg = String.format(
                         "Task finished: workflowId=%s instance=%s taskId=%s outcome=%s durationMs=%d error=%s",
-                        instance.workflowId(), iKey, taskId, outcome, durationMs, error.toString());
+                        instance.workflowId(), iKey, taskId.getValue(), outcome, durationMs, error.toString());
             }
 
             if (error != null) {

@@ -52,6 +52,10 @@ subprojects {
         useJUnitPlatform()
     }
 
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs += ['-Xlint:unchecked']
+    }
+
     tasks.withType(Jar).configureEach {
         from(rootProject.file("LICENSE")) {
             into("META-INF")

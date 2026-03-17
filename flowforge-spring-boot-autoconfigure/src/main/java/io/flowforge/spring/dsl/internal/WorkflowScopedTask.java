@@ -32,7 +32,18 @@ final class WorkflowScopedTask<I, O> implements Task<I, O> {
     }
 
     @Override
+    public Class<I> inputType() {
+        return delegate.inputType();
+    }
+
+    @Override
+    public Class<O> outputType() {
+        return delegate.outputType();
+    }
+
+    @Override
     public boolean optional() {
+
         return delegate.optional();
     }
 

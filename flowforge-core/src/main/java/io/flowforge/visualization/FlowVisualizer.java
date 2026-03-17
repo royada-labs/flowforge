@@ -1,5 +1,6 @@
 package io.flowforge.visualization;
 
+import io.flowforge.task.TaskId;
 import io.flowforge.validation.FlowValidationResult;
 import io.flowforge.validation.TypeMetadata;
 import io.flowforge.workflow.graph.TaskNode;
@@ -43,7 +44,7 @@ public final class FlowVisualizer {
     public static FlowVisualization visualize(
             WorkflowExecutionPlan plan,
             FlowValidationResult validation,
-            Map<String, TypeMetadata> typeInfo
+            Map<TaskId, TypeMetadata> typeInfo
     ) {
         Objects.requireNonNull(plan, "plan");
         Objects.requireNonNull(validation, "validation");
@@ -59,7 +60,7 @@ public final class FlowVisualizer {
 
         for (TaskNode node : sortedNodes) {
             String id = node.id().getValue();
-            TypeMetadata types = typeInfo.get(id);
+            TypeMetadata types = typeInfo.get(node.id());
 
             nodes.add(new VisualNode(
                     id,

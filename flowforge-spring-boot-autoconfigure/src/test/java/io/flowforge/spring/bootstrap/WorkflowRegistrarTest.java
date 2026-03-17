@@ -58,23 +58,24 @@ class WorkflowRegistrarTest {
         }
     }
 
-    static final class TaskA implements io.flowforge.task.Task<Void, Integer> {
-        @Override public io.flowforge.task.TaskId id() {
-            return new io.flowforge.task.TaskId("A");
+    static final class TaskA extends io.flowforge.task.BasicTask<Void, Integer> {
+        TaskA() {
+            super(io.flowforge.task.TaskId.of("A"), Void.class, Integer.class);
         }
-        @Override public reactor.core.publisher.Mono<Integer> execute(Void input, ReactiveExecutionContext ctx) {
+        @Override protected reactor.core.publisher.Mono<Integer> doExecute(Void input, ReactiveExecutionContext ctx) {
             return reactor.core.publisher.Mono.just(1);
         }
     }
 
-    static final class TaskB implements io.flowforge.task.Task<Integer, Integer> {
-        @Override public io.flowforge.task.TaskId id() {
-            return new io.flowforge.task.TaskId("B");
+
+    static final class TaskB extends io.flowforge.task.BasicTask<Integer, Integer> {
+        TaskB() {
+            super(io.flowforge.task.TaskId.of("B"), Integer.class, Integer.class);
         }
         @Override public java.util.Set<io.flowforge.task.TaskId> dependencies() {
-            return java.util.Set.of(new io.flowforge.task.TaskId("A"));
+            return java.util.Set.of(io.flowforge.task.TaskId.of("A"));
         }
-        @Override public reactor.core.publisher.Mono<Integer> execute(Integer input, ReactiveExecutionContext ctx) {
+        @Override protected reactor.core.publisher.Mono<Integer> doExecute(Integer input, ReactiveExecutionContext ctx) {
             return reactor.core.publisher.Mono.just((input == null ? 0 : input) + 1);
         }
     }

@@ -2,7 +2,6 @@ package io.flowforge.spring.dsl;
 
 import io.flowforge.api.FlowForgeClient;
 import io.flowforge.api.FlowTaskHandler;
-import io.flowforge.dsl.TypedTaskNode;
 import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.annotations.FlowWorkflow;
 import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
@@ -27,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * <ul>
  *   <li>TaskDefinition-based DSL produces correct workflows</li>
  *   <li>Type mismatches are caught fail-fast at definition time</li>
- *   <li>TypedTaskNode → FlowKey → context retrieval works end-to-end</li>
- *   <li>Typed DSL coexists with string-based DSL</li>
+ *   <li>TaskDefinition.outputKey() retrieves context values end-to-end</li>
+ *   <li>Typed DSL no longer relies on legacy string-based methods</li>
  * </ul>
  */
 class DSLTypedPropagationTest {
@@ -89,13 +88,6 @@ class DSLTypedPropagationTest {
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     void typed_dsl_should_reject_incompatible_input_type_at_runtime() {
-        // NOTE: The primary type-safety mechanism is compile-time generics.
-        // The compiler ALREADY prevents calling then(incompatible(), start.node())
-        // because TypedTaskNode<Integer> cannot match TypedTaskNode<Boolean>.
-        //
-        // This test validates the RUNTIME fail-fast path that catches mismatches
-        // when the API is used via raw types, reflection, or dynamically constructed
-        // definitions.
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, TypedPipelineConfig.class)
                 .run(ctx -> {
@@ -107,21 +99,21 @@ class DSLTypedPropagationTest {
 
                     // Deliberately bypass generics with raw types to test runtime validation
                     TaskDefinition rawIncompatible = incompatible(); // Boolean input expected
-                    TypedTaskNode rawNode = start.node();            // Integer output
 
                     assertThrows(IllegalArgumentException.class, () ->
-                            start.untyped().then(rawIncompatible, rawNode)
+                            ((TypedFlowBuilder) start).then(rawIncompatible)
                     );
                 });
     }
 
 
+
     // -----------------------------------------------------------------------
-    // Test 3: TypedTaskNode → FlowKey → ctx.get() end-to-end
+    // Test 3: TaskDefinition.outputKey() → ctx.get() end-to-end
     // -----------------------------------------------------------------------
 
     @Test
-    void typed_task_node_toKey_should_retrieve_context_value() {
+    void output_key_should_retrieve_context_value() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, ContextIntegrationConfig.class)
                 .run(ctx -> {
@@ -131,9 +123,7 @@ class DSLTypedPropagationTest {
 
                     StepVerifier.create(client.execute("context-test", null))
                             .assertNext(execCtx -> {
-                                // Simulate what a user would do: use the node reference they got from DSL
-                                TypedTaskNode<Integer> producerNode = new TypedTaskNode<>(producer().toRef());
-                                FlowKey<Integer> key = producerNode.outputKey();
+                                FlowKey<Integer> key = producer().outputKey();
 
                                 Integer result = execCtx.get(key).orElse(null);
                                 assertEquals(42, result);
@@ -142,35 +132,14 @@ class DSLTypedPropagationTest {
                 });
     }
 
-    // -----------------------------------------------------------------------
-    // Test 4: Mixed typed and string DSL in the same workflow
-    // -----------------------------------------------------------------------
 
-    @Test
-    void mixed_typed_and_string_dsl_should_coexist() {
-        new ApplicationContextRunner()
-                .withUserConfiguration(ImportAutoConfig.class, MixedDslConfig.class)
-                .run(ctx -> {
-                    assertNull(ctx.getStartupFailure());
-
-                    FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
-
-                    StepVerifier.create(client.execute("mixed-pipeline", null))
-                            .assertNext(execCtx -> {
-                                assertEquals(42, execCtx.get(producer().outputKey()).orElse(null));
-                                assertEquals("val=42", execCtx.get(transformer().outputKey()).orElse(null));
-                            })
-                            .verifyComplete();
-                });
-    }
 
     // -----------------------------------------------------------------------
-    // Test 5: startTyped returns both builder and typed node
+    // Test 5: startTyped() returns a typed builder
     // -----------------------------------------------------------------------
 
     @Test
-    @SuppressWarnings("deprecation")
-    void startTyped_should_return_typed_flow_builder() {
+    void start_typed_should_return_typed_flow_builder() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, TypedPipelineConfig.class)
                 .run(ctx -> {
@@ -180,16 +149,10 @@ class DSLTypedPropagationTest {
 
                     TypedFlowBuilder<Integer> start = dsl.startTyped(producer());
 
-                    assertNotNull(start.untyped(), "Builder must not be null");
-                    assertNotNull(start.node(), "Node must not be null");
-                    assertEquals("Producer", start.node().ref().idValue());
-                    assertEquals(Integer.class, start.node().ref().outputType());
-                    
-                    // Verify legacy still works for now
-                    FlowDsl.TypedFlowStart<Integer> legacy = new FlowDsl.TypedFlowStart<>(start.untyped(), start.node());
-                    assertNotNull(legacy);
+                    assertNotNull(start, "Builder must not be null");
                 });
     }
+
 
     // -----------------------------------------------------------------------
     // Configurations
@@ -213,6 +176,7 @@ class DSLTypedPropagationTest {
                     .then(formatter())
                     .build();
         }
+
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -222,25 +186,12 @@ class DSLTypedPropagationTest {
         @Bean
         @FlowWorkflow(id = "context-test")
         WorkflowExecutionPlan contextTest(FlowDsl dsl) {
-            return dsl.start("Producer").build();
+            return dsl.startTyped(producer()).build();
         }
+
     }
 
-    @Configuration(proxyBeanMethods = false)
-    static class MixedDslConfig {
-        @Bean ProducerTask producerTask() { return new ProducerTask(); }
-        @Bean TransformerTask transformerTask() { return new TransformerTask(); }
 
-        @Bean
-        @FlowWorkflow(id = "mixed-pipeline")
-        WorkflowExecutionPlan mixedPipeline(FlowDsl dsl) {
-            // Start typed, then chain with string
-            return dsl.startTyped(producer())
-                    .untyped()
-                    .then("Transformer")
-                    .build();
-        }
-    }
 
     // -----------------------------------------------------------------------
     // Task implementations

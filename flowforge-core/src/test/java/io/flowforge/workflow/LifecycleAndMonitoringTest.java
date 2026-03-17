@@ -27,11 +27,12 @@ class LifecycleAndMonitoringTest {
   @Test
   void cancellation_should_stop_execution() {
     // 5.2 Cancellation
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
     AtomicBoolean aRan = new AtomicBoolean(false);
     AtomicBoolean aCancelled = new AtomicBoolean(false);
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.delay(Duration.ofMillis(500))
@@ -65,10 +66,11 @@ class LifecycleAndMonitoringTest {
   @Test
   void monitor_events_should_be_ordered() {
     // 6.1 Event ordering
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
     RecordingMonitor monitor = new RecordingMonitor();
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.just("ok");

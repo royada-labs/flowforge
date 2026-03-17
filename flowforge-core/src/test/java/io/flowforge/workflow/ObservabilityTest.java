@@ -31,20 +31,22 @@ class ObservabilityTest {
   @Test
   void monitor_should_receive_one_terminal_event_per_task() {
     // DAG with success, skipped, and failure
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B"); // optional, will fail
-    TaskId C = new TaskId("C"); // depends on B, should run
-    TaskId D = new TaskId("D"); // required, will fail
-    TaskId E = new TaskId("E"); // depends on D, should not run
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B"); // optional, will fail
+    TaskId C = TaskId.of("C"); // depends on B, should run
+    TaskId D = TaskId.of("D"); // required, will fail
+    TaskId E = TaskId.of("E"); // depends on D, should not run
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, Object>(A) {
+        new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.just("A");
           }
         },
-        new BasicTask<Object, Object>(B) {
+        new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
           @Override
           public boolean optional() {
             return true;
@@ -55,7 +57,8 @@ class ObservabilityTest {
             return Mono.error(new RuntimeException("B fails"));
           }
         },
-        new BasicTask<Object, Object>(C) {
+        new BasicTask<Object, Object>(C, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(B);
@@ -66,13 +69,15 @@ class ObservabilityTest {
             return Mono.just("C");
           }
         },
-        new BasicTask<Object, Object>(D) {
+        new BasicTask<Object, Object>(D, Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.error(new RuntimeException("D fails"));
           }
         },
-        new BasicTask<Object, Object>(E) {
+        new BasicTask<Object, Object>(E, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(D);
@@ -140,10 +145,11 @@ class ObservabilityTest {
 
   @Test
   void monitor_should_capture_durations_non_negative() {
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
     AtomicReference<Duration> capturedDuration = new AtomicReference<>();
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.delay(Duration.ofMillis(50)).thenReturn("A");
@@ -178,19 +184,21 @@ class ObservabilityTest {
 
   @Test
   void report_should_reflect_final_statuses_and_counts() {
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B"); // optional, fails
-    TaskId C = new TaskId("C"); // depends on B
-    TaskId D = new TaskId("D"); // fails
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B"); // optional, fails
+    TaskId C = TaskId.of("C"); // depends on B
+    TaskId D = TaskId.of("D"); // fails
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, Object>(A) {
+        new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.just("A");
           }
         },
-        new BasicTask<Object, Object>(B) {
+        new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
           @Override
           public boolean optional() {
             return true;
@@ -201,7 +209,8 @@ class ObservabilityTest {
             return Mono.error(new RuntimeException("B fails"));
           }
         },
-        new BasicTask<Object, Object>(C) {
+        new BasicTask<Object, Object>(C, Object.class, Object.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(B);
@@ -212,7 +221,8 @@ class ObservabilityTest {
             return Mono.just("C");
           }
         },
-        new BasicTask<Object, Object>(D) {
+        new BasicTask<Object, Object>(D, Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.error(new RuntimeException("D fails"));

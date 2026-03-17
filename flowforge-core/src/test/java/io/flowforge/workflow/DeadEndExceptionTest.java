@@ -23,9 +23,9 @@ class DeadEndExceptionTest {
 
   @Test
   void task_failure_should_fail_workflow_not_dead_end() {
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
-    TaskId C = new TaskId("C");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
+    TaskId C = TaskId.of("C");
 
     // A fails
     // B depends on A. A is FAILED, so B is marked FAILED (immediate dependent).
@@ -59,8 +59,9 @@ class DeadEndExceptionTest {
 
   static final class FailingTask extends BasicTask<Object, String> {
     FailingTask(TaskId id) {
-      super(id);
+      super(id, Object.class, String.class);
     }
+
 
     @Override
     protected Mono<String> doExecute(Object input, ReactiveExecutionContext context) {
@@ -72,9 +73,10 @@ class DeadEndExceptionTest {
     private final Set<TaskId> deps;
 
     PendingTask(TaskId id, Set<TaskId> deps) {
-      super(id);
+      super(id, Object.class, String.class);
       this.deps = deps;
     }
+
 
     @Override
     public Set<TaskId> dependencies() {

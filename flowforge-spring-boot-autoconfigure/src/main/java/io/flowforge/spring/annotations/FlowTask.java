@@ -9,4 +9,6 @@ public @interface FlowTask {
     String id();
     boolean optional() default false;
     String[] dependsOn() default {};
+    Class<?> inputType() default Object.class;
+    Class<?> outputType() default Object.class;
 }

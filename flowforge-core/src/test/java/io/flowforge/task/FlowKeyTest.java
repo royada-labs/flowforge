@@ -11,17 +11,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class FlowKeyTest {
 
     @Test
-    void should_create_key_with_string_id_and_type() {
-        FlowKey<String> key = FlowKey.of("myTask", String.class);
+    void should_create_key_from_task_definition() {
+        FlowKey<String> key = TaskDefinition.of("myTask", Void.class, String.class).outputKey();
 
         assertEquals("myTask", key.taskId().getValue());
         assertEquals(String.class, key.type());
     }
 
     @Test
-    void should_create_key_from_task_id() {
+    void should_create_key_with_task_id_and_type() {
         TaskId taskId = TaskId.of("anotherTask");
-        FlowKey<Integer> key = FlowKey.of(taskId, Integer.class);
+        FlowKey<Integer> key = new FlowKey<>(taskId, Integer.class);
 
         assertEquals(taskId, key.taskId());
         assertEquals(Integer.class, key.type());
@@ -29,8 +29,8 @@ class FlowKeyTest {
 
     @Test
     void keys_with_same_id_and_type_should_be_equal() {
-        FlowKey<String> key1 = FlowKey.of("task", String.class);
-        FlowKey<String> key2 = FlowKey.of("task", String.class);
+        FlowKey<String> key1 = TaskDefinition.of("task", Void.class, String.class).outputKey();
+        FlowKey<String> key2 = TaskDefinition.of("task", Object.class, String.class).outputKey();
 
         assertEquals(key1, key2);
         assertEquals(key1.hashCode(), key2.hashCode());
@@ -38,23 +38,23 @@ class FlowKeyTest {
 
     @Test
     void keys_with_different_types_should_not_be_equal() {
-        FlowKey<String> keyString = FlowKey.of("task", String.class);
-        FlowKey<Integer> keyInt = FlowKey.of("task", Integer.class);
+        FlowKey<String> keyString = TaskDefinition.of("task", Void.class, String.class).outputKey();
+        FlowKey<Integer> keyInt = TaskDefinition.of("task", Void.class, Integer.class).outputKey();
 
         assertNotEquals(keyString, keyInt);
     }
 
     @Test
     void keys_with_different_ids_should_not_be_equal() {
-        FlowKey<String> key1 = FlowKey.of("task1", String.class);
-        FlowKey<String> key2 = FlowKey.of("task2", String.class);
+        FlowKey<String> key1 = TaskDefinition.of("task1", Void.class, String.class).outputKey();
+        FlowKey<String> key2 = TaskDefinition.of("task2", Void.class, String.class).outputKey();
 
         assertNotEquals(key1, key2);
     }
 
     @Test
     void toString_should_include_id_and_type() {
-        FlowKey<String> key = FlowKey.of("myTask", String.class);
+        FlowKey<String> key = TaskDefinition.of("myTask", Void.class, String.class).outputKey();
         String repr = key.toString();
 
         assertTrue(repr.contains("myTask"), "toString should contain the id");
@@ -62,26 +62,14 @@ class FlowKeyTest {
     }
 
     @Test
-    void should_reject_null_id() {
-        assertThrows(NullPointerException.class,
-                () -> FlowKey.of((String) null, String.class));
-    }
-
-    @Test
-    void should_reject_blank_id() {
-        assertThrows(IllegalArgumentException.class,
-                () -> FlowKey.of("  ", String.class));
-    }
-
-    @Test
     void should_reject_null_type() {
         assertThrows(NullPointerException.class,
-                () -> FlowKey.of("task", null));
+                () -> new FlowKey<>(TaskId.of("task"), null));
     }
 
     @Test
     void key_should_not_equal_null_or_different_type() {
-        FlowKey<String> key = FlowKey.of("task", String.class);
+        FlowKey<String> key = TaskDefinition.of("task", Void.class, String.class).outputKey();
 
         assertNotEquals(null, key);
         assertNotEquals("not a key", key);

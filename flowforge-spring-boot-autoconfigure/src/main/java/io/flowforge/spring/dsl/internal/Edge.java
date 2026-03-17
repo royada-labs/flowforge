@@ -1,8 +1,10 @@
 package io.flowforge.spring.dsl.internal;
 
-public record Edge(String from, String to) {
+import io.flowforge.task.TaskId;
+
+public record Edge(TaskId from, TaskId to) {
     public Edge {
-        if (from == null || from.isBlank()) throw new IllegalArgumentException("from");
-        if (to == null || to.isBlank()) throw new IllegalArgumentException("to");
+        if (from == null) throw new IllegalArgumentException("from");
+        if (to == null) throw new IllegalArgumentException("to");
     }
 }

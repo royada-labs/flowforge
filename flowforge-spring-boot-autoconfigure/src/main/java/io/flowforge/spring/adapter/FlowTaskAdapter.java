@@ -14,19 +14,37 @@ public final class FlowTaskAdapter<I, O> implements Task<I, O> {
     private final TaskId id;
     private final Set<TaskId> dependencies;
     private final boolean optional;
+    private final Class<I> inputType;
+    private final Class<O> outputType;
+
     private final FlowTaskHandler<I, O> handler;
 
     public FlowTaskAdapter(
             TaskId id,
             Set<TaskId> dependencies,
             boolean optional,
+            Class<I> inputType,
+            Class<O> outputType,
             FlowTaskHandler<I, O> handler
     ) {
         this.id = Objects.requireNonNull(id);
         this.dependencies = Set.copyOf(dependencies);
         this.optional = optional;
+        this.inputType = inputType;
+        this.outputType = outputType;
         this.handler = Objects.requireNonNull(handler);
     }
+
+    @Override
+    public Class<I> inputType() {
+        return inputType;
+    }
+
+    @Override
+    public Class<O> outputType() {
+        return outputType;
+    }
+
 
     @Override
     public TaskId id() {

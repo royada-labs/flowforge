@@ -4,11 +4,10 @@ import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.bootstrap.FlowTaskAdapterFactory;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
-import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.function.Supplier;
 
-public final class SpringTaskProvider implements TaskProvider<Object, Object> {
+public final class SpringTaskProvider implements TaskProvider {
 
     private final TaskId id;
     private final Supplier<Object> beanSupplier;
@@ -30,8 +29,8 @@ public final class SpringTaskProvider implements TaskProvider<Object, Object> {
     @Override public TaskId id() { return id; }
 
     @Override
-    public Task<Object, Object> get() {
+    public Task<?, ?> get() {
         Object bean = beanSupplier.get();                 // instancia por ejecución (prototype)
-        return (Task<Object, Object>) adapterFactory.adapt(bean, annotation);
+        return adapterFactory.adapt(bean, annotation);
     }
 }

@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskDescriptor;
+import io.flowforge.task.TaskId;
 import io.flowforge.workflow.graph.WorkflowGraph;
 import io.flowforge.validation.TypeMetadata;
 
@@ -21,7 +22,7 @@ public final class WorkflowPlanBuilder {
         return build(tasks, Collections.emptyMap());
     }
 
-    public static WorkflowExecutionPlan build(Collection<? extends Task<?, ?>> tasks, Map<String, TypeMetadata> typeMetadata) {
+    public static WorkflowExecutionPlan build(Collection<? extends Task<?, ?>> tasks, Map<TaskId, TypeMetadata> typeMetadata) {
         Objects.requireNonNull(tasks, "tasks");
 
         List<TaskDescriptor> descriptors = tasks.stream()

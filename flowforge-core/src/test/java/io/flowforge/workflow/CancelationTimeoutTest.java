@@ -29,11 +29,12 @@ class CancelationTimeoutTest {
 
   @Test
   void should_stop_execution_on_cancellation() {
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
 
     // Task A takes a long time
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.delay(Duration.ofSeconds(5)).thenReturn("A");
@@ -41,7 +42,8 @@ class CancelationTimeoutTest {
     };
 
     // Task B depends on A, should never run
-    Task<?, ?> taskB = new BasicTask<Object, Object>(B) {
+    Task<?, ?> taskB = new BasicTask<Object, Object>(B, Object.class, Object.class) {
+
       @Override
       public java.util.Set<TaskId> dependencies() {
         return java.util.Set.of(A);
@@ -90,9 +92,10 @@ class CancelationTimeoutTest {
 
   @Test
   void should_support_convenience_timeout_overload() {
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.delay(Duration.ofSeconds(5)).thenReturn("A");

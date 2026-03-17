@@ -37,7 +37,8 @@ class LoadAndConcurrencyTest {
     AtomicInteger completedCount = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = IntStream.range(0, taskCount)
-        .mapToObj(i -> new BasicTask<Object, Object>(new TaskId("T" + i)) {
+        .mapToObj(i -> new BasicTask<Object, Object>(TaskId.of("T" + i), Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.delay(Duration.ofMillis(10))
@@ -73,7 +74,8 @@ class LoadAndConcurrencyTest {
     AtomicInteger maxObserved = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = IntStream.range(0, taskCount)
-        .mapToObj(i -> new BasicTask<Object, Object>(new TaskId("T" + i)) {
+        .mapToObj(i -> new BasicTask<Object, Object>(TaskId.of("T" + i), Object.class, Object.class) {
+
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.defer(() -> {

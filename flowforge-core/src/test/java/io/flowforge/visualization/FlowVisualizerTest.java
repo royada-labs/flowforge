@@ -32,9 +32,9 @@ class FlowVisualizerTest {
                 FlowValidationError.warning("UNUSED_OUTPUT", "B", "output not used")
         ));
 
-        Map<String, TypeMetadata> typeInfo = Map.of(
-                "A", new TypeMetadata(Void.class, Integer.class),
-                "B", new TypeMetadata(Integer.class, String.class)
+        Map<TaskId, TypeMetadata> typeInfo = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, Integer.class),
+                TaskId.of("B"), new TypeMetadata(Integer.class, String.class)
         );
 
         FlowVisualization viz = FlowVisualizer.visualize(plan, validation, typeInfo);
@@ -123,8 +123,11 @@ class FlowVisualizerTest {
         @Override public TaskId id() { return TaskId.of(idValue); }
         @Override public Set<TaskId> dependencies() { return deps; }
         @Override public boolean optional() { return false; }
+        @Override public Class<Object> inputType() { return Object.class; }
+        @Override public Class<Object> outputType() { return Object.class; }
         @Override public Mono<Object> execute(Object input, ReactiveExecutionContext context) {
             return Mono.just("stub");
         }
     }
+
 }

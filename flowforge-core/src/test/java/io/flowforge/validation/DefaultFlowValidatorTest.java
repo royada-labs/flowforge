@@ -31,10 +31,10 @@ class DefaultFlowValidatorTest {
                 stub("C", "B")
         );
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, Integer.class),
-                "B", new TypeMetadata(Integer.class, String.class),
-                "C", new TypeMetadata(String.class, Void.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, Integer.class),
+                TaskId.of("B"), new TypeMetadata(Integer.class, String.class),
+                TaskId.of("C"), new TypeMetadata(String.class, Void.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -67,9 +67,9 @@ class DefaultFlowValidatorTest {
                 stub("B", "A")
         );
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, Integer.class),
-                "B", new TypeMetadata(Boolean.class, String.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, Integer.class),
+                TaskId.of("B"), new TypeMetadata(Boolean.class, String.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -92,9 +92,9 @@ class DefaultFlowValidatorTest {
                 stub("B", "A")
         );
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, ArrayList.class),
-                "B", new TypeMetadata(List.class, Void.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, ArrayList.class),
+                TaskId.of("B"), new TypeMetadata(List.class, Void.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -112,9 +112,9 @@ class DefaultFlowValidatorTest {
                 stub("B", "A")
         );
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Integer.class, String.class),
-                "B", new TypeMetadata(String.class, Void.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Integer.class, String.class),
+                TaskId.of("B"), new TypeMetadata(String.class, Void.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -129,8 +129,8 @@ class DefaultFlowValidatorTest {
     void should_not_flag_root_with_void_input() {
         WorkflowExecutionPlan plan = buildPlan(stub("A"));
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, String.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, String.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -149,9 +149,9 @@ class DefaultFlowValidatorTest {
                 stub("B", "A")
         );
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, Integer.class),
-                "B", new TypeMetadata(Integer.class, String.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, Integer.class),
+                TaskId.of("B"), new TypeMetadata(Integer.class, String.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -169,9 +169,9 @@ class DefaultFlowValidatorTest {
                 stub("B", "A")
         );
 
-        Map<String, TypeMetadata> types = Map.of(
-                "A", new TypeMetadata(Void.class, Integer.class),
-                "B", new TypeMetadata(Integer.class, Void.class)
+        Map<TaskId, TypeMetadata> types = Map.of(
+                TaskId.of("A"), new TypeMetadata(Void.class, Integer.class),
+                TaskId.of("B"), new TypeMetadata(Integer.class, Void.class)
         );
 
         FlowValidationResult result = validator.validate(plan, types);
@@ -291,5 +291,9 @@ class DefaultFlowValidatorTest {
         public Mono<Object> execute(Object input, ReactiveExecutionContext context) {
             return Mono.just("stub");
         }
+
+        @Override public Class<Object> inputType() { return Object.class; }
+        @Override public Class<Object> outputType() { return Object.class; }
     }
+
 }

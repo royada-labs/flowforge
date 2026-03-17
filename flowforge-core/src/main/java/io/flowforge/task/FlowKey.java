@@ -20,29 +20,12 @@ public final class FlowKey<T> {
     private final TaskId taskId;
     private final Class<T> type;
 
-    /**
-     * Public constructor for manual instantiation.
-     */
-    public FlowKey(TaskId taskId, Class<T> type) {
+    FlowKey(TaskId taskId, Class<T> type) {
         this.taskId = Objects.requireNonNull(taskId, "taskId");
         this.type = Objects.requireNonNull(type, "type");
     }
 
-    /**
-     * Public factory method.
-     */
-    public static <T> FlowKey<T> of(String id, Class<T> type) {
-        Objects.requireNonNull(id, "id");
-        if (id.isBlank()) {
-            throw new IllegalArgumentException("FlowKey id must not be blank");
-        }
-        return new FlowKey<>(TaskId.of(id), type);
-    }
-
-    /**
-     * Public factory method.
-     */
-    public static <T> FlowKey<T> of(TaskId taskId, Class<T> type) {
+    static <T> FlowKey<T> of(TaskId taskId, Class<T> type) {
         return new FlowKey<>(taskId, type);
     }
 

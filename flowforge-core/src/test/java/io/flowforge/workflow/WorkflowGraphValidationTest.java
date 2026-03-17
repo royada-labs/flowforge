@@ -17,8 +17,8 @@ import reactor.core.publisher.Mono;
 
 class WorkflowGraphValidationTest {
 
-    private static final TaskId A = new TaskId("A");
-    private static final TaskId B = new TaskId("B");
+    private static final TaskId A = TaskId.of("A");
+    private static final TaskId B = TaskId.of("B");
 
     @Test
     void should_fail_when_cycle_exists() {
@@ -35,7 +35,7 @@ class WorkflowGraphValidationTest {
 
     @Test
     void should_fail_when_dependency_is_missing() {
-        TaskId missing = new TaskId("MISSING");
+        TaskId missing = TaskId.of("MISSING");
 
         List<Task<?, ?>> tasks = List.of(
                 new TaskWithMissingDependency(missing));
@@ -52,7 +52,7 @@ class WorkflowGraphValidationTest {
     static final class TaskA_DependsOnB extends BasicTask<Object, String> {
 
         TaskA_DependsOnB() {
-            super(A);
+            super(A, Object.class, String.class);
         }
 
         @Override
@@ -69,7 +69,7 @@ class WorkflowGraphValidationTest {
     static final class TaskB_DependsOnA extends BasicTask<Object, String> {
 
         TaskB_DependsOnA() {
-            super(B);
+            super(B, Object.class, String.class);
         }
 
         @Override
@@ -88,7 +88,7 @@ class WorkflowGraphValidationTest {
         private final TaskId missing;
 
         TaskWithMissingDependency(TaskId missing) {
-            super(new TaskId("X"));
+            super(TaskId.of("X"), Object.class, String.class);
             this.missing = missing;
         }
 

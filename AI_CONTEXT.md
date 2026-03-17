@@ -89,6 +89,8 @@ public class UserOnboardingWorkflow {
 
     public static TaskDefinition<String, UserProfile> FETCH = TaskDefinition.of("fetchUserData", String.class, UserProfile.class);
     public static TaskDefinition<UserProfile, UserProfile> VALIDATE = TaskDefinition.of("validateUser", UserProfile.class, UserProfile.class);
+    public static TaskDefinition<UserProfile, Void> SEND_WELCOME = TaskDefinition.of("sendWelcomeEmail", UserProfile.class, Void.class);
+    public static TaskDefinition<UserProfile, Void> PROVISION = TaskDefinition.of("provisionResources", UserProfile.class, Void.class);
 
     @FlowWorkflow(id = "onboarding")
     @Bean
@@ -96,8 +98,8 @@ public class UserOnboardingWorkflow {
         return dsl.startTyped(FETCH)
                   .then(VALIDATE)
                   .fork(
-                      b -> b.then("sendWelcomeEmail"),
-                      b -> b.then("provisionResources")
+                      b -> b.then(SEND_WELCOME),
+                      b -> b.then(PROVISION)
                   )
                   .build();
     }
@@ -158,7 +160,7 @@ FlowForge can be used without Spring by manually creating tasks and the orchestr
 ```java
 // 1. Define Tasks
 class MyTask extends BasicTask<String, Integer> {
-    public MyTask() { super(new TaskId("myTask")); }
+    public MyTask() { super(TaskId.of("myTask"), String.class, Integer.class); }
     
     @Override
     protected Mono<Integer> doExecute(String input, ReactiveExecutionContext ctx) {
@@ -202,4 +204,3 @@ FlowForge is licensed under the **Apache License 2.0**.
 *   The `build.gradle` file is configured to include license metadata in Maven POMs.
 
 This context is sufficient to understand the library's scope, implementation details, and compliance requirements.
-

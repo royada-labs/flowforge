@@ -25,9 +25,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Validates that:
  * <ul>
  *   <li>Valid typed workflows pass validation and execute correctly</li>
- *   <li>Type mismatches are caught as FlowValidationException at build() time</li>
+ *   <li>Type mismatches are caught fail-fast at DSL definition time</li>
  *   <li>Missing input is detected for root tasks</li>
- *   <li>Legacy string-based workflows still work (backward compatibility)</li>
  * </ul>
  */
 class DSLValidationIntegrationTest {
@@ -81,12 +80,12 @@ class DSLValidationIntegrationTest {
     }
 
     // -----------------------------------------------------------------------
-    // Test 2: Type mismatch detected at build() → FlowValidationException
+    // Test 2: Type mismatch detected immediately during .then(...)
     // -----------------------------------------------------------------------
 
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
-    void type_mismatch_should_throw_validation_exception_at_build() {
+    void type_mismatch_should_throw_illegal_argument_exception() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, ValidPipelineConfig.class, BadTransformerTaskConfig.class)
                 .run(ctx -> {
@@ -94,20 +93,14 @@ class DSLValidationIntegrationTest {
 
                     FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-                    // Use single-param then(TaskDefinition) to bypass local check
-                    // and let the global validator find the edge mismatch.
                     TypedFlowBuilder start = dsl.startTyped(producer());
                     TaskDefinition rawBad = badTransformer();
-                    start.untyped().then(rawBad);
 
-                    // build() should throw FlowValidationException due to TYPE_MISMATCH
-                    FlowValidationException ex = assertThrows(
-                            FlowValidationException.class,
-                            () -> start.build()
+                    IllegalArgumentException ex = assertThrows(
+                            IllegalArgumentException.class,
+                            () -> start.then(rawBad)
                     );
 
-                    assertTrue(ex.getMessage().contains("TYPE_MISMATCH"),
-                            "Should contain TYPE_MISMATCH: " + ex.getMessage());
                     assertTrue(ex.getMessage().contains("BadTransformer"),
                             "Should mention the problematic task: " + ex.getMessage());
                 });
@@ -133,28 +126,6 @@ class DSLValidationIntegrationTest {
     }
 
     // -----------------------------------------------------------------------
-    // Test 4: Legacy string-based workflow passes (backward compat)
-    // -----------------------------------------------------------------------
-
-    @Test
-    void legacy_string_workflow_should_pass_validation() {
-        new ApplicationContextRunner()
-                .withUserConfiguration(ImportAutoConfig.class, LegacyConfig.class)
-                .run(ctx -> {
-                    assertNull(ctx.getStartupFailure(), "Legacy workflow should pass validation");
-
-                    FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
-
-                    StepVerifier.create(client.execute("legacy-pipeline", null))
-                            .assertNext(execCtx -> {
-                                assertEquals(42,
-                                        execCtx.get(producer().outputKey()).orElse(null));
-                            })
-                            .verifyComplete();
-                });
-    }
-
-    // -----------------------------------------------------------------------
     // Test 5: Validation exception has well-formatted message
     // -----------------------------------------------------------------------
 
@@ -168,17 +139,13 @@ class DSLValidationIntegrationTest {
 
                     FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-                    TypedFlowBuilder start = dsl.startTyped(producer());
-                    TaskDefinition rawBad = badTransformer();
-                    start.untyped().then(rawBad);
-
                     try {
-                        start.build();
+                        dsl.startTyped(needsInput()).build();
                         fail("Should throw FlowValidationException");
                     } catch (FlowValidationException ex) {
                         String msg = ex.getMessage();
                         // Verify compiler-style formatting
-                        assertTrue(msg.contains("[TYPE_MISMATCH]"), "Format: " + msg);
+                        assertTrue(msg.contains("[MISSING_INPUT]"), "Format: " + msg);
                         assertTrue(msg.contains("error(s)"), "Format: " + msg);
                         assertNotNull(ex.result());
                         assertFalse(ex.result().isValid());
@@ -198,6 +165,7 @@ class DSLValidationIntegrationTest {
     static class ValidPipelineConfig {
         @Bean ProducerTask producerTask() { return new ProducerTask(); }
         @Bean TransformerTask transformerTask() { return new TransformerTask(); }
+        @Bean NeedsInputTask needsInputTask() { return new NeedsInputTask(); }
 
         @Bean
         @FlowWorkflow(id = "valid-pipeline")
@@ -221,18 +189,6 @@ class DSLValidationIntegrationTest {
         @FlowWorkflow(id = "missing-input")
         WorkflowExecutionPlan missingInputPipeline(FlowDsl dsl) {
             return dsl.startTyped(needsInput()).build();
-        }
-    }
-
-    @Configuration(proxyBeanMethods = false)
-    static class LegacyConfig {
-        @Bean ProducerTask legacyProducer() { return new ProducerTask(); }
-        @Bean TransformerTask legacyTransformer() { return new TransformerTask(); }
-
-        @Bean
-        @FlowWorkflow(id = "legacy-pipeline")
-        WorkflowExecutionPlan legacyPipeline(FlowDsl dsl) {
-            return dsl.start("Producer").then("Transformer").build();
         }
     }
 

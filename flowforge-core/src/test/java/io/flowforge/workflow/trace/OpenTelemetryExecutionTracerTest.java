@@ -24,13 +24,13 @@ class OpenTelemetryExecutionTracerTest {
         // Given
         OpenTelemetryExecutionTracer tracer = new OpenTelemetryExecutionTracer(
                 otelTesting.getOpenTelemetry().getTracer(getClass().getName()),
-                Map.of("task1", new TypeMetadata(String.class, Integer.class))
+                Map.of(TaskId.of("task1"), new TypeMetadata(String.class, Integer.class))
         );
 
         // When
         tracer.onWorkflowStart("my-workflow", "exec-123");
-        tracer.onTaskStart("task1");
-        tracer.onTaskSuccess("task1", 42);
+        tracer.onTaskStart(TaskId.of("task1"), java.util.List.of());
+        tracer.onTaskSuccess(TaskId.of("task1"), 42);
         tracer.onWorkflowSuccess();
 
         // Then
@@ -42,7 +42,7 @@ class OpenTelemetryExecutionTracerTest {
                 .findFirst().orElseThrow();
         
         SpanData taskSpan = spans.stream()
-                .filter(s -> s.getName().equals("flowforge.task.execute"))
+                .filter(s -> s.getName().equals("flowforge.task.task1"))
                 .findFirst().orElseThrow();
 
         assertThat(workflowSpan.getAttributes().asMap())
@@ -68,8 +68,8 @@ class OpenTelemetryExecutionTracerTest {
 
         // When
         tracer.onWorkflowStart("err-flow", "exec-error");
-        tracer.onTaskStart("task-fail");
-        tracer.onTaskError("task-fail", error);
+        tracer.onTaskStart(TaskId.of("task-fail"), java.util.List.of());
+        tracer.onTaskError(TaskId.of("task-fail"), error);
         tracer.onWorkflowError(error);
 
         // Then
@@ -80,7 +80,7 @@ class OpenTelemetryExecutionTracerTest {
                 .findFirst().orElseThrow();
         
         SpanData taskSpan = spans.stream()
-                .filter(s -> s.getName().equals("flowforge.task.execute"))
+                .filter(s -> s.getName().equals("flowforge.task.task-fail"))
                 .findFirst().orElseThrow();
 
         assertThat(workflowSpan.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);

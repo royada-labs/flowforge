@@ -64,22 +64,14 @@ class TaskDefinitionTest {
     }
 
     @Test
-    void toRef_should_carry_output_type() {
+    void outputKey_should_carry_output_type() {
         TaskDefinition<String, Integer> def = TaskDefinition.of("task", String.class, Integer.class);
-        TaskRef<Integer> ref = def.toRef();
-
-        assertEquals("task", ref.idValue());
-        assertEquals(Integer.class, ref.outputType());
-    }
-
-    @Test
-    void toKey_should_carry_output_type() {
-        TaskDefinition<String, Integer> def = TaskDefinition.of("task", String.class, Integer.class);
-        FlowKey<Integer> key = def.toKey();
+        FlowKey<Integer> key = def.outputKey();
 
         assertEquals("task", key.taskId().getValue());
         assertEquals(Integer.class, key.type());
     }
+
 
     @Test
     void toString_should_include_id_and_types() {

@@ -36,16 +36,16 @@ class TaskScannerTest {
                             ctx.getBean(TaskHandlerRegistry.class);
 
                     io.flowforge.task.Task<?, ?> taskA =
-                            registry.find(new TaskId("A")).orElseThrow().get();
+                            registry.find(TaskId.of("A")).orElseThrow().get();
                     Task<?, ?> taskB =
-                            registry.find(new TaskId("B")).orElseThrow().get();
+                            registry.find(TaskId.of("B")).orElseThrow().get();
 
                     assertFalse(taskA.optional());
                     assertEquals(Set.of(), taskA.dependencies());
 
                     assertTrue(taskB.optional());
                     assertEquals(
-                            Set.of(new TaskId("A")),
+                            Set.of(TaskId.of("A")),
                             taskB.dependencies()
                     );
                 });

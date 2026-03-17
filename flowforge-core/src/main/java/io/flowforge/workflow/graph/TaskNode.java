@@ -56,13 +56,14 @@ public final class TaskNode {
         return dependents.isEmpty();
     }
 
-    @SuppressWarnings("unchecked")
     public Mono<Object> execute(Object input, ReactiveExecutionContext context) {
-        Task<Object, Object> task = (Task<Object, Object>) descriptor.task();
-
-        Mono<Object> raw = task.execute(input, context).cast(Object.class);
-
+        Mono<Object> raw = executeTyped(descriptor.task(), input, context);
         return descriptor.policy().apply(raw);
+    }
+
+    private static <I, O> Mono<Object> executeTyped(Task<I, O> task, Object input, ReactiveExecutionContext context) {
+        I typedInput = input == null ? null : task.inputType().cast(input);
+        return task.execute(typedInput, context).map(result -> (Object) result);
     }
 
     public Mono<TaskResult> executeWithResult(

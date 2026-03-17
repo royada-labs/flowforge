@@ -13,7 +13,7 @@ import io.flowforge.task.BasicTask;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskDescriptor;
 import io.flowforge.task.TaskId;
-import io.flowforge.task.FlowKey;
+import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.instance.WorkflowInstance;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
@@ -31,10 +31,11 @@ class PolicyIntegrationTest {
   @Test
   void should_retry_task_on_failure() {
     // 7.1 Retries
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
     AtomicInteger attempts = new AtomicInteger(0);
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         int count = attempts.incrementAndGet();
@@ -56,7 +57,7 @@ class PolicyIntegrationTest {
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
-          assertEquals("Success", ctx.get(FlowKey.of(A, String.class)).orElse(null));
+          assertEquals("Success", ctx.get(TaskDefinition.of(A, Object.class, String.class).outputKey()).orElse(null));
         })
         .verifyComplete();
 
@@ -65,10 +66,11 @@ class PolicyIntegrationTest {
 
   @Test
   void should_fail_on_timeout_verified_by_monitor() {
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
     AtomicInteger failureCount = new AtomicInteger(0);
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.delay(Duration.ofMillis(500)).thenReturn("Too slow");

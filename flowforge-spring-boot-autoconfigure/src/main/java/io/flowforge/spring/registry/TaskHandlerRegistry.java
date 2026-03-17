@@ -11,20 +11,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class TaskHandlerRegistry {
 
-    private final Map<TaskId, TaskProvider<?, ?>> providers = new ConcurrentHashMap<>();
+    private final Map<TaskId, TaskProvider> providers = new ConcurrentHashMap<>();
 
-    public void register(TaskProvider<?, ?> provider) {
-        TaskProvider<?, ?> previous = providers.putIfAbsent(provider.id(), provider);
+    public void register(TaskProvider provider) {
+        TaskProvider previous = providers.putIfAbsent(provider.id(), provider);
         if (previous != null) {
             throw new IllegalStateException("Duplicate FlowTask id: " + provider.id());
         }
     }
 
-    public Optional<TaskProvider<?, ?>> find(TaskId id) {
+    public Optional<TaskProvider> find(TaskId id) {
         return Optional.ofNullable(providers.get(id));
     }
 
-    public Collection<TaskProvider<?, ?>> snapshot() {
+    public Collection<TaskProvider> snapshot() {
         return Collections.unmodifiableCollection(providers.values());
     }
 

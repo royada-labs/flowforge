@@ -1,6 +1,5 @@
 package io.flowforge.spring.dsl;
 
-import io.flowforge.dsl.TypedTaskNode;
 import io.flowforge.spring.dsl.internal.FlowGraph;
 import io.flowforge.task.TaskDefinition;
 
@@ -11,44 +10,21 @@ import java.util.function.Consumer;
 public final class DefaultFlowBranch implements FlowBranch {
 
     private final FlowGraph branchGraph;
+    private final FlowBuilder rootBuilder;
+    private final FlowBuilder branchBuilder;
 
-    public DefaultFlowBranch(FlowGraph branchGraph) {
+    public DefaultFlowBranch(FlowGraph branchGraph, FlowBuilder builder) {
         this.branchGraph = Objects.requireNonNull(branchGraph, "branchGraph");
+        this.rootBuilder = Objects.requireNonNull(builder, "builder");
+        this.branchBuilder = new BranchFlowBuilder();
     }
 
-    @Override
-    public FlowBranch then(String taskId) {
-        branchGraph.then(taskId);
-        return this;
-    }
 
     @Override
-    public <I, O> TypedTaskNode<O> then(TaskDefinition<I, O> task) {
+    public <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
-        branchGraph.then(task.idValue());
-        branchGraph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
-        return new TypedTaskNode<>(task.toRef());
-    }
-
-    @Override
-    public <I, O> TypedTaskNode<O> then(TaskDefinition<I, O> task, TypedTaskNode<I> input) {
-        Objects.requireNonNull(task, "task");
-        Objects.requireNonNull(input, "input");
-
-        Class<?> expectedInput = task.inputType();
-        Class<?> providedOutput = input.ref().outputType();
-        if (!expectedInput.isAssignableFrom(providedOutput)) {
-            throw new IllegalArgumentException(
-                    "Type mismatch: task '" + task.idValue()
-                            + "' expects " + expectedInput.getName()
-                            + " but got " + providedOutput.getName()
-                            + " from '" + input.ref().idValue() + "'"
-            );
-        }
-
-        branchGraph.then(task.idValue());
-        branchGraph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
-        return new TypedTaskNode<>(task.toRef());
+        branchGraph.then(task);
+        return new TypedFlowBuilder<>(branchBuilder, task);
     }
 
     @SafeVarargs
@@ -60,10 +36,47 @@ public final class DefaultFlowBranch implements FlowBranch {
         }
 
         var branchConsumers = Arrays.stream(branches)
-                .map(b -> (Consumer<FlowBranch>) Objects.requireNonNull(b, "branch"))
+                .map(b -> Objects.requireNonNull(b, "branch"))
                 .toList();
 
-        branchGraph.fork(branchConsumers);
+        branchGraph.fork(branchConsumers, branchBuilder);
         return this;
+    }
+
+    private final class BranchFlowBuilder implements FlowBuilder {
+        @Override
+        public <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task) {
+            Objects.requireNonNull(task, "task");
+            branchGraph.then(task);
+            return new TypedFlowBuilder<>(this, task);
+        }
+
+        @SafeVarargs
+        @Override
+        public final FlowBuilder fork(Consumer<FlowBranch>... branches) {
+            Objects.requireNonNull(branches, "branches");
+            if (branches.length == 0) {
+                throw new IllegalArgumentException("fork requires at least 1 branch");
+            }
+
+            var branchConsumers = Arrays.stream(branches)
+                    .map(b -> Objects.requireNonNull(b, "branch"))
+                    .toList();
+
+            branchGraph.fork(branchConsumers, this);
+            return this;
+        }
+
+        @Override
+        public <I, O> TypedFlowBuilder<O> join(TaskDefinition<I, O> task) {
+            Objects.requireNonNull(task, "task");
+            branchGraph.join(task);
+            return new TypedFlowBuilder<>(this, task);
+        }
+
+        @Override
+        public io.flowforge.workflow.plan.WorkflowExecutionPlan build() {
+            return rootBuilder.build();
+        }
     }
 }

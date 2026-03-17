@@ -50,13 +50,10 @@ class FlowVisualizationIntegrationTest {
         contextRunner.run(ctx -> {
             FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-            TaskDefinition<Void, Integer> start = TaskDefinition.of("Start", Void.class, Integer.class);
-            // Incompatible type: expects Boolean
-            TaskDefinition<Boolean, String> end = TaskDefinition.of("End", Boolean.class, String.class);
+            // Invalid root: non-Void input at start should trigger MISSING_INPUT validation
+            TaskDefinition<Integer, Integer> start = TaskDefinition.of("Start", Integer.class, Integer.class);
 
             TypedFlowBuilder<Integer> flow = dsl.startTyped(start);
-            // Use single-param then() to bypass local fail-fast and let global validator catch it
-            flow.untyped().then(end);
 
             try {
                 flow.build();
@@ -68,11 +65,11 @@ class FlowVisualizationIntegrationTest {
                 FlowVisualization viz = FlowVisualizer.visualize(plan, result);
 
                 String mermaid = viz.toMermaid();
-                assertTrue(mermaid.contains("class End ff-error"), "End node should be styled as error");
+                assertTrue(mermaid.contains("class Start ff-error"), "Start node should be styled as error");
                 assertTrue(mermaid.contains("classDef ff-error"), "Should include error style definition");
 
                 String json = viz.toJson();
-                assertTrue(json.contains("\"code\": \"TYPE_MISMATCH\""), "JSON should contain the error");
+                assertTrue(json.contains("\"code\": \"MISSING_INPUT\""), "JSON should contain the error");
             }
         });
     }

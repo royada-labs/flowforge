@@ -1,6 +1,5 @@
 package io.flowforge.spring.dsl;
 
-import io.flowforge.dsl.TypedTaskNode;
 import io.flowforge.spring.dsl.internal.FlowGraph;
 import io.flowforge.spring.dsl.internal.FlowPlanMaterializer;
 import io.flowforge.task.TaskDefinition;
@@ -23,57 +22,27 @@ final class DefaultFlowBuilder implements FlowBuilder {
         this.materializer = Objects.requireNonNull(materializer, "materializer");
     }
 
-    @Override
-    public FlowBuilder then(String taskId) {
-        graph.then(taskId);
-        return this;
-    }
 
     // -------------------------------------------------------------------------
     // TaskDefinition overrides — capture type metadata into the graph
     // -------------------------------------------------------------------------
 
     @Override
-    public <I, O> TypedTaskNode<O> then(TaskDefinition<I, O> task) {
+    public <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
-        graph.then(task.idValue());
-        graph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
-        return new TypedTaskNode<>(task.toRef());
+        graph.then(task);
+        return new TypedFlowBuilder<>(this, task);
     }
+
 
     @Override
-    public <I, O> TypedTaskNode<O> then(TaskDefinition<I, O> task, TypedTaskNode<I> input) {
+    public <I, O> TypedFlowBuilder<O> join(TaskDefinition<I, O> task) {
         Objects.requireNonNull(task, "task");
-        Objects.requireNonNull(input, "input");
-
-        // Runtime type validation (fail-fast for raw-type misuse)
-        Class<?> expectedInput = task.inputType();
-        Class<?> providedOutput = input.ref().outputType();
-        if (!expectedInput.isAssignableFrom(providedOutput)) {
-            throw new IllegalArgumentException(
-                    "Type mismatch in workflow definition: task '" + task.idValue()
-                            + "' expects input type " + expectedInput.getName()
-                            + " but received output type " + providedOutput.getName()
-                            + " from task '" + input.ref().idValue() + "'"
-            );
-        }
-
-        graph.then(task.idValue());
-        graph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
-        return new TypedTaskNode<>(task.toRef());
+        graph.join(task);
+        return new TypedFlowBuilder<>(this, task);
     }
 
-    @Override
-    public <I, O> TypedTaskNode<O> join(TaskDefinition<I, O> task) {
-        Objects.requireNonNull(task, "task");
-        graph.join(task.idValue());
-        graph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
-        return new TypedTaskNode<>(task.toRef());
-    }
 
-    // -------------------------------------------------------------------------
-    // Fork / Join (string-based, unchanged)
-    // -------------------------------------------------------------------------
 
     @SafeVarargs
     @Override
@@ -84,18 +53,14 @@ final class DefaultFlowBuilder implements FlowBuilder {
         }
 
         var branchBuilders = Arrays.stream(branches)
-                .map(b -> (Consumer<FlowBranch>) Objects.requireNonNull(b, "branch"))
+                .map(b -> Objects.requireNonNull(b, "branch"))
                 .toList();
 
-        graph.fork(branchBuilders);
+        graph.fork(branchBuilders, this);
         return this;
     }
 
-    @Override
-    public FlowBuilder join(String taskId) {
-        graph.join(taskId);
-        return this;
-    }
+
 
     // -------------------------------------------------------------------------
     // Build with validation

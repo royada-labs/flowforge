@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.flowforge.task.BasicTask;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
-import io.flowforge.task.FlowKey;
+import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
@@ -30,9 +30,9 @@ class SemanticsTest {
     // A (slow) -> C
     // B (fast) -> C
     // C must wait for both
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
-    TaskId C = new TaskId("C");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
+    TaskId C = TaskId.of("C");
 
     List<String> executionLog = new CopyOnWriteArrayList<>();
 
@@ -68,8 +68,8 @@ class SemanticsTest {
   @Test
   void multiple_roots_should_execute() {
     // 1.2 Multi-root
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
 
     List<String> executionLog = new CopyOnWriteArrayList<>();
 
@@ -92,17 +92,18 @@ class SemanticsTest {
   @Test
   void type_mismatch_should_fail_gracefully() {
     // 2.3 Type safety
-    TaskId A = new TaskId("A"); // produces String "10"
-    TaskId B = new TaskId("B"); // expects Integer
+    TaskId A = TaskId.of("A"); // produces String "10"
+    TaskId B = TaskId.of("B"); // expects Integer
 
     List<Task<?, ?>> tasks = List.of(
-        new BasicTask<Object, String>(A) {
+        new BasicTask<Object, String>(A, Object.class, String.class) {
           @Override
           protected Mono<String> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.just("10");
           }
         },
-        new BasicTask<Integer, String>(B) {
+        new BasicTask<Integer, String>(B, Integer.class, String.class) {
+
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A);
@@ -128,19 +129,20 @@ class SemanticsTest {
     // A (required) -> C
     // B (optional, fails) -> C
     // C should run
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
-    TaskId C = new TaskId("C");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
+    TaskId C = TaskId.of("C");
 
     List<Task<?, ?>> tasks = List.of(
         new RunnableTask(A, Set.of(), () -> {
         }),
         new FailingTask(B, Set.of(), true), // optional failure
-        new BasicTask<Object, String>(C) {
+        new BasicTask<Object, String>(C, Object.class, String.class) {
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A, B);
           }
+
 
           @Override
           protected Mono<String> doExecute(Object input, ReactiveExecutionContext context) {
@@ -153,7 +155,7 @@ class SemanticsTest {
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
-          assertEquals("C executed", ctx.get(FlowKey.of(C, String.class)).orElse(null));
+          assertEquals("C executed", ctx.get(TaskDefinition.of(C, Object.class, String.class).outputKey()).orElse(null));
         })
         .verifyComplete();
   }
@@ -164,19 +166,20 @@ class SemanticsTest {
     // A (required, fails) -> C
     // B (optional) -> C
     // C should NOT run
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
-    TaskId C = new TaskId("C");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
+    TaskId C = TaskId.of("C");
 
     List<Task<?, ?>> tasks = List.of(
         new FailingTask(A, Set.of(), false), // required failure
         new RunnableTask(B, Set.of(), () -> {
         }),
-        new BasicTask<Object, String>(C) {
+        new BasicTask<Object, String>(C, Object.class, String.class) {
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A, B);
           }
+
 
           @Override
           protected Mono<String> doExecute(Object input, ReactiveExecutionContext context) {
@@ -199,10 +202,11 @@ class SemanticsTest {
     private final Runnable action;
 
     RunnableTask(TaskId id, Set<TaskId> deps, Runnable action) {
-      super(id);
+      super(id, Object.class, Object.class);
       this.deps = deps;
       this.action = action;
     }
+
 
     @Override
     public Set<TaskId> dependencies() {
@@ -220,10 +224,11 @@ class SemanticsTest {
     private final boolean optional;
 
     FailingTask(TaskId id, Set<TaskId> deps, boolean optional) {
-      super(id);
+      super(id, Object.class, Object.class);
       this.deps = deps;
       this.optional = optional;
     }
+
 
     @Override
     public Set<TaskId> dependencies() {

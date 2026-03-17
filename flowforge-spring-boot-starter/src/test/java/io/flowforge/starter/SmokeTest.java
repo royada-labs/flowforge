@@ -49,7 +49,7 @@ class SmokeTest {
     @Bean
     @FlowWorkflow(id = "smokeWorkflow")
     WorkflowExecutionPlan smokeWorkflow(FlowDsl dsl) {
-      return dsl.start("smokeTask").build();
+      return dsl.startTyped(io.flowforge.task.TaskDefinition.of("smokeTask", Void.class, Object.class)).build();
     }
   }
 }

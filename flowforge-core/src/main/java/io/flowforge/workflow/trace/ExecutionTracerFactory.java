@@ -1,5 +1,6 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
 import io.flowforge.validation.TypeMetadata;
 import java.util.Map;
 
@@ -15,5 +16,5 @@ public interface ExecutionTracerFactory {
      * @param typeMetadata type information collected from the DSL
      * @return a new tracer
      */
-    ExecutionTracer create(Map<String, TypeMetadata> typeMetadata);
+    ExecutionTracer create(Map<TaskId, TypeMetadata> typeMetadata);
 }

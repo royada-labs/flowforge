@@ -8,7 +8,10 @@ import io.flowforge.api.FlowTaskHandler;
 import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.flowforge.spring.dsl.FlowDsl;
 import io.flowforge.task.TaskId;
+import io.flowforge.task.TaskDefinition;
+import io.flowforge.task.FlowKey;
 import io.flowforge.workflow.ReactiveExecutionContext;
+
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -54,8 +57,9 @@ public class FlowForgeClientResultIntegrationTest {
               .consumeNextWith(result -> {
                 assertThat(result).isInstanceOf(ReactiveExecutionContext.class);
                 ReactiveExecutionContext ctx = (ReactiveExecutionContext) result;
-                assertThat(ctx.isCompleted(TaskId.of("B"))).isTrue();
-                assertThat(ctx.isCompleted(TaskId.of("C"))).isTrue();
+                assertThat(ctx.isCompleted(TaskDefinition.of("B", Object.class, Object.class).outputKey())).isTrue();
+                assertThat(ctx.isCompleted(TaskDefinition.of("C", Object.class, Object.class).outputKey())).isTrue();
+
               })
               .verifyComplete();
         });
@@ -64,26 +68,32 @@ public class FlowForgeClientResultIntegrationTest {
   @Configuration
   static class TestConfig {
 
+    static final TaskDefinition<Void, Object> TASK_A = TaskDefinition.of("A", Void.class, Object.class);
+    static final TaskDefinition<Object, Object> TASK_B = TaskDefinition.of("B", Object.class, Object.class);
+    static final TaskDefinition<Object, Object> TASK_C = TaskDefinition.of("C", Object.class, Object.class);
+
     @Bean
     @FlowWorkflow(id = "linear")
     public WorkflowExecutionPlan linearPlan(FlowDsl dsl) {
       // A -> B
-      return dsl.start("A")
-          .then("B")
+      return dsl.startTyped(TASK_A)
+          .then(TASK_B)
           .build();
     }
+
 
     @Bean
     @FlowWorkflow(id = "parallel")
     @SuppressWarnings("unchecked")
     public WorkflowExecutionPlan parallelPlan(FlowDsl dsl) {
       // A -> (B, C)
-      return dsl.start("A")
+      return dsl.startTyped(TASK_A)
           .fork(
-              b -> b.then("B"),
-              b -> b.then("C"))
+              b -> b.then(TASK_B),
+              b -> b.then(TASK_C))
           .build();
     }
+
 
     @Bean
     @FlowTask(id = "A")

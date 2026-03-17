@@ -1,5 +1,7 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
+
 /**
  * Interface for tracing task execution in real-time.
  */
@@ -31,23 +33,12 @@ public interface ExecutionTracer {
     void onWorkflowCanceled();
 
     /**
-     * Called when a task starts execution.
-     *
-     * @param taskId the id of the task; must not be null
-     * @deprecated Use {@link #onTaskStart(String, java.util.Collection)} instead.
-     */
-    @Deprecated(since = "0.4.0", forRemoval = false)
-    default void onTaskStart(String taskId) {
-        onTaskStart(taskId, java.util.Collections.emptyList());
-    }
-
-    /**
      * Called when a task starts execution, providing its precursor dependencies.
      *
      * @param taskId        the id of the task; must not be null
      * @param dependencyIds the ids of tasks this task depends on; must not be null
      */
-    void onTaskStart(String taskId, java.util.Collection<String> dependencyIds);
+    void onTaskStart(TaskId taskId, java.util.Collection<TaskId> dependencyIds);
 
     /**
      * Called when a task completes successfully.
@@ -55,14 +46,14 @@ public interface ExecutionTracer {
      * @param taskId the id of the task; must not be null
      * @param output the result of execution; may be null
      */
-    void onTaskSuccess(String taskId, Object output);
+    void onTaskSuccess(TaskId taskId, Object output);
 
     /**
      * Called when a task completion is skipped.
      *
      * @param taskId the id of the task; must not be null
      */
-    void onTaskSkipped(String taskId);
+    void onTaskSkipped(TaskId taskId);
 
     /**
      * Called when a task fails during execution.
@@ -70,7 +61,7 @@ public interface ExecutionTracer {
      * @param taskId the id of the task; must not be null
      * @param error  the exception encountered; must not be null
      */
-    void onTaskError(String taskId, Throwable error);
+    void onTaskError(TaskId taskId, Throwable error);
 
     /**
      * Builds the final immutable trace of the entire execution.

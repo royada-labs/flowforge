@@ -1,5 +1,6 @@
 package io.flowforge.validation;
 
+import io.flowforge.task.TaskId;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
 import java.util.Map;
@@ -29,5 +30,5 @@ public interface FlowValidator {
      * @param typeInfo type metadata keyed by task id; may be empty
      * @return the validation result
      */
-    FlowValidationResult validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo);
+    FlowValidationResult validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo);
 }

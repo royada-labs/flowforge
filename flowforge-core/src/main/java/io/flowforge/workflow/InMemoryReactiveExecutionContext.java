@@ -1,6 +1,8 @@
 package io.flowforge.workflow;
 
 import io.flowforge.task.TaskId;
+import io.flowforge.task.FlowKey;
+import io.flowforge.exception.TypeMismatchException;
 
 import java.util.Optional;
 import java.util.Set;
@@ -13,26 +15,25 @@ public class InMemoryReactiveExecutionContext
     private final ConcurrentMap<TaskId, Object> store = new ConcurrentHashMap<>();
 
     @Override
-    public <T> void put(TaskId taskId, T value) {
-        store.put(taskId, value);
+    public <T> void put(FlowKey<T> key, T value) {
+        store.put(key.taskId(), value);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> Optional<T> get(TaskId taskId, Class<T> type) {
-        return Optional.ofNullable(store.get(taskId))
-                .filter(v -> v == null || type.isInstance(v))
-                .map(v -> (T) v);
+    public <T> Optional<T> get(FlowKey<T> key) {
+        Object val = store.get(key.taskId());
+        if (val == null) {
+            return Optional.empty();
+        }
+        if (!key.type().isInstance(val)) {
+            throw new TypeMismatchException(key.taskId(), key.type(), val.getClass());
+        }
+        return Optional.of(key.type().cast(val));
     }
 
     @Override
-    public Optional<Object> get(TaskId taskId) {
-        return Optional.ofNullable(store.get(taskId));
-    }
-
-    @Override
-    public boolean isCompleted(TaskId taskId) {
-        return store.containsKey(taskId);
+    public boolean isCompleted(FlowKey<?> key) {
+        return store.containsKey(key.taskId());
     }
 
     @Override

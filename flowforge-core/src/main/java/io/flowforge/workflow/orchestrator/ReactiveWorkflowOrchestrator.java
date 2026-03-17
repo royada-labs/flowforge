@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import io.flowforge.task.TaskId;
+import io.flowforge.task.Task;
 import io.flowforge.task.TaskResult;
 import io.flowforge.workflow.InMemoryReactiveExecutionContext;
 import io.flowforge.workflow.ReactiveExecutionContext;
@@ -21,8 +22,15 @@ import io.flowforge.workflow.instance.WorkflowRunMetadata;
 import io.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
-import io.flowforge.workflow.trace.*;
+import io.flowforge.workflow.trace.ExecutionTracer;
+import io.flowforge.workflow.trace.ExecutionTracerFactory;
+import io.flowforge.workflow.trace.NoOpExecutionTracer;
+import io.flowforge.workflow.trace.DefaultExecutionTracer;
+import io.flowforge.workflow.trace.CompositeExecutionTracer;
+import io.flowforge.workflow.trace.ExecutionTrace;
 import io.flowforge.validation.TypeMetadata;
+
+
 import io.flowforge.workflow.report.ExecutionReport;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
@@ -118,7 +126,7 @@ public final class ReactiveWorkflowOrchestrator {
     }
 
     public Mono<ExecutionTrace> executeWithTrace(WorkflowExecutionPlan plan, Object initialInput,
-            java.util.Map<String, TypeMetadata> typeMetadata) {
+            java.util.Map<TaskId, TypeMetadata> typeMetadata) {
         ExecutionTracer internalTracer = new DefaultExecutionTracer(typeMetadata);
         ExecutionTracer configuredTracer = tracerFactory.create(typeMetadata);
         ExecutionTracer composite = new CompositeExecutionTracer(List.of(internalTracer, configuredTracer));
@@ -127,7 +135,6 @@ public final class ReactiveWorkflowOrchestrator {
                 .then(Mono.fromCallable(composite::build));
     }
 
-    @Deprecated
     public Mono<ReactiveExecutionContext> execute(WorkflowExecutionPlan plan, Object initialInput) {
         return execute("UNKNOWN", plan, initialInput);
     }
@@ -199,10 +206,10 @@ public final class ReactiveWorkflowOrchestrator {
                         session.recordTaskStart(node.id());
                         monitor.onTaskStart(session.instance(), node.id());
                         
-                        java.util.List<String> depIds = node.dependencies().stream()
-                                .map(d -> d.id().getValue())
+                        java.util.List<TaskId> depIds = node.dependencies().stream()
+                                .map(TaskNode::id)
                                 .toList();
-                        session.tracer().onTaskStart(node.id().getValue(), depIds);
+                        session.tracer().onTaskStart(node.id(), depIds);
 
                         return Mono.defer(() -> inputResolver.resolveInput(session.instance(), node, initialInput)
                                 .defaultIfEmpty(NULL_SENTINEL)
@@ -287,20 +294,30 @@ public final class ReactiveWorkflowOrchestrator {
         java.time.Duration duration = session.recordTaskCompletion(node.id());
 
         if (result instanceof TaskResult.Success success) {
-            instance.context().put(node.id(), success.output());
+            putTaskOutput(instance.context(), node.descriptor().task(), success.output());
+
             instance.markCompleted(node);
             monitor.onTaskSuccess(instance, node.id(), duration);
-            session.tracer().onTaskSuccess(node.id().getValue(), success.output());
+            session.tracer().onTaskSuccess(node.id(), success.output());
         } else if (result instanceof TaskResult.Skipped) {
             instance.markSkipped(node);
             monitor.onTaskSkipped(instance, node.id(), duration);
-            session.tracer().onTaskSkipped(node.id().getValue());
+            session.tracer().onTaskSkipped(node.id());
         } else if (result instanceof TaskResult.Failure failure) {
             session.recordTaskError(node.id(), failure.error());
             instance.markFailed(node);
             monitor.onTaskFailure(instance, node.id(), failure.error(), duration);
-            session.tracer().onTaskError(node.id().getValue(), failure.error());
+            session.tracer().onTaskError(node.id(), failure.error());
         }
+    }
+
+    private static <O> void putTaskOutput(
+            ReactiveExecutionContext context,
+            Task<?, O> task,
+            Object output
+    ) {
+        O typedOutput = output == null ? null : task.outputType().cast(output);
+        context.put(task.outputKey(), typedOutput);
     }
 
     private ExecutionReport buildExecutionReport(ExecutionSession session) {

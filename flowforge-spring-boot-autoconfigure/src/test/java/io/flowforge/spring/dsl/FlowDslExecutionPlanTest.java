@@ -3,6 +3,7 @@ package io.flowforge.spring.dsl;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.spring.registry.TaskProvider;
 import io.flowforge.task.Task;
+import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.graph.TaskNode;
@@ -27,9 +28,9 @@ class FlowDslExecutionPlanTest {
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
         WorkflowExecutionPlan plan = dsl
-                .start("A")
-                .then("B")
-                .then("C")
+                .startTyped(TaskDefinition.of("A", Void.class, Object.class))
+                .then(TaskDefinition.of("B", Object.class, Object.class))
+                .then(TaskDefinition.of("C", Object.class, Object.class))
                 .build();
 
         assertRootIds(plan, Set.of("A"));
@@ -50,10 +51,10 @@ class FlowDslExecutionPlanTest {
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
         WorkflowExecutionPlan plan = dsl
-                .start("A")
+                .startTyped(TaskDefinition.of("A", Void.class, Object.class))
                 .fork(
-                        b -> b.then("B"),
-                        b -> b.then("C")
+                        b -> b.then(TaskDefinition.of("B", Object.class, Object.class)),
+                        b -> b.then(TaskDefinition.of("C", Object.class, Object.class))
                 )
                 .build();
 
@@ -74,12 +75,12 @@ class FlowDslExecutionPlanTest {
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
         WorkflowExecutionPlan plan = dsl
-                .start("A")
+                .startTyped(TaskDefinition.of("A", Void.class, Object.class))
                 .fork(
-                        b -> b.then("B"),
-                        b -> b.then("C")
+                        b -> b.then(TaskDefinition.of("B", Object.class, Object.class)),
+                        b -> b.then(TaskDefinition.of("C", Object.class, Object.class))
                 )
-                .join("D")
+                .join(TaskDefinition.of("D", Object.class, Object.class))
                 .build();
 
         assertRootIds(plan, Set.of("A"));
@@ -104,12 +105,13 @@ class FlowDslExecutionPlanTest {
         FlowDsl dsl = new DefaultFlowDsl(reg);
 
         WorkflowExecutionPlan plan = dsl
-                .start("A")
+                .startTyped(TaskDefinition.of("A", Void.class, Object.class))
                 .fork(
-                        br -> br.then("B").then("C"),
-                        br -> br.then("D")
+                        br -> br.then(TaskDefinition.of("B", Object.class, Object.class))
+                                .then(TaskDefinition.of("C", Object.class, Object.class)),
+                        br -> br.then(TaskDefinition.of("D", Object.class, Object.class))
                 )
-                .join("E")
+                .join(TaskDefinition.of("E", Object.class, Object.class))
                 .build();
 
         assertRootIds(plan, Set.of("A"));
@@ -129,7 +131,7 @@ class FlowDslExecutionPlanTest {
     /* ========================= */
 
     private static TaskNode node(WorkflowExecutionPlan plan, String id) {
-        return plan.getNode(new TaskId(id))
+        return plan.getNode(TaskId.of(id))
                 .orElseThrow(() -> new AssertionError("Missing node: " + id));
     }
 
@@ -154,9 +156,9 @@ class FlowDslExecutionPlanTest {
         assertEquals(expectedDependents, deps, "dependents mismatch for " + nodeId);
     }
 
-    private static TaskProvider<Object, Object> providerNoop(String id) {
-        TaskId taskId = new TaskId(id);
-        return new TaskProvider<>() {
+    private static TaskProvider providerNoop(String id) {
+        TaskId taskId = TaskId.of(id);
+        return new TaskProvider() {
             @Override public TaskId id() { return taskId; }
 
             @Override
@@ -168,9 +170,11 @@ class FlowDslExecutionPlanTest {
 
     private static Task<Object, Object> noop(String id) {
         return new Task<>() {
-            @Override public TaskId id() { return new TaskId(id); }
+            @Override public TaskId id() { return TaskId.of(id); }
             @Override public Set<TaskId> dependencies() { return Set.of(); }
             @Override public boolean optional() { return false; }
+            @Override public Class<Object> inputType() { return Object.class; }
+            @Override public Class<Object> outputType() { return Object.class; }
             @Override public Mono<Object> execute(Object input, ReactiveExecutionContext ctx) {
                 return Mono.just("ok");
             }

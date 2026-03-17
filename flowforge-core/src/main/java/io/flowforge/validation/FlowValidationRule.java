@@ -1,5 +1,6 @@
 package io.flowforge.validation;
 
+import io.flowforge.task.TaskId;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
 import java.util.List;
@@ -25,5 +26,5 @@ public interface FlowValidationRule {
      *                 may be empty for legacy string-based workflows
      * @return a list of validation errors (empty if the rule passes)
      */
-    List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo);
+    List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo);
 }

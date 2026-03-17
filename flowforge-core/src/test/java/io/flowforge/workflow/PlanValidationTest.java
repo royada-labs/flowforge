@@ -20,10 +20,10 @@ class PlanValidationTest {
   @Test
   void should_fail_fast_on_missing_dependency() {
     // X depends on Y which doesn't exist
-    TaskId X = new TaskId("X");
-    TaskId Y = new TaskId("Y");
+    TaskId X = TaskId.of("X");
+    TaskId Y = TaskId.of("Y");
 
-    Task<?, ?> taskX = new BasicTask<Object, Object>(X) {
+    Task<?, ?> taskX = new BasicTask<Object, Object>(X, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(Y);
@@ -48,10 +48,10 @@ class PlanValidationTest {
   @Test
   void should_fail_fast_on_cycle() {
     // A depends on B, B depends on A
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(B);
@@ -63,7 +63,7 @@ class PlanValidationTest {
       }
     };
 
-    Task<?, ?> taskB = new BasicTask<Object, Object>(B) {
+    Task<?, ?> taskB = new BasicTask<Object, Object>(B, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(A);
@@ -86,16 +86,16 @@ class PlanValidationTest {
   @Test
   void should_fail_fast_on_duplicate_task_id() {
     // Two tasks with same ID
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
 
-    Task<?, ?> task1 = new BasicTask<Object, Object>(A) {
+    Task<?, ?> task1 = new BasicTask<Object, Object>(A, Object.class, Object.class) {
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.just("Task1");
       }
     };
 
-    Task<?, ?> task2 = new BasicTask<Object, Object>(A) {
+    Task<?, ?> task2 = new BasicTask<Object, Object>(A, Object.class, Object.class) {
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.just("Task2");
@@ -129,9 +129,9 @@ class PlanValidationTest {
   @Test
   void should_validate_self_dependency_as_cycle() {
     // Task depends on itself
-    TaskId A = new TaskId("A");
+    TaskId A = TaskId.of("A");
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(A);
@@ -155,11 +155,11 @@ class PlanValidationTest {
   @Test
   void should_validate_complex_cycle() {
     // A -> B -> C -> A (cycle)
-    TaskId A = new TaskId("A");
-    TaskId B = new TaskId("B");
-    TaskId C = new TaskId("C");
+    TaskId A = TaskId.of("A");
+    TaskId B = TaskId.of("B");
+    TaskId C = TaskId.of("C");
 
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(C);
@@ -171,7 +171,7 @@ class PlanValidationTest {
       }
     };
 
-    Task<?, ?> taskB = new BasicTask<Object, Object>(B) {
+    Task<?, ?> taskB = new BasicTask<Object, Object>(B, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(A);
@@ -183,7 +183,7 @@ class PlanValidationTest {
       }
     };
 
-    Task<?, ?> taskC = new BasicTask<Object, Object>(C) {
+    Task<?, ?> taskC = new BasicTask<Object, Object>(C, Object.class, Object.class) {
       @Override
       public Set<TaskId> dependencies() {
         return Set.of(B);

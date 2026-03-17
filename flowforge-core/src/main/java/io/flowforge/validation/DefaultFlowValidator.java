@@ -52,7 +52,7 @@ public final class DefaultFlowValidator implements FlowValidator {
     }
 
     @Override
-    public FlowValidationResult validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo) {
+    public FlowValidationResult validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo) {
         Objects.requireNonNull(plan, "plan");
         Objects.requireNonNull(typeInfo, "typeInfo");
 
@@ -77,7 +77,7 @@ public final class DefaultFlowValidator implements FlowValidator {
      */
     static final class UnreachableNodeRule implements FlowValidationRule {
         @Override
-        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo) {
+        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo) {
             Set<TaskId> reachable = new HashSet<>();
             Deque<TaskNode> queue = new ArrayDeque<>(plan.roots());
 
@@ -115,7 +115,7 @@ public final class DefaultFlowValidator implements FlowValidator {
      */
     static final class TypeCompatibilityRule implements FlowValidationRule {
         @Override
-        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo) {
+        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo) {
             if (typeInfo.isEmpty()) {
                 return List.of();
             }
@@ -123,14 +123,14 @@ public final class DefaultFlowValidator implements FlowValidator {
             List<FlowValidationError> errors = new ArrayList<>();
 
             for (TaskNode node : plan.nodes()) {
-                String nodeId = node.id().getValue();
+                TaskId nodeId = node.id();
                 TypeMetadata nodeType = typeInfo.get(nodeId);
                 if (nodeType == null) {
                     continue; // no type info for this task — skip
                 }
 
                 for (TaskNode dependency : node.dependencies()) {
-                    String depId = dependency.id().getValue();
+                    TaskId depId = dependency.id();
                     TypeMetadata depType = typeInfo.get(depId);
                     if (depType == null) {
                         continue; // upstream has no type info — skip
@@ -139,10 +139,10 @@ public final class DefaultFlowValidator implements FlowValidator {
                     if (!nodeType.inputType().isAssignableFrom(depType.outputType())) {
                         errors.add(FlowValidationError.error(
                                 FlowValidationError.TYPE_MISMATCH,
-                                nodeId,
+                                nodeId.getValue(),
                                 "expected input type " + nodeType.inputType().getSimpleName()
                                         + " but got " + depType.outputType().getSimpleName()
-                                        + " (from '" + depId + "')"
+                                        + " (from '" + depId.getValue() + "')"
                         ));
                     }
                 }
@@ -157,7 +157,7 @@ public final class DefaultFlowValidator implements FlowValidator {
      */
     static final class MissingInputRule implements FlowValidationRule {
         @Override
-        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo) {
+        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo) {
             if (typeInfo.isEmpty()) {
                 return List.of();
             }
@@ -165,7 +165,7 @@ public final class DefaultFlowValidator implements FlowValidator {
             List<FlowValidationError> errors = new ArrayList<>();
 
             for (TaskNode root : plan.roots()) {
-                String rootId = root.id().getValue();
+                TaskId rootId = root.id();
                 TypeMetadata rootType = typeInfo.get(rootId);
                 if (rootType == null) {
                     continue;
@@ -174,7 +174,7 @@ public final class DefaultFlowValidator implements FlowValidator {
                 if (rootType.inputType() != Void.class) {
                     errors.add(FlowValidationError.error(
                             FlowValidationError.MISSING_INPUT,
-                            rootId,
+                            rootId.getValue(),
                             "Root task expects input type " + rootType.inputType().getSimpleName()
                                     + " but has no upstream dependency"
                     ));
@@ -190,7 +190,7 @@ public final class DefaultFlowValidator implements FlowValidator {
      */
     static final class UnusedOutputRule implements FlowValidationRule {
         @Override
-        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<String, TypeMetadata> typeInfo) {
+        public List<FlowValidationError> validate(WorkflowExecutionPlan plan, Map<TaskId, TypeMetadata> typeInfo) {
             if (typeInfo.isEmpty()) {
                 return List.of();
             }
@@ -202,7 +202,7 @@ public final class DefaultFlowValidator implements FlowValidator {
                     continue;
                 }
 
-                String nodeId = node.id().getValue();
+                TaskId nodeId = node.id();
                 TypeMetadata nodeType = typeInfo.get(nodeId);
                 if (nodeType == null) {
                     continue;
@@ -211,7 +211,7 @@ public final class DefaultFlowValidator implements FlowValidator {
                 if (nodeType.outputType() != Void.class) {
                     errors.add(FlowValidationError.warning(
                             FlowValidationError.UNUSED_OUTPUT,
-                            nodeId,
+                            nodeId.getValue(),
                             "Leaf task produces " + nodeType.outputType().getSimpleName()
                                     + " but no downstream task consumes it"
                     ));

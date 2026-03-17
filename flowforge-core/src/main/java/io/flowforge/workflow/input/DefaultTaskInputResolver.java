@@ -25,7 +25,7 @@ public final class DefaultTaskInputResolver implements TaskInputResolver {
         if (node.dependencies().size() == 1) {
             TaskNode dep = node.dependencies().iterator().next();
             return Mono.justOrEmpty(
-                    instance.context().get(dep.id(), Object.class).orElse(null)
+                    instance.context().get(dep.descriptor().task().outputKey()).orElse(null)
             );
         }
 
@@ -33,9 +33,10 @@ public final class DefaultTaskInputResolver implements TaskInputResolver {
         Map<TaskId, Object> inputs = new LinkedHashMap<>();
         for (TaskNode dep : node.dependencies()) {
             Object value =
-                    instance.context().get(dep.id(), Object.class).orElse(null);
+                    instance.context().get(dep.descriptor().task().outputKey()).orElse(null);
             inputs.put(dep.id(), value);
         }
         return Mono.just(inputs);
     }
 }
+

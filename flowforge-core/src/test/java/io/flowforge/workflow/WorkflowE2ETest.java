@@ -22,10 +22,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class WorkflowE2ETest {
 
-    private static final TaskId A = new TaskId("A");
-    private static final TaskId B = new TaskId("B");
-    private static final TaskId C = new TaskId("C");
-    private static final TaskId D = new TaskId("D");
+    private static final TaskId A = TaskId.of("A");
+    private static final TaskId B = TaskId.of("B");
+    private static final TaskId C = TaskId.of("C");
+    private static final TaskId D = TaskId.of("D");
 
     @Test
     void should_execute_dag_and_propagate_outputs_via_context() {
@@ -72,8 +72,9 @@ class WorkflowE2ETest {
     static final class TaskA extends BasicTask<String, Integer> {
 
         TaskA() {
-            super(A);
+            super(A, String.class, Integer.class);
         }
+
 
         @Override
         protected Mono<Integer> doExecute(String input, ReactiveExecutionContext context) {
@@ -84,8 +85,9 @@ class WorkflowE2ETest {
     static final class TaskB extends BasicTask<Integer, Integer> {
 
         TaskB() {
-            super(B);
+            super(B, Integer.class, Integer.class);
         }
+
 
         @Override
         public Set<TaskId> dependencies() {
@@ -101,8 +103,9 @@ class WorkflowE2ETest {
     static final class TaskC extends BasicTask<Integer, String> {
 
         TaskC() {
-            super(C);
+            super(C, Integer.class, String.class);
         }
+
 
         @Override
         public Set<TaskId> dependencies() {
@@ -116,10 +119,15 @@ class WorkflowE2ETest {
     }
 
     static final class TaskD extends BasicTask<Map<TaskId, Object>, String> {
+        @SuppressWarnings("unchecked")
+        private static final Class<Map<TaskId, Object>> MAP_INPUT_TYPE =
+                (Class<Map<TaskId, Object>>) (Class<?>) Map.class;
 
         TaskD() {
-            super(D);
+            super(D, MAP_INPUT_TYPE, String.class);
         }
+
+
 
         @Override
         public Set<TaskId> dependencies() {

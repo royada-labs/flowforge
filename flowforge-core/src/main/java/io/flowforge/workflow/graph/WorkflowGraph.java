@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 public final class WorkflowGraph {
 
     private final Map<TaskId, TaskNode> nodes;
-    private final Map<String, TypeMetadata> typeMetadata;
+    private final Map<TaskId, TypeMetadata> typeMetadata;
 
-    private WorkflowGraph(Map<TaskId, TaskNode> nodes, Map<String, TypeMetadata> typeMetadata) {
+    private WorkflowGraph(Map<TaskId, TaskNode> nodes, Map<TaskId, TypeMetadata> typeMetadata) {
         this.nodes = Map.copyOf(nodes);
         this.typeMetadata = Map.copyOf(typeMetadata != null ? typeMetadata : Collections.emptyMap());
     }
@@ -21,7 +21,7 @@ public final class WorkflowGraph {
         return build(tasks, Collections.emptyMap());
     }
 
-    public static WorkflowGraph build(Collection<TaskDescriptor> tasks, Map<String, TypeMetadata> typeMetadata) {
+    public static WorkflowGraph build(Collection<TaskDescriptor> tasks, Map<TaskId, TypeMetadata> typeMetadata) {
         Objects.requireNonNull(tasks, "tasks");
 
         Map<TaskId, TaskNode> nodeMap = new HashMap<>();
@@ -58,7 +58,7 @@ public final class WorkflowGraph {
         return new WorkflowGraph(nodeMap, typeMetadata);
     }
 
-    public Map<String, TypeMetadata> typeMetadata() {
+    public Map<TaskId, TypeMetadata> typeMetadata() {
         return typeMetadata;
     }
 

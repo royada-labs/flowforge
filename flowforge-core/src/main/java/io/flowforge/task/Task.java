@@ -9,6 +9,10 @@ public interface Task<I, O> {
 
     TaskId id();
 
+    Class<I> inputType();
+
+    Class<O> outputType();
+
     default Set<TaskId> dependencies() {
         return Set.of();
     }
@@ -18,4 +22,9 @@ public interface Task<I, O> {
     }
 
     Mono<O> execute(I input, ReactiveExecutionContext context);
+
+    default FlowKey<O> outputKey() {
+        return new FlowKey<>(id(), outputType());
+    }
 }
+

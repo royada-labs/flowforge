@@ -1,5 +1,6 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
 import io.flowforge.validation.TypeMetadata;
 
 import java.util.*;
@@ -14,13 +15,13 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
 
     private long workflowStartTime;
     private String traceId = "";
-    private final Map<String, TypeMetadata> typeInfo;
+    private final Map<TaskId, TypeMetadata> typeInfo;
     
     // Internal mutable state for tasks in flight
-    private final Map<String, TaskStartInfo> taskStarts = new ConcurrentHashMap<>();
+    private final Map<TaskId, TaskStartInfo> taskStarts = new ConcurrentHashMap<>();
     private final List<TaskExecutionTrace> completedTraces = new CopyOnWriteArrayList<>();
 
-    public DefaultExecutionTracer(Map<String, TypeMetadata> typeInfo) {
+    public DefaultExecutionTracer(Map<TaskId, TypeMetadata> typeInfo) {
         this.typeInfo = Map.copyOf(typeInfo != null ? typeInfo : Collections.emptyMap());
     }
 
@@ -47,7 +48,7 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    public void onTaskStart(String taskId, Collection<String> dependencyIds) {
+    public void onTaskStart(TaskId taskId, Collection<TaskId> dependencyIds) {
         taskStarts.put(taskId, new TaskStartInfo(
                 System.currentTimeMillis(),
                 Thread.currentThread().getName()
@@ -55,27 +56,21 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    @Deprecated
-    public void onTaskStart(String taskId) {
-        onTaskStart(taskId, Collections.emptyList());
-    }
-
-    @Override
-    public void onTaskSuccess(String taskId, Object output) {
+    public void onTaskSuccess(TaskId taskId, Object output) {
         recordCompletion(taskId, ExecutionStatus.SUCCESS, null);
     }
 
     @Override
-    public void onTaskSkipped(String taskId) {
+    public void onTaskSkipped(TaskId taskId) {
         recordCompletion(taskId, ExecutionStatus.SKIPPED, null);
     }
 
     @Override
-    public void onTaskError(String taskId, Throwable error) {
+    public void onTaskError(TaskId taskId, Throwable error) {
         recordCompletion(taskId, ExecutionStatus.ERROR, error != null ? error.getMessage() : "Unknown error");
     }
 
-    private void recordCompletion(String taskId, ExecutionStatus status, String errorMessage) {
+    private void recordCompletion(TaskId taskId, ExecutionStatus status, String errorMessage) {
         TaskStartInfo startInfo = taskStarts.get(taskId);
         long endTime = System.currentTimeMillis();
         long startTime = startInfo != null ? startInfo.startTime : endTime;
@@ -86,7 +81,7 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
         String outputType = types != null ? types.outputType().getSimpleName() : "Unknown";
 
         completedTraces.add(new TaskExecutionTrace(
-                taskId,
+                taskId.getValue(),
                 status,
                 startTime,
                 endTime,

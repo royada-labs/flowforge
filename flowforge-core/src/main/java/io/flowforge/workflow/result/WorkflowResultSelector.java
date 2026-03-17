@@ -36,9 +36,7 @@ public final class WorkflowResultSelector {
       return ctx;
     }
 
-    TaskId terminalId = terminals.get(0).id();
-
-    // Return the raw output of the single terminal task, or null if not present
-    return ctx.get(terminalId).orElse(null);
+    TaskNode terminal = terminals.get(0);
+    return ctx.get(terminal.descriptor().task().outputKey()).orElse(null);
   }
 }

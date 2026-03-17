@@ -70,10 +70,14 @@ class FlowForgeClientIntegrationTest {
             }
         }
 
+        static final io.flowforge.task.TaskDefinition<Void, Object> TASK_A = io.flowforge.task.TaskDefinition.of("A", Void.class, Object.class);
+        static final io.flowforge.task.TaskDefinition<Object, Object> TASK_B = io.flowforge.task.TaskDefinition.of("B", Object.class, Object.class);
+
         @org.springframework.context.annotation.Bean
         @FlowWorkflow(id = "apiScore")
         public WorkflowExecutionPlan apiScoreWorkflow(FlowDsl dsl) {
-            return dsl.start("A").then("B").build();
+            return dsl.startTyped(TASK_A).then(TASK_B).build();
         }
+
     }
 }

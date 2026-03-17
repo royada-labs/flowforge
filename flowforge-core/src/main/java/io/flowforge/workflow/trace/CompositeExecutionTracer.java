@@ -1,5 +1,7 @@
 package io.flowforge.workflow.trace;
 
+import io.flowforge.task.TaskId;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -44,36 +46,28 @@ public final class CompositeExecutionTracer implements ExecutionTracer {
     }
 
     @Override
-    public void onTaskStart(String taskId, java.util.Collection<String> dependencyIds) {
+    public void onTaskStart(TaskId taskId, java.util.Collection<TaskId> dependencyIds) {
         for (ExecutionTracer tracer : tracers) {
             tracer.onTaskStart(taskId, dependencyIds);
         }
     }
 
     @Override
-    @Deprecated
-    public void onTaskStart(String taskId) {
-        for (ExecutionTracer tracer : tracers) {
-            tracer.onTaskStart(taskId);
-        }
-    }
-
-    @Override
-    public void onTaskSuccess(String taskId, Object output) {
+    public void onTaskSuccess(TaskId taskId, Object output) {
         for (ExecutionTracer tracer : tracers) {
             tracer.onTaskSuccess(taskId, output);
         }
     }
 
     @Override
-    public void onTaskSkipped(String taskId) {
+    public void onTaskSkipped(TaskId taskId) {
         for (ExecutionTracer tracer : tracers) {
             tracer.onTaskSkipped(taskId);
         }
     }
 
     @Override
-    public void onTaskError(String taskId, Throwable error) {
+    public void onTaskError(TaskId taskId, Throwable error) {
         for (ExecutionTracer tracer : tracers) {
             tracer.onTaskError(taskId, error);
         }

@@ -29,8 +29,9 @@ class ProductionReadinessTest {
 
   @Test
   void point_A_verify_report_available_before_completion() {
-    TaskId A = new TaskId("A");
-    Task<?, ?> taskA = new BasicTask<Object, Object>(A) {
+    TaskId A = TaskId.of("A");
+    Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.just("A");
@@ -66,21 +67,23 @@ class ProductionReadinessTest {
     // 1. Required task times out -> Workflow fails
     // 2. Optional task times out -> Workflow continues
 
-    TaskId RequiredSlow = new TaskId("RequiredSlow");
-    TaskId OptionalSlow = new TaskId("OptionalSlow");
-    TaskId Dependent = new TaskId("Dependent"); // Depends on OptionalSlow
+    TaskId RequiredSlow = TaskId.of("RequiredSlow");
+    TaskId OptionalSlow = TaskId.of("OptionalSlow");
+    TaskId Dependent = TaskId.of("Dependent"); // Depends on OptionalSlow
 
     // Timeout of 50ms
     TimeoutPolicy fastTimeout = TimeoutPolicy.of(Duration.ofMillis(50));
 
-    Task<?, ?> tReqSlow = new BasicTask<Object, Object>(RequiredSlow) {
+    Task<?, ?> tReqSlow = new BasicTask<Object, Object>(RequiredSlow, Object.class, Object.class) {
+
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
         return Mono.delay(Duration.ofMillis(200)).thenReturn("Slow");
       }
     };
 
-    Task<?, ?> tOptSlow = new BasicTask<Object, Object>(OptionalSlow) {
+    Task<?, ?> tOptSlow = new BasicTask<Object, Object>(OptionalSlow, Object.class, Object.class) {
+
       @Override
       public boolean optional() {
         return true;
@@ -92,7 +95,8 @@ class ProductionReadinessTest {
       }
     };
 
-    Task<?, ?> tDependent = new BasicTask<Object, Object>(Dependent) {
+    Task<?, ?> tDependent = new BasicTask<Object, Object>(Dependent, Object.class, Object.class) {
+
       @Override
       public java.util.Set<TaskId> dependencies() {
         return java.util.Set.of(OptionalSlow);

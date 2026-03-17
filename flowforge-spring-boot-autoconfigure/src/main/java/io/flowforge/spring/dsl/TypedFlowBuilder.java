@@ -1,6 +1,5 @@
 package io.flowforge.spring.dsl;
 
-import io.flowforge.dsl.TypedTaskNode;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
@@ -24,11 +23,11 @@ import java.util.function.Consumer;
 public final class TypedFlowBuilder<O> {
 
     private final FlowBuilder builder;
-    private final TypedTaskNode<O> node;
+    private final TaskDefinition<?, O> tailTask;
 
-    TypedFlowBuilder(FlowBuilder builder, TypedTaskNode<O> node) {
+    TypedFlowBuilder(FlowBuilder builder, TaskDefinition<?, O> tailTask) {
         this.builder = Objects.requireNonNull(builder, "builder");
-        this.node = Objects.requireNonNull(node, "node");
+        this.tailTask = Objects.requireNonNull(tailTask, "tailTask");
     }
 
     /**
@@ -39,9 +38,34 @@ public final class TypedFlowBuilder<O> {
      * @return a new {@code TypedFlowBuilder} for the next output type
      */
     public <NextO> TypedFlowBuilder<NextO> then(TaskDefinition<O, NextO> nextTask) {
-        TypedTaskNode<NextO> nextNode = builder.then(nextTask, node);
-        return new TypedFlowBuilder<>(builder, nextNode);
+        Objects.requireNonNull(nextTask, "nextTask");
+
+        Class<?> expectedInput = nextTask.inputType();
+        Class<?> providedOutput = tailTask.outputType();
+        if (!expectedInput.isAssignableFrom(providedOutput)) {
+            throw new IllegalArgumentException(
+                    "Type mismatch in workflow definition: task '" + nextTask.idValue()
+                            + "' expects input type " + expectedInput.getName()
+                            + " but received output type " + providedOutput.getName()
+                            + " from task '" + tailTask.idValue() + "'"
+            );
+        }
+
+        return builder.then(nextTask);
     }
+
+    /**
+     * Joins previous parallel branches into a single task.
+     *
+     * @param joinTask the definition of the join task
+     * @param <NextO>  the output type of the join task
+     * @return a new {@code TypedFlowBuilder} for the joined output
+     */
+    public <NextO> TypedFlowBuilder<NextO> join(TaskDefinition<O, NextO> joinTask) {
+        return builder.join(joinTask);
+    }
+
+
 
     /**
      * Fork into multiple branches, continuing from the current tail.
@@ -53,24 +77,6 @@ public final class TypedFlowBuilder<O> {
     public final TypedFlowBuilder<O> fork(Consumer<FlowBranch>... branches) {
         builder.fork(branches);
         return this;
-    }
-
-    /**
-     * Returns the underlying un-typed {@link FlowBuilder}.
-     *
-     * @return the raw builder
-     */
-    public FlowBuilder untyped() {
-        return builder;
-    }
-
-    /**
-     * Returns the {@link TypedTaskNode} representing the current tail.
-     *
-     * @return the last added node
-     */
-    public TypedTaskNode<O> node() {
-        return node;
     }
 
     /**

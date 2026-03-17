@@ -23,8 +23,9 @@ import java.util.Objects;
  * }
  *
  * // Usage in the typed DSL:
- * TypedTaskNode<UserProfile> user = builder.then(fetchUser());
- * TypedTaskNode<EnrichedUser> enriched = builder.then(enrichUser(), user);
+ * builder.startTyped(fetchUser())
+ *        .then(enrichUser())
+ *        .build();
  * }</pre>
  *
  * <p>This class is immutable and safe for use as a static constant.
@@ -116,30 +117,13 @@ public final class TaskDefinition<I, O> {
     }
 
     /**
-     * Derives a {@link TaskRef} from this definition, carrying only the output type.
-     *
-     * @return a new {@code TaskRef<O>} for this task's id and output type
-     */
-    public TaskRef<O> toRef() {
-        return TaskRef.of(id, outputType);
-    }
-
-    /**
      * Derives a {@link FlowKey} for accessing this task's output from an
      * {@link io.flowforge.workflow.ReactiveExecutionContext}.
      *
      * @return a new {@code FlowKey<O>} for this task's id and output type
      */
     public FlowKey<O> outputKey() {
-        return FlowKey.of(id, outputType);
-    }
-
-    /**
-     * @deprecated Use {@link #outputKey()} instead.
-     */
-    @Deprecated(since = "0.4.0", forRemoval = true)
-    public FlowKey<O> toKey() {
-        return outputKey();
+        return new FlowKey<>(id, outputType);
     }
 
     @Override

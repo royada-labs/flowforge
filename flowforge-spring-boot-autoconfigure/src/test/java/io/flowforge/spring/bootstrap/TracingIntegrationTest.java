@@ -64,6 +64,7 @@ class TracingIntegrationTest {
                     .then(s2)
                     .then(s3)
                     .build();
+
         }
 
         @Bean @FlowTask(id = "Step1") io.flowforge.api.FlowTaskHandler<Void, Integer> s1() {

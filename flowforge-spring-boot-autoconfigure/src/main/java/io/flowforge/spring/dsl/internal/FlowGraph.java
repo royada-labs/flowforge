@@ -2,6 +2,9 @@ package io.flowforge.spring.dsl.internal;
 
 import io.flowforge.spring.dsl.DefaultFlowBranch;
 import io.flowforge.spring.dsl.FlowBranch;
+import io.flowforge.spring.dsl.FlowBuilder;
+import io.flowforge.task.TaskDefinition;
+import io.flowforge.task.TaskId;
 import io.flowforge.validation.TypeMetadata;
 
 import java.util.*;
@@ -9,113 +12,102 @@ import java.util.function.Consumer;
 
 public class FlowGraph {
 
-    private final Set<String> nodes = new LinkedHashSet<>();
+    private final Map<TaskId, TaskDefinition<?, ?>> definitions = new LinkedHashMap<>();
     private final Set<Edge> edges = new LinkedHashSet<>();
-    private final Map<String, TypeMetadata> typeMetadata = new LinkedHashMap<>();
 
-    private final String start;
-    private Set<String> tails;
+    private final TaskId start;
+    protected Set<TaskId> tails;
 
-    private FlowGraph(String start) {
-        this.start = Objects.requireNonNull(start, "start");
-        this.nodes.add(start);
+    private FlowGraph(TaskDefinition<?, ?> startTask) {
+        Objects.requireNonNull(startTask, "startTask");
+        registerDefinition(startTask);
+        this.start = startTask.id();
         this.tails = new LinkedHashSet<>();
         this.tails.add(start);
     }
 
-    public static FlowGraph start(String taskId) {
-        if (taskId == null || taskId.isBlank()) {
-            throw new IllegalArgumentException("taskId");
-        }
-        return new FlowGraph(taskId);
+    public static FlowGraph start(TaskDefinition<?, ?> startTask) {
+        return new FlowGraph(startTask);
     }
 
-    public String start() {
+    public TaskId start() {
         return start;
     }
 
-    public Set<String> nodes() {
-        return Collections.unmodifiableSet(nodes);
+    public Set<TaskId> nodes() {
+        return Collections.unmodifiableSet(definitions.keySet());
     }
 
     public Set<Edge> edges() {
         return Collections.unmodifiableSet(edges);
     }
 
-    public Set<String> tails() {
+    public Set<TaskId> tails() {
         return Collections.unmodifiableSet(tails);
     }
 
-    /**
-     * Registers type metadata for the given task id.
-     * Called by the typed DSL when {@code TaskDefinition} is used.
-     *
-     * @param taskId     the task id
-     * @param inputType  the declared input type
-     * @param outputType the declared output type
-     */
-    public void registerTypeMetadata(String taskId, Class<?> inputType, Class<?> outputType) {
-        typeMetadata.put(taskId, new TypeMetadata(inputType, outputType));
+    public Map<TaskId, TypeMetadata> typeMetadata() {
+        Map<TaskId, TypeMetadata> metadata = new LinkedHashMap<>();
+        for (TaskDefinition<?, ?> definition : definitions.values()) {
+            metadata.put(definition.id(), new TypeMetadata(definition.inputType(), definition.outputType()));
+        }
+        return Collections.unmodifiableMap(metadata);
     }
 
-    /**
-     * Returns collected type metadata (unmodifiable).
-     *
-     * @return map from task id to type metadata
-     */
-    public Map<String, TypeMetadata> typeMetadata() {
-        return Collections.unmodifiableMap(typeMetadata);
-    }
+    public void then(TaskDefinition<?, ?> task) {
+        Objects.requireNonNull(task, "task");
+        registerDefinition(task);
 
-    public void then(String taskId) {
-        requireTaskId(taskId);
-
-        nodes.add(taskId);
-
-        // connect all current tails -> taskId
-        for (String t : tails) {
-            edges.add(new Edge(t, taskId));
+        TaskId taskId = task.id();
+        for (TaskId tail : tails) {
+            edges.add(new Edge(tail, taskId));
         }
 
-        // new tails = {taskId}
         tails = new LinkedHashSet<>();
         tails.add(taskId);
     }
 
-    public void join(String taskId) {
-        // join is semantically identical to then, but kept for clarity
-        then(taskId);
+    public void join(TaskDefinition<?, ?> task) {
+        then(task);
     }
 
-    public void fork(List<Consumer<FlowBranch>> branches) {
+    public void fork(List<Consumer<FlowBranch>> branches, FlowBuilder builder) {
         Objects.requireNonNull(branches, "branches");
+        Objects.requireNonNull(builder, "builder");
         if (branches.isEmpty()) {
             throw new IllegalArgumentException("fork requires at least 1 branch");
         }
 
-        // Each branch starts from current tails (shared base)
-        // We create a branch graph that shares nodes/edges sets by reference? No.
-        // We create independent branch graphs that append into THIS graph, but start with current tails.
-        // Implementation: for each branch, we clone a "view" that writes into THIS graph but has its own tails.
-        Set<String> unionTails = new LinkedHashSet<>();
+        Set<TaskId> unionTails = new LinkedHashSet<>();
 
         for (Consumer<FlowBranch> consumer : branches) {
             Objects.requireNonNull(consumer, "branch consumer");
 
             FlowGraph branch = new BranchOverlayGraph(this, this.tails);
-            consumer.accept(new DefaultFlowBranch(branch));
+            consumer.accept(new DefaultFlowBranch(branch, builder));
 
             unionTails.addAll(branch.tails());
         }
 
-        // after fork, tails become union of branch tails
         this.tails = unionTails;
     }
 
-    private static void requireTaskId(String taskId) {
-        if (taskId == null || taskId.isBlank()) {
-            throw new IllegalArgumentException("taskId");
+    protected final void registerDefinition(TaskDefinition<?, ?> task) {
+        TaskDefinition<?, ?> existing = definitions.putIfAbsent(task.id(), task);
+        if (existing != null && !existing.equals(task)) {
+            throw new IllegalArgumentException(
+                    "Conflicting task definitions for id '" + task.idValue() + "': "
+                            + existing + " vs " + task
+            );
         }
+    }
+
+    protected final TaskDefinition<?, ?> definition(TaskId id) {
+        TaskDefinition<?, ?> definition = definitions.get(id);
+        if (definition == null) {
+            throw new IllegalStateException("Missing task definition for id: " + id.getValue());
+        }
+        return definition;
     }
 
     /**
@@ -126,14 +118,14 @@ public class FlowGraph {
 
         private final FlowGraph parent;
 
-        BranchOverlayGraph(FlowGraph parent, Set<String> initialTails) {
-            super(parent.start); // not used directly; we override accessors
+        BranchOverlayGraph(FlowGraph parent, Set<TaskId> initialTails) {
+            super(parent.definition(parent.start));
             this.parent = parent;
             this.setTails(new LinkedHashSet<>(initialTails));
         }
 
         @Override
-        public Set<String> nodes() {
+        public Set<TaskId> nodes() {
             return parent.nodes();
         }
 
@@ -143,52 +135,48 @@ public class FlowGraph {
         }
 
         @Override
-        public void registerTypeMetadata(String taskId, Class<?> inputType, Class<?> outputType) {
-            parent.registerTypeMetadata(taskId, inputType, outputType);
-        }
-
-        @Override
-        public Map<String, TypeMetadata> typeMetadata() {
+        public Map<TaskId, TypeMetadata> typeMetadata() {
             return parent.typeMetadata();
         }
 
         @Override
-        public void then(String taskId) {
-            requireTaskId(taskId);
+        public void then(TaskDefinition<?, ?> task) {
+            Objects.requireNonNull(task, "task");
+            parent.registerDefinition(task);
 
-            parent.nodes.add(taskId);
-
-            for (String t : super.tails) {
-                parent.edges.add(new Edge(t, taskId));
+            TaskId taskId = task.id();
+            for (TaskId tail : super.tails) {
+                parent.edges.add(new Edge(tail, taskId));
             }
 
-            Set<String> newTails = new LinkedHashSet<>();
+            Set<TaskId> newTails = new LinkedHashSet<>();
             newTails.add(taskId);
             setTails(newTails);
         }
 
         @Override
-        public void join(String taskId) {
-            then(taskId);
+        public void join(TaskDefinition<?, ?> task) {
+            then(task);
         }
 
         @Override
-        public void fork(List<Consumer<FlowBranch>> branches) {
+        public void fork(List<Consumer<FlowBranch>> branches, FlowBuilder builder) {
             Objects.requireNonNull(branches, "branches");
+            Objects.requireNonNull(builder, "builder");
             if (branches.isEmpty()) {
                 throw new IllegalArgumentException("fork requires at least 1 branch");
             }
 
-            Set<String> unionTails = new LinkedHashSet<>();
-            for (Consumer<FlowBranch> c : branches) {
+            Set<TaskId> unionTails = new LinkedHashSet<>();
+            for (Consumer<FlowBranch> consumer : branches) {
                 FlowGraph nestedBranch = new BranchOverlayGraph(parent, super.tails);
-                c.accept(new DefaultFlowBranch(nestedBranch));
+                consumer.accept(new DefaultFlowBranch(nestedBranch, builder));
                 unionTails.addAll(nestedBranch.tails());
             }
             setTails(unionTails);
         }
 
-        private void setTails(Set<String> newTails) {
+        private void setTails(Set<TaskId> newTails) {
             super.tails = newTails;
         }
     }

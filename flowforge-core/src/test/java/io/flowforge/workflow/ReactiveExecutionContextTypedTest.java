@@ -62,15 +62,17 @@ class ReactiveExecutionContextTypedTest {
 
     @Test
     void should_throw_mismatch_exception_when_stored_type_does_not_match() {
-        // Store as raw TaskId
-        TaskId id = TaskId.of("typeMismatch");
-        ctx.put(id, 42); // Integer stored
+        // We use a raw TaskId to simulate a type mismatch in the store (if possible)
+        // or just test that the context handles type mismatches if we try to get a key with wrong type
+        FlowKey<Integer> intKey = TaskDefinition.of("typeMismatch", Void.class, Integer.class).outputKey();
+        ctx.put(intKey, 42); // Integer stored
 
-        FlowKey<String> stringKey = TaskDefinition.of(id, Void.class, String.class).outputKey();
+        FlowKey<String> stringKey = TaskDefinition.of("typeMismatch", Void.class, String.class).outputKey();
 
         assertThrows(TypeMismatchException.class, () -> ctx.get(stringKey),
                 "Should throw TypeMismatchException when stored Integer is fetched as String");
     }
+
 
     @Test
     void should_provide_getOrThrow_api() {
@@ -110,30 +112,19 @@ class ReactiveExecutionContextTypedTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void flow_key_put_should_be_visible_via_legacy_task_id_get() {
+    void should_be_able_to_check_completion_by_task_id_if_needed_internally() {
         FlowKey<String> key = TaskDefinition.of("shared", Void.class, String.class).outputKey();
-        TaskId taskId = key.taskId();
-
         ctx.put(key, "value");
 
-        // Readable via legacy API
-        Optional<String> legacy = ctx.get(taskId, String.class);
-        assertTrue(legacy.isPresent());
-        assertEquals("value", legacy.get());
+        assertTrue(ctx.isCompleted(key));
     }
-
+    
     @Test
-    void legacy_task_id_put_should_be_visible_via_flow_key_get() {
-        TaskId taskId = TaskId.of("shared2");
-        FlowKey<String> key = TaskDefinition.of(taskId, Void.class, String.class).outputKey();
-
-        ctx.put(taskId, "legacyValue");
-
-        // Readable via typed API
-        Optional<String> typed = ctx.get(key);
-        assertTrue(typed.isPresent());
-        assertEquals("legacyValue", typed.get());
+    void should_not_be_completed_for_missing_keys() {
+        FlowKey<String> key = TaskDefinition.of("missing_task", Void.class, String.class).outputKey();
+        assertFalse(ctx.isCompleted(key));
     }
+
 
     @Test
     void should_coexist_multiple_keys_with_different_ids() {
