@@ -79,6 +79,23 @@ WorkflowExecutionPlan plan(FlowDsl dsl) {
 *   🧱 **Fail-Fast Validation**: Advanced DAG analysis detects cycles and missing dependencies at startup.
 *   🔍 **Deep Observability**: Native integration with **OpenTelemetry** and structured JSON execution tracing.
 *   📦 **Spring Boot Optimized**: Zero-config starter with auto-discovery of tasks and workflows.
+*   🔐 **Safe Task Registration**: Startup-time detection rejects duplicate/conflicting task metadata and ambiguous method-reference mappings.
+
+---
+
+## 🔒 Registration & Resolution Guarantees
+
+FlowForge resolves method references using the **full JVM signature** (`implClass + method + descriptor`), not by heuristic name fallback.
+
+- Duplicate `TaskDefinition` identities are rejected at startup.
+- Conflicting method-reference registrations are rejected at startup.
+- Overloaded task methods are resolved deterministically by signature.
+- Reflection/introspection happens at startup only; runtime executes pre-built task plans.
+
+### Root Input Contract
+
+- If root tasks require non-`Void` input, callers must provide `client.execute(..., input)`.
+- If all roots are `Void`, extra input is ignored for backward compatibility.
 
 ---
 

@@ -110,6 +110,11 @@ public class MyService {
 }
 ```
 
+Input contract:
+
+- If your root task input type is non-`Void`, provide a compatible `input` in `execute/executeResult`.
+- If your roots are `Void`, extra input is ignored (legacy-friendly behavior).
+
 ---
 
 ## 4. Understanding Type Safety (FlowKey)

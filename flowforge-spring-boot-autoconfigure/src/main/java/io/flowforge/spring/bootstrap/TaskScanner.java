@@ -18,7 +18,10 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.ResolvableType;
 import reactor.core.publisher.Mono;
 
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 public final class TaskScanner implements BeanFactoryPostProcessor {
@@ -90,8 +93,15 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
         TaskDefinition<?, ?> definition = definition(taskId, inferredTypes[0], inferredTypes[1]);
         definitionRegistry.register(definition, beanName);
 
-        String implClass = type != null ? type.getName().replace('.', '/') : "";
-        definitionRegistry.registerMethodRef(implClass, beanName, definition);
+        Method factoryMethod = findFactoryMethod(beanFactory, bd);
+        if (factoryMethod != null) {
+            definitionRegistry.registerMethodRef(
+                    internalName(factoryMethod.getDeclaringClass()),
+                    factoryMethod.getName(),
+                    descriptor(factoryMethod),
+                    definition
+            );
+        }
 
         Supplier<Object> beanSupplier = () -> beanFactory.getBean(beanName);
         registry.register(new TaskProvider() {
@@ -100,7 +110,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
             @Override
             public Task<?, ?> get() {
                 Object bean = beanSupplier.get();
-                return adapterFactory.adapt(bean, annotation);
+                return adapterFactory.adapt(bean, annotation, inferredTypes[0], inferredTypes[1]);
             }
         });
     }
@@ -117,17 +127,23 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
         String implClass = type.getName().replace('.', '/');
         Supplier<Object> beanSupplier = () -> beanFactory.getBean(beanName);
 
-        for (Method method : type.getDeclaredMethods()) {
+        for (Method method : type.getMethods()) {
             FlowTask ann = method.getAnnotation(FlowTask.class);
             if (ann == null) {
+                continue;
+            }
+            if (!Modifier.isPublic(method.getModifiers())) {
+                throw new IllegalStateException("@FlowTask method must be public: " + method);
+            }
+            if (method.isSynthetic() || method.isBridge()) {
                 continue;
             }
 
             Class<?>[] inferred = inferMethodTypes(ann, method);
             TaskId taskId = TaskId.of(ann.id());
             TaskDefinition<?, ?> definition = definition(taskId, inferred[0], inferred[1]);
-            definitionRegistry.register(definition, method.getName());
-            definitionRegistry.registerMethodRef(implClass, method.getName(), definition);
+            definitionRegistry.register(definition, beanName + "#" + method.getName() + "#" + descriptor(method));
+            definitionRegistry.registerMethodRef(implClass, method.getName(), descriptor(method), definition);
 
             registry.register(new TaskProvider() {
                 @Override
@@ -150,25 +166,49 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
             FlowTask annotation,
             BeanDefinition beanDefinition
     ) {
-        Class<?> input = annotation.inputType();
-        Class<?> output = annotation.outputType();
-        if (input != Object.class || output != Object.class) {
-            return new Class<?>[]{input, output};
+        Class<?>[] genericTypes = inferFlowTaskHandlerGenericTypes(beanFactory, beanDefinition);
+        Class<?> input = alignExplicitAndInferred("input", beanName, annotation.inputType(), genericTypes[0]);
+        Class<?> output = alignExplicitAndInferred("output", beanName, annotation.outputType(), genericTypes[1]);
+        return new Class<?>[]{input, output};
+    }
+
+    private static Method findFactoryMethod(
+            ConfigurableListableBeanFactory beanFactory,
+            BeanDefinition beanDefinition
+    ) {
+        String factoryBeanName = beanDefinition.getFactoryBeanName();
+        String factoryMethodName = beanDefinition.getFactoryMethodName();
+        if (factoryBeanName == null || factoryMethodName == null) {
+            return null;
         }
 
+        Class<?> factoryType = beanFactory.getType(factoryBeanName);
+        if (factoryType == null) {
+            return null;
+        }
+        return Arrays.stream(factoryType.getDeclaredMethods())
+                .filter(method -> method.getName().equals(factoryMethodName))
+                .filter(method -> method.getParameterCount() == 0)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static Class<?>[] inferFlowTaskHandlerGenericTypes(
+            ConfigurableListableBeanFactory beanFactory,
+            BeanDefinition beanDefinition
+    ) {
         String factoryBeanName = beanDefinition.getFactoryBeanName();
         String factoryMethodName = beanDefinition.getFactoryMethodName();
         if (factoryBeanName == null || factoryMethodName == null) {
             return new Class<?>[]{Object.class, Object.class};
         }
-
         Class<?> factoryType = beanFactory.getType(factoryBeanName);
         if (factoryType == null) {
             return new Class<?>[]{Object.class, Object.class};
         }
 
         for (Method method : factoryType.getDeclaredMethods()) {
-            if (!method.getName().equals(factoryMethodName) || method.getParameterCount() != 0) {
+            if (!method.getName().equals(factoryMethodName)) {
                 continue;
             }
             ResolvableType type = ResolvableType.forMethodReturnType(method).as(FlowTaskHandler.class);
@@ -178,6 +218,21 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
         }
 
         return new Class<?>[]{Object.class, Object.class};
+    }
+
+    private static Class<?> alignExplicitAndInferred(
+            String label,
+            String beanName,
+            Class<?> explicitType,
+            Class<?> inferredType
+    ) {
+        if (explicitType != Object.class && inferredType != Object.class && !explicitType.equals(inferredType)) {
+            throw new IllegalStateException(
+                    "@FlowTask " + label + " type mismatch for bean '" + beanName + "': annotation="
+                            + explicitType.getName() + ", inferred=" + inferredType.getName()
+            );
+        }
+        return explicitType != Object.class ? explicitType : inferredType;
     }
 
     private static Class<?>[] inferMethodTypes(FlowTask annotation, Method method) {
@@ -219,5 +274,14 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
     @SuppressWarnings("unchecked")
     private static <I, O> TaskDefinition<I, O> definition(TaskId id, Class<?> input, Class<?> output) {
         return TaskDefinition.of(id, (Class<I>) input, (Class<O>) output);
+    }
+
+    private static String descriptor(Method method) {
+        return MethodType.methodType(method.getReturnType(), method.getParameterTypes())
+                .toMethodDescriptorString();
+    }
+
+    private static String internalName(Class<?> type) {
+        return type.getName().replace('.', '/');
     }
 }

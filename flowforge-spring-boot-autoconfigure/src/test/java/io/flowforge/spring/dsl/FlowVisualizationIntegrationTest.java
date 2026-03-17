@@ -3,6 +3,7 @@ package io.flowforge.spring.dsl;
 import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.flowforge.task.TaskDefinition;
+import io.flowforge.validation.FlowValidationError;
 import io.flowforge.validation.FlowValidationException;
 import io.flowforge.validation.FlowValidationResult;
 import io.flowforge.visualization.FlowVisualization;
@@ -50,27 +51,27 @@ class FlowVisualizationIntegrationTest {
         contextRunner.run(ctx -> {
             FlowDsl dsl = ctx.getBean(FlowDsl.class);
 
-            // Invalid root: non-Void input at start should trigger MISSING_INPUT validation
-            TaskDefinition<Integer, Integer> start = TaskDefinition.of("Start", Integer.class, Integer.class);
+            WorkflowExecutionPlan plan = dsl.startTyped(TaskDefinition.of("Start", Void.class, Integer.class))
+                    .then(TaskDefinition.of("End", Integer.class, String.class))
+                    .build();
 
-            TypedFlowBuilder<Integer> flow = dsl.startTyped(start);
+            FlowValidationResult result = FlowValidationResult.of(java.util.List.of(
+                    FlowValidationError.error(
+                            FlowValidationError.TYPE_MISMATCH,
+                            "End",
+                            "expected input type Boolean but got Integer (from 'Start')"
+                    )
+            ));
+            FlowValidationException ex = new FlowValidationException(result, plan);
 
-            try {
-                flow.build();
-                fail("Should have thrown FlowValidationException");
-            } catch (FlowValidationException ex) {
-                WorkflowExecutionPlan plan = ex.plan().orElseThrow();
-                FlowValidationResult result = ex.result();
+            FlowVisualization viz = FlowVisualizer.visualize(ex.plan().orElseThrow(), ex.result());
 
-                FlowVisualization viz = FlowVisualizer.visualize(plan, result);
+            String mermaid = viz.toMermaid();
+            assertTrue(mermaid.contains("class End ff-error"), "End node should be styled as error");
+            assertTrue(mermaid.contains("classDef ff-error"), "Should include error style definition");
 
-                String mermaid = viz.toMermaid();
-                assertTrue(mermaid.contains("class Start ff-error"), "Start node should be styled as error");
-                assertTrue(mermaid.contains("classDef ff-error"), "Should include error style definition");
-
-                String json = viz.toJson();
-                assertTrue(json.contains("\"code\": \"MISSING_INPUT\""), "JSON should contain the error");
-            }
+            String json = viz.toJson();
+            assertTrue(json.contains("\"code\": \"TYPE_MISMATCH\""), "JSON should contain the error");
         });
     }
 

@@ -6,7 +6,6 @@ import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.annotations.FlowWorkflow;
 import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.flowforge.task.TaskDefinition;
-import io.flowforge.validation.FlowValidationException;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,11 @@ import org.springframework.context.annotation.Import;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration tests for the DAG validation system integrated with the typed DSL.
@@ -26,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <ul>
  *   <li>Valid typed workflows pass validation and execute correctly</li>
  *   <li>Type mismatches are caught fail-fast at DSL definition time</li>
- *   <li>Missing input is detected for root tasks</li>
+ *   <li>Root tasks requiring input are validated at execution time</li>
  * </ul>
  */
 class DSLValidationIntegrationTest {
@@ -52,7 +55,7 @@ class DSLValidationIntegrationTest {
         return TaskDefinition.of("BadTransformer", Boolean.class, String.class);
     }
 
-    // Root that requires input — should trigger MISSING_INPUT
+    // Root that requires input.
     static TaskDefinition<Integer, String> needsInput() {
         return TaskDefinition.of("NeedsInput", Integer.class, String.class);
     }
@@ -107,49 +110,44 @@ class DSLValidationIntegrationTest {
     }
 
     // -----------------------------------------------------------------------
-    // Test 3: Missing input detected for root task
+    // Test 3: Root task requiring input must receive initial input at execution time
     // -----------------------------------------------------------------------
 
     @Test
-    void missing_input_should_throw_validation_exception() {
+    void missing_input_should_fail_at_execution_with_clear_error() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, MissingInputConfig.class)
                 .run(ctx -> {
-                    // The workflow definition happens during bean creation,
-                    // so the context startup itself should fail
-                    assertNotNull(ctx.getStartupFailure(),
-                            "Context should fail due to MISSING_INPUT validation");
-                    assertTrue(ctx.getStartupFailure().getCause() instanceof FlowValidationException
-                                    || ctx.getStartupFailure().getMessage().contains("MISSING_INPUT"),
-                            "Should be caused by FlowValidationException");
+                    assertNull(ctx.getStartupFailure(), "Context should start");
+
+                    FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
+
+                    IllegalArgumentException ex = assertThrows(
+                            IllegalArgumentException.class,
+                            () -> client.executeResult("missing-input", null)
+                    );
+                    assertNotNull(ex.getMessage());
+                    assertTrue(ex.getMessage().contains("requires initial input"));
+
+                    StepVerifier.create(client.executeResult("missing-input", 99))
+                            .expectNext("got=99")
+                            .verifyComplete();
                 });
     }
 
     // -----------------------------------------------------------------------
-    // Test 5: Validation exception has well-formatted message
+    // Test 5: Root-input validation warning does not block build
     // -----------------------------------------------------------------------
 
     @Test
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    void validation_exception_should_have_formatted_message() {
+    void root_input_validation_warning_should_not_block_build() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ImportAutoConfig.class, ValidPipelineConfig.class, BadTransformerTaskConfig.class)
                 .run(ctx -> {
                     assertNull(ctx.getStartupFailure());
-
                     FlowDsl dsl = ctx.getBean(FlowDsl.class);
-
-                    try {
-                        dsl.startTyped(needsInput()).build();
-                        fail("Should throw FlowValidationException");
-                    } catch (FlowValidationException ex) {
-                        String msg = ex.getMessage();
-                        // Verify compiler-style formatting
-                        assertTrue(msg.contains("[MISSING_INPUT]"), "Format: " + msg);
-                        assertTrue(msg.contains("error(s)"), "Format: " + msg);
-                        assertNotNull(ex.result());
-                        assertFalse(ex.result().isValid());
-                    }
+                    // should not throw after MissingInput is downgraded to warning
+                    dsl.startTyped(needsInput()).build();
                 });
     }
 

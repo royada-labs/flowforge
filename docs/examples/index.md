@@ -81,6 +81,13 @@ dsl.flow(PricingTasks::start)
    .build();
 ```
 
+Overloaded method references are supported and resolved by full signature:
+
+```java
+TaskCallRef<MyTasks, Integer, String> intMapper = MyTasks::map;
+TaskCallRef<MyTasks, Long, String> longMapper = MyTasks::map;
+```
+
 ---
 
 ## 3. Data Transformation Pipeline

@@ -82,6 +82,20 @@ class TaskScannerTest {
                 });
     }
 
+    @Test
+    void should_fail_when_annotation_and_inferred_types_mismatch() {
+        contextRunner
+                .withUserConfiguration(TypeMismatchTaskConfig.class)
+                .run(ctx -> {
+                    Throwable failure = ctx.getStartupFailure();
+                    assertNotNull(failure, "Context should fail on type mismatch");
+                    assertTrue(
+                            failure.getMessage().contains("type mismatch"),
+                            failure.getMessage()
+                    );
+                });
+    }
+
     // ---------------------------------------------------------------------
     // Test configurations
     // ---------------------------------------------------------------------
@@ -129,6 +143,15 @@ class TaskScannerTest {
         @FlowTask(id = "X")
         NotAHandler notAHandler() {
             return new NotAHandler();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class TypeMismatchTaskConfig {
+        @Bean
+        @FlowTask(id = "M", inputType = String.class, outputType = Integer.class)
+        FlowTaskHandler<Integer, Integer> mismatched() {
+            return (input, ctx) -> Mono.just(input == null ? 0 : input + 1);
         }
     }
 

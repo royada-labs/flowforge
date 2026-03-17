@@ -18,6 +18,9 @@ public final class DefaultTaskInputResolver implements TaskInputResolver {
     ) {
         // 1) Roots → input inicial
         if (node.isRoot()) {
+            if (node.descriptor().task().inputType() == Void.class) {
+                return Mono.empty();
+            }
             return Mono.justOrEmpty(initialInput);
         }
 
@@ -39,4 +42,3 @@ public final class DefaultTaskInputResolver implements TaskInputResolver {
         return Mono.just(inputs);
     }
 }
-

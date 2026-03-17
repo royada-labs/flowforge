@@ -119,8 +119,8 @@ class DefaultFlowValidatorTest {
 
         FlowValidationResult result = validator.validate(plan, types);
 
-        assertFalse(result.isValid());
-        assertTrue(result.errorsOnly().stream()
+        assertTrue(result.isValid());
+        assertTrue(result.warningsOnly().stream()
                 .anyMatch(e -> e.code().equals(FlowValidationError.MISSING_INPUT)
                         && e.taskId().equals("A")));
     }

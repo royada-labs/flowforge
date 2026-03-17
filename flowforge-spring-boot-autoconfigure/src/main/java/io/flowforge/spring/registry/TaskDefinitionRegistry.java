@@ -4,6 +4,7 @@ import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,12 +18,21 @@ public final class TaskDefinitionRegistry {
     private final Map<String, TaskDefinition<?, ?>> byMethodRef = new ConcurrentHashMap<>();
 
     public void register(TaskDefinition<?, ?> definition, String beanName) {
-        byId.put(definition.id(), definition);
-        byBeanName.put(beanName, definition);
+        Objects.requireNonNull(definition, "definition");
+        Objects.requireNonNull(beanName, "beanName");
+        putOrVerify(byId, definition.id(), definition, "task id");
+        putOrVerify(byBeanName, beanName, definition, "bean name");
     }
 
-    public void registerMethodRef(String implClassInternalName, String methodName, TaskDefinition<?, ?> definition) {
-        byMethodRef.put(methodRefKey(implClassInternalName, methodName), definition);
+    public void registerMethodRef(
+            String implClassInternalName,
+            String methodName,
+            String methodDescriptor,
+            TaskDefinition<?, ?> definition
+    ) {
+        Objects.requireNonNull(definition, "definition");
+        String key = methodRefKey(implClassInternalName, methodName, methodDescriptor);
+        putOrVerify(byMethodRef, key, definition, "method reference");
     }
 
     public Optional<TaskDefinition<?, ?>> find(TaskId id) {
@@ -33,11 +43,32 @@ public final class TaskDefinitionRegistry {
         return Optional.ofNullable(byBeanName.get(beanName));
     }
 
-    public Optional<TaskDefinition<?, ?>> findByMethodRef(String implClassInternalName, String methodName) {
-        return Optional.ofNullable(byMethodRef.get(methodRefKey(implClassInternalName, methodName)));
+    public Optional<TaskDefinition<?, ?>> findByMethodRef(
+            String implClassInternalName,
+            String methodName,
+            String methodDescriptor
+    ) {
+        return Optional.ofNullable(byMethodRef.get(methodRefKey(implClassInternalName, methodName, methodDescriptor)));
     }
 
-    private static String methodRefKey(String implClassInternalName, String methodName) {
-        return implClassInternalName + "#" + methodName;
+    private static String methodRefKey(String implClassInternalName, String methodName, String methodDescriptor) {
+        Objects.requireNonNull(implClassInternalName, "implClassInternalName");
+        Objects.requireNonNull(methodName, "methodName");
+        Objects.requireNonNull(methodDescriptor, "methodDescriptor");
+        return implClassInternalName + "#" + methodName + "#" + methodDescriptor;
+    }
+
+    private static <K> void putOrVerify(
+            Map<K, TaskDefinition<?, ?>> map,
+            K key,
+            TaskDefinition<?, ?> definition,
+            String keyType
+    ) {
+        TaskDefinition<?, ?> previous = map.putIfAbsent(key, definition);
+        if (previous != null && !previous.equals(definition)) {
+            throw new IllegalStateException(
+                    "Conflicting TaskDefinition for " + keyType + " '" + key + "': " + previous + " vs " + definition
+            );
+        }
     }
 }

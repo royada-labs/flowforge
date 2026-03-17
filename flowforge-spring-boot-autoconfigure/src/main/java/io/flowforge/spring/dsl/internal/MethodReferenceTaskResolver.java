@@ -4,7 +4,6 @@ import io.flowforge.spring.dsl.TaskCallRef;
 import io.flowforge.spring.dsl.TaskMethodRef;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.task.TaskDefinition;
-import io.flowforge.task.TaskId;
 
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;
@@ -40,12 +39,12 @@ public final class MethodReferenceTaskResolver implements TaskReferenceResolver 
     private TaskDefinition<?, ?> resolve(SerializedLambda lambda) {
         String methodName = lambda.getImplMethodName();
         String implClass = lambda.getImplClass();
+        String methodDescriptor = lambda.getImplMethodSignature();
 
-        return definitions.findByMethodRef(implClass, methodName)
-                .or(() -> definitions.findByBeanName(methodName))
-                .or(() -> definitions.find(TaskId.of(methodName)))
+        return definitions.findByMethodRef(implClass, methodName, methodDescriptor)
                 .orElseThrow(() -> new IllegalStateException(
-                        "No @FlowTask metadata found for method reference '" + implClass + "::" + methodName + "'"
+                        "No @FlowTask metadata found for method reference '" + implClass + "::" + methodName
+                                + "' with signature '" + methodDescriptor + "'"
                 ));
     }
 

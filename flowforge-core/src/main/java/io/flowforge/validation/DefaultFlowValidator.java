@@ -172,11 +172,11 @@ public final class DefaultFlowValidator implements FlowValidator {
                 }
 
                 if (rootType.inputType() != Void.class) {
-                    errors.add(FlowValidationError.error(
+                    errors.add(FlowValidationError.warning(
                             FlowValidationError.MISSING_INPUT,
                             rootId.getValue(),
                             "Root task expects input type " + rootType.inputType().getSimpleName()
-                                    + " but has no upstream dependency"
+                                    + "; caller must provide initial input at execution time"
                     ));
                 }
             }

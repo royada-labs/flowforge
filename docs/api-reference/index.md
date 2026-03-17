@@ -110,5 +110,11 @@ dsl.startTyped(A)
 Method reference guarantees:
 
 - `@FlowTask` metadata (task id + input/output types) is inferred and stored at startup.
-- Method references are resolved when building the workflow definition.
+- Method references are resolved by full signature (`implClass + method + descriptor`) when building the workflow definition.
 - Runtime execution uses the compiled plan directly (no reflection in task execution path).
+- Name-based fallback resolution is intentionally disabled to avoid accidental task mapping.
+
+Root input guarantees:
+
+- Roots with non-`Void` input require caller-provided initial input at `execute(...)`.
+- Roots with `Void` input ignore extra initial input for backward compatibility.
