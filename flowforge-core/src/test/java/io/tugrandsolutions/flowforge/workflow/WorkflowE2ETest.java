@@ -50,20 +50,16 @@ class WorkflowE2ETest {
         StepVerifier.create(orchestrator.execute(plan, "hello"))
                 .assertNext(ctx -> {
                     // A: length("hello") = 5
-                    Integer aOut = ctx.get(A, Integer.class).orElse(null);
-                    assertEquals(5, aOut);
+                    assertEquals(5, ctx.get(FlowKey.of(A, Integer.class)).orElse(null));
 
                     // B: double(A) = 10
-                    Integer bOut = ctx.get(B, Integer.class).orElse(null);
-                    assertEquals(10, bOut);
+                    assertEquals(10, ctx.get(FlowKey.of(B, Integer.class)).orElse(null));
 
                     // C: "len=5"
-                    String cOut = ctx.get(C, String.class).orElse(null);
-                    assertEquals("len=5", cOut);
+                    assertEquals("len=5", ctx.get(FlowKey.of(C, String.class)).orElse(null));
 
                     // D: combine(B, C)
-                    String dOut = ctx.get(D, String.class).orElse(null);
-                    assertEquals("B=10;C=len=5", dOut);
+                    assertEquals("B=10;C=len=5", ctx.get(FlowKey.of(D, String.class)).orElse(null));
                 })
                 .verifyComplete();
     }

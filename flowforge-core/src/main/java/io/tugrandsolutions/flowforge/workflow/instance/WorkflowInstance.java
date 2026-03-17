@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import io.tugrandsolutions.flowforge.task.TaskId;
@@ -11,14 +12,21 @@ import io.tugrandsolutions.flowforge.workflow.ReactiveExecutionContext;
 import io.tugrandsolutions.flowforge.workflow.graph.TaskNode;
 import io.tugrandsolutions.flowforge.workflow.plan.WorkflowExecutionPlan;
 
+/**
+ * Tracks the state of a single workflow DAG execution.
+ * Optimized for O(1) task activation using dependency counters.
+ */
 public final class WorkflowInstance {
 
     private final WorkflowRunMetadata metadata;
     private final WorkflowExecutionPlan plan;
     private final ReactiveExecutionContext context;
 
-    // Definitivo: status por ID, no por instancia de TaskNode
     private final Map<TaskId, TaskStatus> statusMap = new ConcurrentHashMap<>();
+    private final Map<TaskId, AtomicInteger> remainingDependencies = new ConcurrentHashMap<>();
+
+    // Thread-safe set of tasks that are ready to run (O(1) access)
+    private final Set<TaskId> readyTaskIds = ConcurrentHashMap.newKeySet();
 
     public WorkflowInstance(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
             ReactiveExecutionContext context) {
@@ -32,7 +40,6 @@ public final class WorkflowInstance {
         this(WorkflowRunMetadata.of(workflowId), plan, context);
     }
 
-    // Legacy constructor for tests/backwards compatibility (uses "UNKNOWN" or null)
     public WorkflowInstance(WorkflowExecutionPlan plan, ReactiveExecutionContext context) {
         this("UNKNOWN", plan, context);
     }
@@ -40,90 +47,92 @@ public final class WorkflowInstance {
     private void initialize() {
         for (TaskNode node : plan.nodes()) {
             statusMap.put(node.id(), TaskStatus.PENDING);
+            int dependencyCount = node.dependencies().size();
+            remainingDependencies.put(node.id(), new AtomicInteger(dependencyCount));
+            
+            if (dependencyCount == 0) {
+                statusMap.put(node.id(), TaskStatus.READY);
+                readyTaskIds.add(node.id());
+            }
         }
-        for (TaskNode root : plan.roots()) {
-            statusMap.put(root.id(), TaskStatus.READY);
-        }
     }
 
-    public WorkflowRunMetadata metadata() {
-        return metadata;
-    }
-
-    public String workflowId() {
-        return metadata.workflowId();
-    }
-
-    public ReactiveExecutionContext context() {
-        return context;
-    }
-
-    public WorkflowExecutionPlan plan() {
-        return plan;
-    }
+    public WorkflowRunMetadata metadata() { return metadata; }
+    public String workflowId() { return metadata.workflowId(); }
+    public ReactiveExecutionContext context() { return context; }
+    public WorkflowExecutionPlan plan() { return plan; }
 
     public TaskStatus status(TaskNode node) {
         return statusMap.get(node.id());
     }
 
+    /**
+     * O(1) access to ready tasks.
+     */
     public Set<TaskNode> readyTasks() {
-        return plan.nodes().stream()
-                .filter(n -> statusMap.get(n.id()) == TaskStatus.READY)
+        return readyTaskIds.stream()
+                .map(id -> plan.getNode(id).orElseThrow())
                 .collect(Collectors.toUnmodifiableSet());
-    }
-
-    public void markRunning(TaskNode node) {
-        statusMap.put(node.id(), TaskStatus.RUNNING);
-    }
-
-    public void markCompleted(TaskNode node) {
-        statusMap.put(node.id(), TaskStatus.COMPLETED);
-        updateDependents(node);
-    }
-
-    public void markFailed(TaskNode node) {
-        // Quita el println (tests no lo necesitan)
-        if (node.descriptor().optional()) {
-            markSkipped(node);
-            return;
-        }
-        statusMap.put(node.id(), TaskStatus.FAILED);
-        handleFailure(node);
-    }
-
-    public void markSkipped(TaskNode node) {
-        statusMap.put(node.id(), TaskStatus.SKIPPED);
-        updateDependents(node);
     }
 
     public boolean tryMarkRunning(TaskNode node) {
         TaskStatus updated = statusMap.compute(node.id(), (id, current) -> {
-            if (current == TaskStatus.READY)
+            if (current == TaskStatus.READY) {
+                readyTaskIds.remove(id);
                 return TaskStatus.RUNNING;
+            }
             return current;
         });
         return updated == TaskStatus.RUNNING;
     }
 
-    private void updateDependents(TaskNode completed) {
+    public void markCompleted(TaskNode node) {
+        statusMap.put(node.id(), TaskStatus.COMPLETED);
+        decrementDependents(node);
+    }
+
+    public void markFailed(TaskNode node) {
+        if (node.descriptor().optional()) {
+            markSkipped(node);
+            return;
+        }
+        statusMap.put(node.id(), TaskStatus.FAILED);
+        // Cascade failure to ALL downstream dependents immediately
+        failDownstream(node);
+    }
+
+    public void markSkipped(TaskNode node) {
+        statusMap.put(node.id(), TaskStatus.SKIPPED);
+        decrementDependents(node);
+    }
+
+    private void decrementDependents(TaskNode completed) {
         for (TaskNode dependent : completed.dependents()) {
-            if (canRun(dependent)) {
-                statusMap.put(dependent.id(), TaskStatus.READY);
+            AtomicInteger remaining = remainingDependencies.get(dependent.id());
+            if (remaining != null && remaining.decrementAndGet() == 0) {
+                // All dependencies met
+                statusMap.compute(dependent.id(), (id, current) -> {
+                    if (current == TaskStatus.PENDING) {
+                        readyTaskIds.add(id);
+                        return TaskStatus.READY;
+                    }
+                    return current;
+                });
             }
         }
     }
 
-    private boolean canRun(TaskNode node) {
-        return node.dependencies().stream()
-                .allMatch(dep -> {
-                    TaskStatus s = statusMap.get(dep.id());
-                    return s == TaskStatus.COMPLETED || s == TaskStatus.SKIPPED;
-                });
-    }
-
-    private void handleFailure(TaskNode failed) {
+    private void failDownstream(TaskNode failed) {
         for (TaskNode dependent : failed.dependents()) {
-            statusMap.put(dependent.id(), TaskStatus.FAILED);
+            statusMap.compute(dependent.id(), (id, current) -> {
+                if (current == TaskStatus.PENDING || current == TaskStatus.READY) {
+                    readyTaskIds.remove(id);
+                    // Recursively fail
+                    failDownstream(dependent);
+                    return TaskStatus.FAILED;
+                }
+                return current;
+            });
         }
     }
 

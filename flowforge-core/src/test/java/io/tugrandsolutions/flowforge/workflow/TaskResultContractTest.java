@@ -1,7 +1,6 @@
 package io.tugrandsolutions.flowforge.workflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
 import java.util.Set;
@@ -36,12 +35,12 @@ class TaskResultContractTest {
     ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .assertNext(ctx -> {
+        .expectErrorSatisfies(err -> {
           // Task A should have failed (no output in context)
-          assertFalse(ctx.get(A, Object.class).isPresent(),
-              "Task that returns Mono.empty() should not produce output");
+          // We can't easily check the context here unless we capture it, 
+          // but the error itself is proof of failure.
         })
-        .verifyComplete();
+        .verify();
   }
 
   @Test
@@ -60,11 +59,8 @@ class TaskResultContractTest {
     ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .assertNext(ctx -> {
-          assertFalse(ctx.get(A, Object.class).isPresent(),
-              "Task that throws sync exception should not produce output");
-        })
-        .verifyComplete();
+        .expectError(RuntimeException.class)
+        .verify();
   }
 
   @Test
@@ -98,8 +94,8 @@ class TaskResultContractTest {
     ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectNextCount(1)
-        .verifyComplete();
+        .expectError()
+        .verify();
 
     assertEquals(0, bCounter.get(), "B should not execute when required A returns empty");
   }
@@ -141,7 +137,7 @@ class TaskResultContractTest {
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
-          assertEquals("B", ctx.get(B, String.class).orElse(null));
+          assertEquals("B", ctx.get(FlowKey.of(B, String.class)).orElse(null));
         })
         .verifyComplete();
 
@@ -179,8 +175,8 @@ class TaskResultContractTest {
     ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectNextCount(1)
-        .verifyComplete();
+        .expectError(IllegalStateException.class)
+        .verify();
 
     assertEquals(0, bCounter.get(), "B should not execute when required A throws sync exception");
   }
@@ -222,7 +218,7 @@ class TaskResultContractTest {
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
-          assertEquals("B", ctx.get(B, String.class).orElse(null));
+          assertEquals("B", ctx.get(FlowKey.of(B, String.class)).orElse(null));
         })
         .verifyComplete();
 

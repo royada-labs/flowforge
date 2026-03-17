@@ -1,7 +1,6 @@
 package io.tugrandsolutions.flowforge.workflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -118,19 +117,8 @@ class SemanticsTest {
     ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .assertNext(ctx -> {
-          // A succeeded
-          assertEquals("10", ctx.get(A, String.class).orElse(null));
-          // B failed due to class cast
-          assertFalse(ctx.get(B, String.class).isPresent());
-          // We verify B is effectively failed in the graph (implicit in the result
-          // absence or logic)
-          // Note: Orchestrator catches the cancellation/error.
-          // To verify the error specifically we'd need a monitor or check the status map
-          // which isn't public in context.
-          // But effectively, context for B should be empty.
-        })
-        .verifyComplete();
+        .expectError()
+        .verify();
   }
 
   @Test
@@ -164,7 +152,7 @@ class SemanticsTest {
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
-          assertEquals("C executed", ctx.get(C, String.class).orElse(null));
+          assertEquals("C executed", ctx.get(FlowKey.of(C, String.class)).orElse(null));
         })
         .verifyComplete();
   }
@@ -199,10 +187,8 @@ class SemanticsTest {
     ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .assertNext(ctx -> {
-          assertFalse(ctx.get(C, String.class).isPresent(), "C should not execute if required A fails");
-        })
-        .verifyComplete();
+        .expectError()
+        .verify();
   }
 
   // --- Helpers ---

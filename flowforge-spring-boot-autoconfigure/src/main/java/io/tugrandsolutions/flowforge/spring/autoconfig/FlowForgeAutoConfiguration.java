@@ -24,6 +24,7 @@ import io.tugrandsolutions.flowforge.workflow.monitor.WorkflowMonitor;
 import reactor.core.scheduler.Schedulers;
 
 @AutoConfiguration
+@org.springframework.boot.context.properties.EnableConfigurationProperties(FlowForgeProperties.class)
 public class FlowForgeAutoConfiguration {
 
     @Bean
@@ -71,9 +72,17 @@ public class FlowForgeAutoConfiguration {
     public ReactiveWorkflowOrchestrator reactiveWorkflowOrchestrator(
             ObjectProvider<WorkflowMonitor> monitorProvider,
             ObjectProvider<io.tugrandsolutions.flowforge.workflow.trace.ExecutionTracerFactory> tracerFactoryProvider,
-            reactor.core.scheduler.Scheduler flowForgeScheduler) {
+            reactor.core.scheduler.Scheduler flowForgeScheduler,
+            FlowForgeProperties properties) {
         WorkflowMonitor monitor = monitorProvider.getIfAvailable(NoOpWorkflowMonitor::new);
         io.tugrandsolutions.flowforge.workflow.trace.ExecutionTracerFactory tracerFactory = tracerFactoryProvider.getIfAvailable();
+
+        io.tugrandsolutions.flowforge.workflow.orchestrator.ExecutionLimits limits = 
+            new io.tugrandsolutions.flowforge.workflow.orchestrator.ExecutionLimits(
+                properties.getExecution().getMaxInFlightTasks(),
+                properties.getExecution().getMaxQueueSize(),
+                properties.getExecution().getBackpressureStrategy()
+            );
 
         return new ReactiveWorkflowOrchestrator(
                 Schedulers.boundedElastic(),
@@ -81,7 +90,7 @@ public class FlowForgeAutoConfiguration {
                 monitor,
                 new DefaultTaskInputResolver(),
                 tracerFactory,
-                Math.max(2, Runtime.getRuntime().availableProcessors()));
+                limits);
     }
 
     @Bean

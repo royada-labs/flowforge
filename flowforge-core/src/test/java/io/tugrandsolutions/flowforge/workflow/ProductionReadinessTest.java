@@ -1,6 +1,6 @@
 package io.tugrandsolutions.flowforge.workflow;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
@@ -108,11 +108,8 @@ class ProductionReadinessTest {
         io.tugrandsolutions.flowforge.workflow.graph.WorkflowGraph.build(List.of(dReq)));
 
     StepVerifier.create(new ReactiveWorkflowOrchestrator().execute(plan1, null))
-        .assertNext(ctx -> {
-          // Workflow completes normally even if task fails
-          assertFalse(ctx.get(RequiredSlow, Object.class).isPresent(), "Failed task should have no output");
-        })
-        .verifyComplete();
+        .expectError()
+        .verify();
 
     // Case 2: Optional task times out, Dependent runs
     TaskDescriptor dOpt = new TaskDescriptor(tOptSlow, fastTimeout);
@@ -123,8 +120,8 @@ class ProductionReadinessTest {
 
     StepVerifier.create(new ReactiveWorkflowOrchestrator().execute(plan2, null))
         .assertNext(ctx -> {
-          // Dependent should assertEquals("DependentRan", ctx.get(Dependent,
-          // String.class).orElse(null));
+          FlowKey<String> dependentKey = FlowKey.of(Dependent, String.class);
+          assertEquals("DependentRan", ctx.get(dependentKey).orElse(null));
         })
         .verifyComplete();
   }

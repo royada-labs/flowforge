@@ -116,8 +116,8 @@ class ObservabilityTest {
         new io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver());
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectNextCount(1)
-        .verifyComplete();
+        .expectError()
+        .verify();
 
     // A: success, B: skipped (optional failure), C: success, D: failed, E: failed
     // (cascade)
@@ -255,8 +255,8 @@ class ObservabilityTest {
         new io.tugrandsolutions.flowforge.workflow.input.DefaultTaskInputResolver());
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectNextCount(1)
-        .verifyComplete();
+        .expectError()
+        .verify();
 
     ExecutionReport report = capturedReport.get();
     assertNotNull(report, "Report should be captured");

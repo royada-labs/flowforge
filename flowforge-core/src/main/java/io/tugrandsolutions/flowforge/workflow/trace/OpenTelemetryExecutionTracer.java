@@ -36,6 +36,7 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
         this.workflowSpan = tracer.spanBuilder("flowforge.workflow." + workflowId)
                 .setAttribute("flowforge.workflow.id", workflowId)
                 .setAttribute("flowforge.execution.id", executionId)
+                .setAttribute("flowforge.system", "flowforge")
                 .startSpan();
 
         this.traceId = workflowSpan.getSpanContext().getTraceId();
@@ -44,7 +45,9 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     @Override
     public void onWorkflowSuccess() {
         if (workflowSpan != null) {
-            workflowSpan.setStatus(StatusCode.OK);
+            if (workflowSpan.isRecording()) {
+                workflowSpan.setStatus(StatusCode.OK);
+            }
             workflowSpan.end();
             workflowSpan = null;
         }
@@ -53,8 +56,10 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     @Override
     public void onWorkflowError(Throwable error) {
         if (workflowSpan != null) {
-            workflowSpan.recordException(error);
-            workflowSpan.setStatus(StatusCode.ERROR);
+            if (workflowSpan.isRecording()) {
+                workflowSpan.recordException(error);
+                workflowSpan.setStatus(StatusCode.ERROR);
+            }
             workflowSpan.end();
             workflowSpan = null;
         }
@@ -63,7 +68,9 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     @Override
     public void onWorkflowCanceled() {
         if (workflowSpan != null) {
-            workflowSpan.setAttribute("flowforge.status", "CANCELED");
+            if (workflowSpan.isRecording()) {
+                workflowSpan.setAttribute("flowforge.status", "CANCELED");
+            }
             workflowSpan.end();
             workflowSpan = null;
         }
@@ -71,8 +78,6 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
 
     @Override
     public void onTaskStart(String taskId) {
-        // We use the root workflow span as parent to ensure correct hierarchy
-        // even if Reactor shifts threads between callbacks.
         Context parentContext = workflowSpan != null 
                 ? Context.current().with(workflowSpan) 
                 : Context.current();
@@ -80,12 +85,15 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
         Span taskSpan = tracer.spanBuilder("flowforge.task." + taskId)
                 .setParent(parentContext)
                 .setAttribute("flowforge.task.id", taskId)
+                .setAttribute("flowforge.system", "flowforge")
                 .startSpan();
 
-        TypeMetadata types = typeInfo.get(taskId);
-        if (types != null) {
-            taskSpan.setAttribute("flowforge.task.input.type", types.inputType().getSimpleName());
-            taskSpan.setAttribute("flowforge.task.output.type", types.outputType().getSimpleName());
+        if (taskSpan.isRecording()) {
+            TypeMetadata types = typeInfo.get(taskId);
+            if (types != null) {
+                taskSpan.setAttribute("flowforge.task.input.type", types.inputType().getSimpleName());
+                taskSpan.setAttribute("flowforge.task.output.type", types.outputType().getSimpleName());
+            }
         }
 
         activeSpans.put(taskId, taskSpan);
@@ -95,8 +103,10 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     public void onTaskSuccess(String taskId, Object output) {
         Span span = activeSpans.remove(taskId);
         if (span != null) {
-            span.setAttribute("flowforge.task.status", "SUCCESS");
-            span.setStatus(StatusCode.OK);
+            if (span.isRecording()) {
+                span.setAttribute("flowforge.task.status", "SUCCESS");
+                span.setStatus(StatusCode.OK);
+            }
             span.end();
         }
     }
@@ -105,7 +115,9 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     public void onTaskSkipped(String taskId) {
         Span span = activeSpans.remove(taskId);
         if (span != null) {
-            span.setAttribute("flowforge.task.status", "SKIPPED");
+            if (span.isRecording()) {
+                span.setAttribute("flowforge.task.status", "SKIPPED");
+            }
             span.end();
         }
     }
@@ -114,9 +126,11 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     public void onTaskError(String taskId, Throwable error) {
         Span span = activeSpans.remove(taskId);
         if (span != null) {
-            span.recordException(error);
-            span.setStatus(StatusCode.ERROR);
-            span.setAttribute("flowforge.task.status", "ERROR");
+            if (span.isRecording()) {
+                span.recordException(error);
+                span.setStatus(StatusCode.ERROR);
+                span.setAttribute("flowforge.task.status", "ERROR");
+            }
             span.end();
         }
     }

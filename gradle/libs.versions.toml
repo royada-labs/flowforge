@@ -4,7 +4,6 @@ springDependencyManagement = "1.1.7"
 
 # slf4j, lombok, junit, assertj, hdrhistogram, reactor vienen del BOM de Spring Boot
 spotbugsAnnotations = "4.9.8"
-jsonSchemaValidator = "3.0.1"
 hdrhistogram = "2.2.2"
 opentelemetry = "1.47.0"
 
@@ -15,6 +14,9 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 [libraries]
 # BOMs / platforms
 spring-boot-dependencies-bom = {module = "org.springframework.boot:spring-boot-dependencies",version.ref = "springBoot"}
+spring_boot_autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure" }
+spring_boot_configuration_processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
+spring_boot_test = { module = "org.springframework.boot:spring-boot-test" }
 
 # Reactor (alineado con Spring Boot)
 reactor-core = { module = "io.projectreactor:reactor-core" } 
@@ -34,9 +36,9 @@ lombok = { module = "org.projectlombok:lombok" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" } 
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" } 
 assertj-core = { module = "org.assertj:assertj-core" } 
+mockito-core = { module = "org.mockito:mockito-core" }
 
 hdrhistogram = { module = "org.hdrhistogram:HdrHistogram", version.ref = "hdrhistogram" }
-json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "jsonSchemaValidator" }
 
 # OpenTelemetry
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }

@@ -24,7 +24,9 @@ public interface ReactiveExecutionContext {
      * @param taskId the task identifier; must not be null
      * @param value  the output value; may be null
      * @param <T>    the value type
+     * @deprecated Use {@link #put(FlowKey, Object)} for type safety.
      */
+    @Deprecated(since = "0.4.0", forRemoval = false)
     <T> void put(TaskId taskId, T value);
 
     /**
@@ -35,7 +37,9 @@ public interface ReactiveExecutionContext {
      * @param <T>    the value type
      * @return an {@link Optional} containing the value if present and type-compatible,
      *         or empty if not found or type does not match
+     * @deprecated Use {@link #get(FlowKey)} for type safety.
      */
+    @Deprecated(since = "0.4.0", forRemoval = false)
     <T> Optional<T> get(TaskId taskId, Class<T> type);
 
     /**
@@ -43,7 +47,9 @@ public interface ReactiveExecutionContext {
      *
      * @param taskId the task identifier; must not be null
      * @return an {@link Optional} containing the raw value if present
+     * @deprecated Use {@link #get(FlowKey)} for type safety.
      */
+    @Deprecated(since = "0.4.0", forRemoval = false)
     default Optional<Object> get(TaskId taskId) {
         return get(taskId, Object.class);
     }

@@ -55,7 +55,7 @@ class PolicyIntegrationTest {
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
-          assertEquals("Success", ctx.get(A, String.class).orElse(null));
+          assertEquals("Success", ctx.get(FlowKey.of(A, String.class)).orElse(null));
         })
         .verifyComplete();
 
@@ -117,8 +117,8 @@ class PolicyIntegrationTest {
         2);
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectNextCount(1)
-        .verifyComplete();
+        .expectError()
+        .verify();
 
     assertEquals(1, failureCount.get(), "Task should have failed with TimeoutException");
   }

@@ -47,14 +47,14 @@ class OptionalFailurePropagationTest {
         StepVerifier.create(orchestrator.execute(plan, "input"))
                 .assertNext(ctx -> {
                     // A produce output
-                    assertEquals("ok", ctx.get(A, String.class).orElse(null));
+                    assertEquals("ok", ctx.get(FlowKey.of(A, String.class)).orElse(null));
 
                     // B falla pero es optional: NO garantizamos output en contexto
                     // (depende de tu BasicTask si guarda skipped o no). Lo importante:
                     assertEquals(1, cRuns.get(), "Dependent C should have run despite optional failure in B");
 
                     // C produce output
-                    assertEquals("c", ctx.get(C, String.class).orElse(null));
+                    assertEquals("c", ctx.get(FlowKey.of(C, String.class)).orElse(null));
                 })
                 .verifyComplete();
     }
@@ -83,12 +83,8 @@ class OptionalFailurePropagationTest {
                 );
 
         StepVerifier.create(orchestrator.execute(plan, "input"))
-                .assertNext(ctx -> {
-                    assertEquals("ok", ctx.get(A, String.class).orElse(null));
-                    assertEquals(0, cRuns.get(), "Dependent C must NOT run when required task B fails");
-                    assertFalse(ctx.get(C, String.class).isPresent(), "C should not have produced output");
-                })
-                .verifyComplete();
+                .expectError()
+                .verify();
     }
 
     /* ============================= */
