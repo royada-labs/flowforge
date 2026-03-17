@@ -2,6 +2,7 @@ package io.tugrandsolutions.flowforge.spring.dsl.internal;
 
 import io.tugrandsolutions.flowforge.spring.dsl.DefaultFlowBranch;
 import io.tugrandsolutions.flowforge.spring.dsl.FlowBranch;
+import io.tugrandsolutions.flowforge.validation.TypeMetadata;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -10,6 +11,7 @@ public class FlowGraph {
 
     private final Set<String> nodes = new LinkedHashSet<>();
     private final Set<Edge> edges = new LinkedHashSet<>();
+    private final Map<String, TypeMetadata> typeMetadata = new LinkedHashMap<>();
 
     private final String start;
     private Set<String> tails;
@@ -42,6 +44,27 @@ public class FlowGraph {
 
     public Set<String> tails() {
         return Collections.unmodifiableSet(tails);
+    }
+
+    /**
+     * Registers type metadata for the given task id.
+     * Called by the typed DSL when {@code TaskDefinition} is used.
+     *
+     * @param taskId     the task id
+     * @param inputType  the declared input type
+     * @param outputType the declared output type
+     */
+    public void registerTypeMetadata(String taskId, Class<?> inputType, Class<?> outputType) {
+        typeMetadata.put(taskId, new TypeMetadata(inputType, outputType));
+    }
+
+    /**
+     * Returns collected type metadata (unmodifiable).
+     *
+     * @return map from task id to type metadata
+     */
+    public Map<String, TypeMetadata> typeMetadata() {
+        return Collections.unmodifiableMap(typeMetadata);
     }
 
     public void then(String taskId) {
@@ -117,6 +140,16 @@ public class FlowGraph {
         @Override
         public Set<Edge> edges() {
             return parent.edges();
+        }
+
+        @Override
+        public void registerTypeMetadata(String taskId, Class<?> inputType, Class<?> outputType) {
+            parent.registerTypeMetadata(taskId, inputType, outputType);
+        }
+
+        @Override
+        public Map<String, TypeMetadata> typeMetadata() {
+            return parent.typeMetadata();
         }
 
         @Override

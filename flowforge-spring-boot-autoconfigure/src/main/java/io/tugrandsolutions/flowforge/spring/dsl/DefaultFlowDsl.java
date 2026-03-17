@@ -1,8 +1,10 @@
 package io.tugrandsolutions.flowforge.spring.dsl;
 
+import io.tugrandsolutions.flowforge.dsl.TypedTaskNode;
 import io.tugrandsolutions.flowforge.spring.dsl.internal.FlowGraph;
 import io.tugrandsolutions.flowforge.spring.dsl.internal.FlowPlanMaterializer;
 import io.tugrandsolutions.flowforge.spring.registry.TaskHandlerRegistry;
+import io.tugrandsolutions.flowforge.task.TaskDefinition;
 
 import java.util.Objects;
 
@@ -21,5 +23,15 @@ public final class DefaultFlowDsl implements FlowDsl {
         Objects.requireNonNull(taskId, "taskId");
         FlowGraph graph = FlowGraph.start(taskId);
         return new DefaultFlowBuilder(graph, materializer);
+    }
+
+    @Override
+    public <I, O> TypedFlowStart<O> startTyped(TaskDefinition<I, O> task) {
+        Objects.requireNonNull(task, "task");
+        FlowGraph graph = FlowGraph.start(task.idValue());
+        graph.registerTypeMetadata(task.idValue(), task.inputType(), task.outputType());
+        FlowBuilder builder = new DefaultFlowBuilder(graph, materializer);
+        TypedTaskNode<O> node = new TypedTaskNode<>(task.toRef());
+        return new TypedFlowStart<>(builder, node);
     }
 }
