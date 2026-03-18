@@ -1,8 +1,5 @@
 package io.flowforge.spring.autoconfig;
 
-import io.flowforge.spring.dsl.DefaultFlowDsl;
-import io.flowforge.spring.dsl.FlowDsl;
-import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -10,19 +7,22 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 import io.flowforge.api.FlowForgeClient;
+import io.flowforge.impl.DefaultFlowForgeClient;
+import io.flowforge.registry.WorkflowPlanRegistry;
+import io.flowforge.registry.WorkflowRegistry;
 import io.flowforge.spring.bootstrap.TaskScanner;
 import io.flowforge.spring.bootstrap.WorkflowPlanRegistrar;
-import io.flowforge.impl.DefaultFlowForgeClient;
+import io.flowforge.spring.dsl.DefaultFlowDsl;
+import io.flowforge.spring.dsl.FlowDsl;
 import io.flowforge.spring.registry.DefaultWorkflowPlanRegistry;
 import io.flowforge.spring.registry.MutableWorkflowPlanRegistry;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
-import io.flowforge.registry.WorkflowRegistry;
-import io.flowforge.registry.WorkflowPlanRegistry;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor;
 import io.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
+import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import reactor.core.scheduler.Schedulers;
 
 @AutoConfiguration

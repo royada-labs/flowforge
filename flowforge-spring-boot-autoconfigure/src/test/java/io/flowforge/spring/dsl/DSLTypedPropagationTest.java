@@ -1,23 +1,27 @@
 package io.flowforge.spring.dsl;
 
-import io.flowforge.api.FlowForgeClient;
-import io.flowforge.api.FlowTaskHandler;
-import io.flowforge.spring.annotations.FlowTask;
-import io.flowforge.spring.annotations.FlowWorkflow;
-import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
-import io.flowforge.task.TaskDefinition;
-import io.flowforge.task.FlowKey;
-import io.flowforge.workflow.ReactiveExecutionContext;
-import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import io.flowforge.api.FlowForgeClient;
+import io.flowforge.api.FlowTaskHandler;
+import io.flowforge.spring.annotations.FlowTask;
+import io.flowforge.spring.annotations.FlowWorkflow;
+import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
+import io.flowforge.task.FlowKey;
+import io.flowforge.task.TaskDefinition;
+import io.flowforge.workflow.ReactiveExecutionContext;
+import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for the typed DSL with type propagation.

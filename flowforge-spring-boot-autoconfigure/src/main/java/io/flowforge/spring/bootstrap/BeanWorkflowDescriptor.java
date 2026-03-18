@@ -1,9 +1,9 @@
 package io.flowforge.spring.bootstrap;
 
+import java.util.Objects;
+
 import io.flowforge.registry.WorkflowDescriptor;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
-
-import java.util.Objects;
 
 final class BeanWorkflowDescriptor implements WorkflowDescriptor {
 

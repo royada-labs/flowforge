@@ -1,7 +1,9 @@
 package io.flowforge.impl;
 
 import java.time.Duration;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import io.flowforge.api.FlowForgeClient;
 import io.flowforge.exception.UnknownWorkflowException;
@@ -15,9 +17,6 @@ import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.trace.ExecutionTrace;
 import reactor.core.publisher.Mono;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public final class DefaultFlowForgeClient implements FlowForgeClient {
 

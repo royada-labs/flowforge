@@ -1,10 +1,8 @@
 package io.flowforge.spring.bootstrap;
 
-import io.flowforge.registry.WorkflowRegistry;
-import io.flowforge.spring.annotations.FlowWorkflow;
-import io.flowforge.spring.dsl.FlowDsl;
-import io.flowforge.spring.workflow.WorkflowDefinition;
-import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanFactory;
@@ -16,8 +14,11 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import io.flowforge.registry.WorkflowRegistry;
+import io.flowforge.spring.annotations.FlowWorkflow;
+import io.flowforge.spring.dsl.FlowDsl;
+import io.flowforge.spring.workflow.WorkflowDefinition;
+import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
 /**
  * Discovers both workflow declaration styles and registers unified descriptors:

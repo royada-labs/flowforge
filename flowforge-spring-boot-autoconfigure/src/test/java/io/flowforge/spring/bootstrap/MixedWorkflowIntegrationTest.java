@@ -1,5 +1,14 @@
 package io.flowforge.spring.bootstrap;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.flowforge.api.FlowForgeClient;
 import io.flowforge.api.FlowTaskHandler;
 import io.flowforge.registry.WorkflowRegistry;
@@ -11,16 +20,8 @@ import io.flowforge.spring.workflow.WorkflowDefinition;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MixedWorkflowIntegrationTest {
 

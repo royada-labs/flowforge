@@ -1,17 +1,18 @@
 package io.flowforge.spring.bootstrap;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.flowforge.task.BasicTask;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.plan.WorkflowPlanBuilder;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 class BeanWorkflowDescriptorTest {
 

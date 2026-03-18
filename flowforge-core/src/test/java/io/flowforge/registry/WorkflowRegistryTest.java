@@ -1,20 +1,21 @@
 package io.flowforge.registry;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.flowforge.task.BasicTask;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.plan.WorkflowPlanBuilder;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WorkflowRegistryTest {
 
