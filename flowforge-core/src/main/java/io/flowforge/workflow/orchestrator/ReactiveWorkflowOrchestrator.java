@@ -6,9 +6,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import io.flowforge.task.TaskId;
 import io.flowforge.task.Task;
+import io.flowforge.task.TaskId;
 import io.flowforge.task.TaskResult;
+import io.flowforge.validation.TypeMetadata;
 import io.flowforge.workflow.InMemoryReactiveExecutionContext;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.graph.TaskNode;
@@ -21,16 +22,13 @@ import io.flowforge.workflow.instance.WorkflowRunMetadata;
 import io.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import io.flowforge.workflow.report.ExecutionReport;
+import io.flowforge.workflow.trace.CompositeExecutionTracer;
+import io.flowforge.workflow.trace.DefaultExecutionTracer;
+import io.flowforge.workflow.trace.ExecutionTrace;
 import io.flowforge.workflow.trace.ExecutionTracer;
 import io.flowforge.workflow.trace.ExecutionTracerFactory;
 import io.flowforge.workflow.trace.NoOpExecutionTracer;
-import io.flowforge.workflow.trace.DefaultExecutionTracer;
-import io.flowforge.workflow.trace.CompositeExecutionTracer;
-import io.flowforge.workflow.trace.ExecutionTrace;
-import io.flowforge.validation.TypeMetadata;
-
-
-import io.flowforge.workflow.report.ExecutionReport;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;

@@ -1,17 +1,18 @@
 package io.flowforge.workflow.trace;
 
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
-import io.opentelemetry.sdk.trace.data.SpanData;
-import io.flowforge.task.TaskId;
-import io.flowforge.validation.TypeMetadata;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import io.flowforge.task.TaskId;
+import io.flowforge.validation.TypeMetadata;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
+import io.opentelemetry.sdk.trace.data.SpanData;
 
 class OpenTelemetryExecutionTracerTest {
 

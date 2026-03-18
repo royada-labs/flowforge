@@ -1,17 +1,17 @@
 package io.flowforge.workflow.trace;
 
-import io.flowforge.task.TaskId;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.flowforge.validation.TypeMetadata;
-
-import io.opentelemetry.api.trace.SpanContext;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Collection;
+
+import io.flowforge.task.TaskId;
+import io.flowforge.validation.TypeMetadata;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 
 /**
  * Implementation of {@link ExecutionTracer} that exports events as OpenTelemetry spans.

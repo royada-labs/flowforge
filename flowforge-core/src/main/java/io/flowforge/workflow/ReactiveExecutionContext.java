@@ -3,13 +3,13 @@
  */
 package io.flowforge.workflow;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
-import io.flowforge.task.TaskId;
-import io.flowforge.task.FlowKey;
 import io.flowforge.exception.TypeMismatchException;
-import java.util.NoSuchElementException;
+import io.flowforge.task.FlowKey;
+import io.flowforge.task.TaskId;
 
 /**
  * Thread-safe store for intermediate task results within a single workflow execution.

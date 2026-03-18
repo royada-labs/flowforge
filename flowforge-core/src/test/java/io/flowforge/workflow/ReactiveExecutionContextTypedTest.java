@@ -1,15 +1,19 @@
 package io.flowforge.workflow;
 
-import io.flowforge.task.FlowKey;
-import io.flowforge.task.TaskDefinition;
-import io.flowforge.exception.TypeMismatchException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.flowforge.exception.TypeMismatchException;
+import io.flowforge.task.FlowKey;
+import io.flowforge.task.TaskDefinition;
 
 /**
  * Tests for the typed {@link FlowKey}-based API on {@link ReactiveExecutionContext}.
