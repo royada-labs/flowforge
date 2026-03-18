@@ -12,9 +12,8 @@ import org.springframework.stereotype.Component;
 
 import io.flowforge.api.FlowForgeClient;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.prometheus.metrics.core.util.Scheduler;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 @Component
