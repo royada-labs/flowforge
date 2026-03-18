@@ -9,6 +9,7 @@ The primary entry point for interacting with workflows.
 | Method | Return Type | Description |
 | :--- | :--- | :--- |
 | `execute(workflowId, input)` | `Mono<ReactiveExecutionContext>` | Triggers execution and returns the final context. |
+| `execute(workflowId, input, timeout)` | `Mono<ReactiveExecutionContext>` | Executes the workflow with a client-side timeout (errors if not complete in time). |
 | `executeResult(workflowId, input)` | `Mono<Object>` | Convenience method to get the final task's output. |
 | `executeWithTrace(workflowId, input)` | `Mono<ExecutionTrace>` | Executes and returns a detailed execution trace (JSON/pretty print). |
 
@@ -27,6 +28,18 @@ class CustomerTasks {
 ```
 
 `ReactiveExecutionContext` is optional for `@FlowTask` methods. Use it only when the task needs contextual reads/writes.
+
+`@FlowTask` also supports optional metadata for advanced workflows:
+
+- `optional = true`: marks a task as skippable if its dependencies fail.
+- `dependsOn = {"taskA", "taskB"}`: declares extra dependency edges beyond the sequential/DSL flow.
+- `inputType = X.class` / `outputType = Y.class`: manually override inferred input/output types (useful for complex generics or when the compiler cannot infer the types reliably).
+
+#### FAQ: ¿Cuándo usar cada opción?
+
+- **`optional=true`**: usa esto cuando la tarea no sea crítica y deba poder saltarse si una dependencia falla (p.ej., notificaciones secundarias).
+- **`dependsOn`**: útil cuando necesitas expresar dependencias adicionales que no aparecen en el flujo principal del DSL (ej. un task de limpieza que siempre debe ejecutarse después de un grupo de tareas).
+- **`inputType/outputType`**: útil cuando el compilador no puede inferir correctamente el tipo (por ejemplo, `Mono<?>` retornado o cuando se usan wrappers genéricos). Evita `ClassCastException` en tiempo de ejecución.
 
 You can still use `FlowTaskHandler` bean methods and `TaskDefinition` where needed.
 

@@ -104,3 +104,11 @@ client.execute("resilient-flow", null, Duration.ofMillis(500));
 **Behavior**:
 - The workflow execution is canceled if it takes longer than 500ms.
 - Task-level retry/timeout policies are configured in core task descriptors (`RetryPolicy`, `TimeoutPolicy`).
+
+A task descriptor example (used internally by the framework) looks like this:
+
+```java
+TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
+```
+
+This ensures retries/timeout are applied to the task at runtime.

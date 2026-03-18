@@ -109,6 +109,12 @@ public class MyService {
 }
 ```
 
+You can also execute with a client-side timeout:
+
+```java
+client.execute("first-flow", null, Duration.ofMillis(500));
+```
+
 Input contract:
 
 - If your root task input type is non-`Void`, provide a compatible `input` in `execute/executeResult`.

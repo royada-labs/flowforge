@@ -40,6 +40,7 @@ FlowForge provides several layers of protection:
 *   **Validation Errors**: Caught at startup (e.g., `STARTUP_CYCLE_DETECTED`).
 *   **Runtime Exceptions**: If a task throws an exception, the branch is marked as failed.
 *   **Execution Policies**: You can attach `RetryPolicy` or `TimeoutPolicy` to tasks to handle transient failures or slow operations.
+*   **Client Timeouts**: You can also apply a client-side timeout via `FlowForgeClient.execute(workflowId, input, timeout)` to cancel slow runs.
 
 ## 5. Observability
 

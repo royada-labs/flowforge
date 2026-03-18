@@ -78,7 +78,15 @@ FlowForge resolves method references using the **full JVM signature** (`implClas
 
 - If root tasks require non-`Void` input, callers must provide `client.execute(..., input)`.
 - If all roots are `Void`, extra input is ignored for backward compatibility.
+### Client Timeouts
 
+You can also execute workflows with a client-side timeout:
+
+```java
+client.execute("my-workflow", input, Duration.ofMillis(500))
+```
+
+This will cancel the execution and fail if the workflow does not complete in the given duration.
 ---
 
 ## 📦 Installation
