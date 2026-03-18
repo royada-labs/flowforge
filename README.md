@@ -126,6 +126,7 @@ Detailed guides and references are available in the `/docs` directory:
 3.  [**Examples**](docs/examples/index.md) - Real-world scenarios (API orchestration, data pipelines).
 4.  [**Observability**](docs/observability/index.md) - Tracing and OpenTelemetry metrics.
 5.  [**API Reference**](docs/api-reference/index.md) - Deep dive into core interfaces.
+6.  [**Migration Prompt Guide**](docs/migration-prompt-guide.md) - Prompt/checklist to migrate legacy implementations safely.
 
 ---
 
