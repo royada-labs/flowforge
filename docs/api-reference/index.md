@@ -14,7 +14,25 @@ The primary entry point for interacting with workflows.
 
 ---
 
-## 2. `TaskDefinition<I, O>`
+## 2. `@TaskHandler` + `@FlowTask` (Primary Declaration Model)
+
+Recommended way to declare tasks:
+
+```java
+@TaskHandler("customer")
+class CustomerTasks {
+    @FlowTask(id = "getUser")
+    Mono<User> getUser(Void in) { ... }
+}
+```
+
+`ReactiveExecutionContext` is optional for `@FlowTask` methods. Use it only when the task needs contextual reads/writes.
+
+You can still use `FlowTaskHandler` bean methods and `TaskDefinition` where needed.
+
+---
+
+## 3. `TaskDefinition<I, O>`
 
 Immutable metadata describing a task.
 
@@ -23,9 +41,9 @@ Immutable metadata describing a task.
 
 ---
 
-## 3. `ReactiveExecutionContext`
+## 4. `ReactiveExecutionContext`
 
-The state container for an active execution. Each task receives an instance in its `execute` method.
+The state container for an active execution. It is available to tasks that explicitly declare it as a parameter.
 
 - **`get(FlowKey<T> key)`**: Returns `Optional<T>`.
 - **`getOrThrow(FlowKey<T> key)`**: Returns `T` or throws `NoSuchElementException`.
@@ -33,9 +51,9 @@ The state container for an active execution. Each task receives an instance in i
 
 ---
 
-## 4. `FlowTaskHandler<I, O>`
+## 5. `FlowTaskHandler<I, O>`
 
-The interface your tasks must implement.
+Contract interface for functional bean-style tasks.
 
 ```java
 public interface FlowTaskHandler<I, O> {
@@ -55,7 +73,7 @@ class CustomerTasks {
 
 ---
 
-## 5. `FlowDsl`
+## 6. `FlowDsl`
 
 The fluent builder for workflows.
 
@@ -69,9 +87,11 @@ The fluent builder for workflows.
 - **`join(taskDef)`**: Synchronizes parallel branches into a single typed task.
 - **`join(methodRef)`**: Synchronizes branches using method references.
 
+In sequential chains, FlowForge automatically wires `previousOutput -> nextInput`.
+
 ---
 
-## 6. `ExecutionTracer`
+## 7. `ExecutionTracer`
 
 An SPI for capturing workflow events.
 
@@ -80,7 +100,7 @@ An SPI for capturing workflow events.
 
 ---
 
-## 7. Type Safety Guarantees
+## 8. Type Safety Guarantees
 
 FlowForge enforces typed chaining at compile time.
 

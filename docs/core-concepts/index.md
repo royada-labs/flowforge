@@ -14,6 +14,10 @@ FlowForge operates in three distinct phases:
 
 At the heart of FlowForge are two primitives:
 
+### Annotation-First Declaration
+The recommended declaration style is `@TaskHandler` classes with `@FlowTask` methods, wired with typed method references in the DSL (`flow(...)`, `then(...)`, `fork(...)`, `join(...)`, `parallel(...)`).
+`ReactiveExecutionContext` is optional in `@FlowTask` signatures and should be injected only when needed by that task.
+
 ### `TaskDefinition<I, O>`
 Describes a task's identity and its "contract" (Input type `I` and Output type `O`). It acts as the blueprint for both the DSL and the data access.
 
@@ -23,6 +27,7 @@ A type-safe address to a value in the execution context. When a task with output
 ## 3. Execution Model (DAG + Reactor)
 
 Workflows are modeled as a **Directed Acyclic Graph (DAG)**. 
+In sequential edges (`then(...)`), task output is automatically used as input of the next task.
 
 *   **Parallelism**: Tasks that do not depend on each other are executed concurrently.
 *   **Reactive**: Every step is a `Mono`. There are no blocking threads waiting for tasks to finish.

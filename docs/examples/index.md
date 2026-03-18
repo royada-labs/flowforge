@@ -2,23 +2,37 @@
 
 The following examples demonstrate how to use FlowForge in production scenarios.
 
-## 1. User Onboarding Flow
+## 1. User Onboarding Flow (Annotation-First)
 
 **Context**: When a user signs up, we need to create their account, send a welcome email, and provision a free tier resource.
 
 ```java
 @Configuration
 public class OnboardingFlow {
+    @TaskHandler("onboarding")
+    static class OnboardingTasks {
+        @FlowTask(id = "createAccount")
+        Mono<User> createAccount(Void in) { ... }
+
+        @FlowTask(id = "sendWelcomeEmail")
+        Mono<Void> sendWelcomeEmail(User in) { ... }
+
+        @FlowTask(id = "provisionResource")
+        Mono<Void> provisionResource(User in) { ... }
+
+        @FlowTask(id = "notifySlackAdmin")
+        Mono<Void> notifySlackAdmin(Object in, ReactiveExecutionContext ctx) { ... }
+    }
 
     @FlowWorkflow(id = "user-onboarding")
     @Bean
     public WorkflowExecutionPlan plan(FlowDsl dsl) {
-        return dsl.startTyped(CREATE_ACCOUNT)
+        return dsl.flow(OnboardingTasks::createAccount)
                   .fork(
-                      branch -> branch.then(SEND_WELCOME_EMAIL),
-                      branch -> branch.then(PROVISION_RESOURCE)
+                      branch -> branch.then(OnboardingTasks::sendWelcomeEmail),
+                      branch -> branch.then(OnboardingTasks::provisionResource)
                   )
-                  .join(NOTIFY_SLACK_ADMIN)
+                  .join(OnboardingTasks::notifySlackAdmin)
                   .build();
     }
 }
@@ -28,39 +42,13 @@ public class OnboardingFlow {
 - `CREATE_ACCOUNT` runs first. 
 - Once finished, `SEND_WELCOME_EMAIL` and `PROVISION_RESOURCE` run in parallel.
 - `NOTIFY_SLACK_ADMIN` only runs after both parallel branches succeed.
+- `ReactiveExecutionContext` is injected only in tasks that need it (`notifySlackAdmin` in this example).
 
 ---
 
-## 2. API Orchestration (Typed)
+## 2. API Orchestration (Annotation-First)
 
 **Context**: A gateway service that aggregates data from two microservices (User and Order) and calculates a discount.
-
-```java
-public class TypedOrchestration {
-    
-    static final TaskDefinition<Void, Object> START = TaskDefinition.of("start", Void.class, Object.class);
-    static final TaskDefinition<Object, User> GET_USER = TaskDefinition.of("getUser", Object.class, User.class);
-    static final TaskDefinition<Object, Order> GET_ORDER = TaskDefinition.of("getOrder", Object.class, Order.class);
-    static final TaskDefinition<Object, Double> CALC_DISCOUNT = TaskDefinition.of("calc", Object.class, Double.class);
-
-    @FlowWorkflow(id = "price-calculator")
-    @Bean
-    public WorkflowExecutionPlan plan(FlowDsl dsl) {
-        return dsl.startTyped(START)
-                  .fork(
-                      b -> b.then(GET_USER),
-                      b -> b.then(GET_ORDER)
-                  )
-                  .join(CALC_DISCOUNT)
-                  .build();
-    }
-}
-```
-
-**Behavior**: 
-`GET_USER` and `GET_ORDER` run in parallel after `START`. `CALC_DISCOUNT` runs when both branches complete.
-
-Method-reference equivalent with `@TaskHandler`:
 
 ```java
 @TaskHandler
@@ -80,6 +68,8 @@ dsl.flow(PricingTasks::start)
    .join(PricingTasks::calc)
    .build();
 ```
+
+Alternative for advanced use-cases: explicit `TaskDefinition` contracts are still supported.
 
 Overloaded method references are supported and resolved by full signature:
 

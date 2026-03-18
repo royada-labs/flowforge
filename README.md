@@ -8,54 +8,16 @@ Unlike traditional workflow engines, FlowForge focuses on **embedded, high-concu
 
 ---
 
-## 🚀 Quick Start (Typed DSL)
-
-```java
-public class UserOnboarding {
-    // 1. Define your tasks with types
-    static TaskDefinition<Void, User> FETCH = TaskDefinition.of("fetch", Void.class, User.class);
-    static TaskDefinition<User, Profile> ENRICH = TaskDefinition.of("enrich", User.class, Profile.class);
-
-    @Bean
-    public WorkflowExecutionPlan onboardingFlow(FlowDsl dsl) {
-        // 2. Compose with compile-time type safety
-        return dsl.startTyped(FETCH)
-                  .then(ENRICH)
-                  .build();
-    }
-
-}
-```
-
-Or with method references (no manual `TaskDefinition` constants):
-
-```java
-@Bean
-@FlowTask(id = "producer")
-FlowTaskHandler<Void, Integer> producer() { ... }
-
-@Bean
-@FlowTask(id = "toStringTask")
-FlowTaskHandler<Integer, String> toStringTask() { ... }
-
-@Bean
-WorkflowExecutionPlan plan(FlowDsl dsl) {
-    return dsl.flow(MyConfig::producer)
-              .then(MyConfig::toStringTask)
-              .build();
-}
-```
-
-Or with an annotated task container (no `FlowTaskHandler` interface implementation):
+## 🚀 Quick Start (Annotation-First)
 
 ```java
 @TaskHandler("customer")
 class CustomerTasks {
   @FlowTask(id = "getUser")
-  Mono<User> getUser(Void in, ReactiveExecutionContext ctx) { ... }
+  Mono<User> getUser(Void in) { ... } // no context needed
 
   @FlowTask(id = "getOrders")
-  Mono<OrderSummary> getOrders(User in, ReactiveExecutionContext ctx) { ... }
+  Mono<OrderSummary> getOrders(User in) { ... } // getUser output -> getOrders input
 
   @FlowTask(id = "discount")
   Mono<Discount> discount(OrderSummary in, ReactiveExecutionContext ctx) { ... }
@@ -63,12 +25,32 @@ class CustomerTasks {
 
 @Bean
 WorkflowExecutionPlan plan(FlowDsl dsl) {
-  return dsl.flow(CustomerTasks::getUser)
-            .then(CustomerTasks::getOrders)
-            .then(CustomerTasks::discount)
+    return dsl.flow(CustomerTasks::getUser)
+              .then(CustomerTasks::getOrders)
+              .then(CustomerTasks::discount)
+              .build();
+}
+```
+
+Alternative: explicit `TaskDefinition<I,O>` is still available for advanced/centralized contracts.
+
+```java
+TaskDefinition<Void, User> GET_USER = TaskDefinition.of("getUser", Void.class, User.class);
+TaskDefinition<User, OrderSummary> GET_ORDERS = TaskDefinition.of("getOrders", User.class, OrderSummary.class);
+TaskDefinition<OrderSummary, Discount> DISCOUNT = TaskDefinition.of("discount", OrderSummary.class, Discount.class);
+
+@Bean
+WorkflowExecutionPlan plan(FlowDsl dsl) {
+  return dsl.startTyped(GET_USER)
+            .then(GET_ORDERS)
+            .then(DISCOUNT)
             .build();
 }
 ```
+
+`ReactiveExecutionContext` is optional in `@FlowTask` methods. Inject it only when the task needs to read/write additional values from context; otherwise keep the signature minimal (`input -> output`).
+
+In sequential composition (`flow(...).then(...)`), FlowForge automatically feeds the previous task output as the next task input.
 
 ---
 

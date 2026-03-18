@@ -28,43 +28,30 @@ dependencies {
 
 A workflow consists of **Tasks** and a **Plan**.
 
-### Define a Task
-Create a Spring Component that implements `FlowTaskHandler`.
+### Recommended: Annotation-First (`@TaskHandler` + `@FlowTask`)
 
 ```java
-@FlowTask(id = "calculateLength")
-@Component
-public class LengthTask implements FlowTaskHandler<Void, Integer> {
-    @Override
-    public Mono<Integer> execute(Void input, ReactiveExecutionContext ctx) {
+@TaskHandler("demo")
+class DemoTasks {
+    @FlowTask(id = "calculateLength")
+    Mono<Integer> calculateLength(Void input) {
         return Mono.just(5);
     }
 }
-```
 
-### Compose the Workflow
-Use the `FlowDsl` to wire tasks together.
-
-```java
 @Configuration
-public class MyFlowConfig {
-    
-    // Type-safe handles
-    public static final TaskDefinition<Void, Integer> LENGTH = 
-        TaskDefinition.of("calculateLength", Void.class, Integer.class);
-
+class MyFlowConfig {
     @FlowWorkflow(id = "first-flow")
     @Bean
-    public WorkflowExecutionPlan myPlan(FlowDsl dsl) {
-        return dsl.startTyped(LENGTH)
-                  .build();
+    WorkflowExecutionPlan myPlan(FlowDsl dsl) {
+        return dsl.flow(DemoTasks::calculateLength).build();
     }
 }
 ```
 
-### Compose Without Manual `TaskDefinition`
+`ReactiveExecutionContext` is optional in `@FlowTask` methods. Add it only if that specific task needs context access.
 
-You can also define workflows with typed method references to `@FlowTask` bean methods.
+### Alternative: Bean Methods Returning `FlowTaskHandler`
 
 ```java
 @Configuration
@@ -74,16 +61,28 @@ public class MyFlowConfig {
     @FlowTask(id = "producer")
     FlowTaskHandler<Void, Integer> producer() { ... }
 
+    @FlowWorkflow(id = "first-flow")
     @Bean
-    @FlowTask(id = "toStringTask")
-    FlowTaskHandler<Integer, String> toStringTask() { ... }
+    WorkflowExecutionPlan myPlan(FlowDsl dsl) {
+        return dsl.flow(MyFlowConfig::producer).build();
+    }
+}
+```
+
+### Advanced Alternative: Explicit `TaskDefinition<I,O>`
+
+Use this when you prefer centralized static contracts.
+
+```java
+@Configuration
+public class MyFlowConfig {
+    static final TaskDefinition<Void, Integer> PRODUCER =
+        TaskDefinition.of("producer", Void.class, Integer.class);
 
     @FlowWorkflow(id = "method-ref-flow")
     @Bean
     WorkflowExecutionPlan myPlan(FlowDsl dsl) {
-        return dsl.flow(MyFlowConfig::producer)
-                  .then(MyFlowConfig::toStringTask)
-                  .build();
+        return dsl.startTyped(PRODUCER).build();
     }
 }
 ```
@@ -138,16 +137,16 @@ This guarantees that if the workflow compiles, the data types in your context ar
 
 ## 5. `@TaskHandler` Style (No Interface Boilerplate)
 
-You can group task methods in a Spring bean annotated with `@TaskHandler` and annotate each method with `@FlowTask`.
+This is the primary recommended style in FlowForge.
 
 ```java
 @TaskHandler
 class CustomerTasks {
     @FlowTask(id = "producer")
-    Mono<Integer> producer(Void in, ReactiveExecutionContext ctx) { ... }
+    Mono<Integer> producer(Void in) { ... }
 
     @FlowTask(id = "formatter")
-    Mono<String> formatter(Integer in, ReactiveExecutionContext ctx) { ... }
+    Mono<String> formatter(Integer in) { ... }
 }
 
 @Bean
@@ -157,3 +156,5 @@ WorkflowExecutionPlan plan(FlowDsl dsl) {
               .build();
 }
 ```
+
+Sequential rule: the output type of each task is the input type of the next task in `.then(...)`. If the types do not match, it fails at compile time.
