@@ -1,7 +1,5 @@
 package io.flowforge.harness;
 
-import static org.assertj.core.api.Assertions.fail;
-
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,8 +12,9 @@ import org.springframework.stereotype.Component;
 
 import io.flowforge.api.FlowForgeClient;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.prometheus.metrics.core.util.Scheduler;
+import io.micrometer.core.instrument.Timer;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 @Component
