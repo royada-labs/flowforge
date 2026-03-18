@@ -1,0 +1,13 @@
+// El plugin 'java-platform' y 'maven-publish' se aplican desde el build.gradle raíz
+// basándose en el nombre del proyecto. Este archivo contiene la configuración específica del BOM.
+
+javaPlatform {
+    allowDependencies()
+}
+
+dependencies {
+    constraints {
+        // Fijamos la versión del core para que coincida con la del BOM
+        api "io.flowforge:flowforge-core:${project.version}"
+    }
+}

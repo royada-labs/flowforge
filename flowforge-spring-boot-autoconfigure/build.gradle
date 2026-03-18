@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+}
+dependencies {
+    api project(':flowforge-core')
+    api libs.spring.boot.autoconfigure
+    
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    testCompileOnly libs.lombok
+    testAnnotationProcessor libs.lombok
+    annotationProcessor libs.spring.boot.configuration.processor
+
+    testImplementation(libs.spring.boot.test)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.reactor.test)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.mockito.core)
+
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.slf4j.simple)
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = "full"
+        showStandardStreams = true
+    }
+}

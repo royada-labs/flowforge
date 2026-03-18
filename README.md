@@ -2,130 +2,135 @@
 
 **Forge reactive workflows with precision.**
 
-FlowForge is a lightweight, strongly-typed, reactive workflow orchestration engine for Java. It enables you to define, execute, and monitor complex business workflows composed of reusable tasks, executed asynchronously using Project Reactor.
+FlowForge is a lightweight, strongly-typed, reactive workflow orchestration engine for Java. It enables you to define, validate, execute, and observe complex business workflows composed of reusable tasks, executed asynchronously using Project Reactor.
 
-FlowForge is designed for **embedded, high-concurrency, short-lived workflows** where determinism, type safety, and observability matter more than heavyweight BPM or distributed durability.
-
----
-
-## 🚀 Key Features
-
-### ✨ Reactive & Non-Blocking
-Built entirely on **Project Reactor**. Tasks are executed as `Mono<T>` pipelines, maximizing resource utilization via non-blocking I/O.
-
-### 🛡️ Production-Ready Reliability
-- **Dead-End Detection**: Automatically detects invalid workflow states where no progress is possible (runtime deadlocks) and fails fast with `DeadEndException`.
-- **Cycle Detection**: Validates the DAG structure at build time to prevent infinite loops.
-- **Strict Contracts**: Handles edge cases like `Mono.empty()` or synchronous exceptions by normalizing them into explicit failures, preventing silent hangs.
-
-### ⏱️ Control & Lifecycle
-- **Cooperative Cancellation**: Instantly stops workflow planning and cancels running reactive streams when requested.
-- **Double Timeout Strategy**:
-    - **Global Timeout**: Enforce a hard limit on the entire workflow execution.
-    - **Per-Task Timeout**: smart handling where `Optional` tasks verify timeout without failing the workflow, while `Required` tasks enforce strict SLAs.
-
-### 🔍 Deep Observability
-- **Execution Reports**: Generates detailed `ExecutionReport` containing final task statuses, individual durations, error stack traces, and concurrency metrics.
-- **Race-Free Monitoring**: Guarantees that the final report is available to monitors *before* the workflow emits its final signal.
-- **Ordered Events**: Deterministic event stream (`TaskStart` -> `TaskSuccess`/`Failure`) for external monitoring systems.
+Unlike traditional workflow engines, FlowForge focuses on **embedded, high-concurrency, short-lived workflows** where type safety and observability are paramount.
 
 ---
 
-## 📦 Usage Examples
-
-### 1. Defining Tasks
+## 🚀 Quick Start (Typed DSL)
 
 ```java
-TaskId FETCH_DATA = new TaskId("fetch-data");
-TaskId PROCESS_DATA = new TaskId("process-data");
+public class UserOnboarding {
+    // 1. Define your tasks with types
+    static TaskDefinition<Void, User> FETCH = TaskDefinition.of("fetch", Void.class, User.class);
+    static TaskDefinition<User, Profile> ENRICH = TaskDefinition.of("enrich", User.class, Profile.class);
 
-Task<String, String> fetchTask = new BasicTask<>(FETCH_DATA) {
-    @Override
-    protected Mono<String> doExecute(String input, ReactiveExecutionContext context) {
-        return webClient.get().uri("/data").retrieve().bodyToMono(String.class);
-    }
-};
-
-Task<String, Result> processTask = new BasicTask<>(PROCESS_DATA) {
-    @Override
-    public Set<TaskId> dependencies() {
-        return Set.of(FETCH_DATA);
+    @Bean
+    public WorkflowExecutionPlan onboardingFlow(FlowDsl dsl) {
+        // 2. Compose with compile-time type safety
+        return dsl.startTyped(FETCH)
+                  .then(ENRICH)
+                  .build();
     }
 
-    @Override
-    protected Mono<Result> doExecute(String input, ReactiveExecutionContext context) {
-        // Input is automatically resolved from dependency output
-        return service.process(input); 
-    }
-};
+}
 ```
 
-### 2. Building and Validating the Plan
+Or with method references (no manual `TaskDefinition` constants):
 
 ```java
-// Automatic validation of cycles, duplicates, and missing dependencies
-WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(fetchTask, processTask));
+@Bean
+@FlowTask(id = "producer")
+FlowTaskHandler<Void, Integer> producer() { ... }
+
+@Bean
+@FlowTask(id = "toStringTask")
+FlowTaskHandler<Integer, String> toStringTask() { ... }
+
+@Bean
+WorkflowExecutionPlan plan(FlowDsl dsl) {
+    return dsl.flow(MyConfig::producer)
+              .then(MyConfig::toStringTask)
+              .build();
+}
 ```
 
-### 3. Executing with Policies
+Or with an annotated task container (no `FlowTaskHandler` interface implementation):
 
 ```java
-ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+@TaskHandler("customer")
+class CustomerTasks {
+  @FlowTask(id = "getUser")
+  Mono<User> getUser(Void in, ReactiveExecutionContext ctx) { ... }
 
-// Execute with a global timeout of 5 seconds
-orchestrator.execute(plan, "initial-input", Duration.ofSeconds(5))
-    .doOnNext(context -> {
-        Result result = context.get(PROCESS_DATA, Result.class).orElseThrow();
-        System.out.println("Workflow finished: " + result);
-    })
-    .doOnError(TimeoutException.class, e -> System.err.println("Workflow timed out!"))
-    .doOnError(DeadEndException.class, e -> System.err.println("Workflow stuck in dead-end!"))
-    .subscribe();
-```
+  @FlowTask(id = "getOrders")
+  Mono<OrderSummary> getOrders(User in, ReactiveExecutionContext ctx) { ... }
 
-### 4. Monitoring
+  @FlowTask(id = "discount")
+  Mono<Discount> discount(OrderSummary in, ReactiveExecutionContext ctx) { ... }
+}
 
-```java
-WorkflowMonitor monitor = new WorkflowMonitor() {
-    @Override
-    public void onWorkflowComplete(WorkflowInstance instance, ExecutionReport report) {
-        System.out.println("Total duration: " + report.getTotalDuration());
-        System.out.println("Failed tasks: " + report.getFailedTasks());
-        
-        if (report.getFinalStatuses().get(FETCH_DATA) == TaskStatus.FAILED) {
-            log.error("Fetch failed: ", report.getError(FETCH_DATA).orElse(null));
-        }
-    }
-};
-
-// Orchestrator with custom monitor
-new ReactiveWorkflowOrchestrator(
-    Schedulers.parallel(), 
-    monitor, 
-    new DefaultTaskInputResolver()
-);
+@Bean
+WorkflowExecutionPlan plan(FlowDsl dsl) {
+  return dsl.flow(CustomerTasks::getUser)
+            .then(CustomerTasks::getOrders)
+            .then(CustomerTasks::discount)
+            .build();
+}
 ```
 
 ---
 
-## 🏗️ Architecture
+## ✨ Key Features
 
-FlowForge follows a programmatic orchestration model:
-
-1.  **Workflow Definition**: Strongly typed `Task` objects defining logic and dependencies.
-2.  **Validation**: Structural analysis of the DAG (Directed Acyclic Graph).
-3.  **Orchestrator**: Event-driven engine using extensive `Sinks` and `Schedulers`.
-    - **State Loop**: Single-threaded serializer for state updates (lock-free safety).
-    - **Worker Loop**: Parallel execution of tasks on bounded schedulers.
-4.  **Execution Context**: Thread-safe storage for task outputs passing data downstream.
+*   🛡️ **Bulletproof Type-Safety**: No runtime casting. Type propagation is enforced by the compiler across the DAG.
+*   ⚡ **Reactive Execution**: Built on **Project Reactor**. Fully non-blocking and backpressure-ready.
+*   🧱 **Fail-Fast Validation**: Advanced DAG analysis detects cycles and missing dependencies at startup.
+*   🔍 **Deep Observability**: Native integration with **OpenTelemetry** and structured JSON execution tracing.
+*   📦 **Spring Boot Optimized**: Zero-config starter with auto-discovery of tasks and workflows.
+*   🔐 **Safe Task Registration**: Startup-time detection rejects duplicate/conflicting task metadata and ambiguous method-reference mappings.
 
 ---
 
-## 🚫 Scope (Non-Goals)
+## 🔒 Registration & Resolution Guarantees
 
-FlowForge is intentionally **not**:
-* A distributed workflow engine (no database persistence required).
-* A BPMN visual tool.
-* A replacement for Temporal/Camunda (use those for long-running, durable, human-centric processes).
+FlowForge resolves method references using the **full JVM signature** (`implClass + method + descriptor`), not by heuristic name fallback.
 
-**Use FlowForge for**: High-frequency composite API handling, parallel data aggregation, and complex in-memory business logic pipelines.
+- Duplicate `TaskDefinition` identities are rejected at startup.
+- Conflicting method-reference registrations are rejected at startup.
+- Overloaded task methods are resolved deterministically by signature.
+- Reflection/introspection happens at startup only; runtime executes pre-built task plans.
+
+### Root Input Contract
+
+- If root tasks require non-`Void` input, callers must provide `client.execute(..., input)`.
+- If all roots are `Void`, extra input is ignored for backward compatibility.
+
+---
+
+## 📦 Installation
+
+### Gradle
+```gradle
+implementation("io.flowforge:flowforge-spring-boot-starter:1.0.0")
+```
+
+### Maven
+```xml
+<dependency>
+  <groupId>io.flowforge</groupId>
+  <artifactId>flowforge-spring-boot-starter</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+---
+
+## 📚 Documentation
+
+Detailed guides and references are available in the `/docs` directory:
+
+1.  [**Getting Started**](docs/getting-started/index.md) - Installation and your first workflow.
+2.  [**Core Concepts**](docs/core-concepts/index.md) - Architecture, types, and the execution model.
+3.  [**Examples**](docs/examples/index.md) - Real-world scenarios (API orchestration, data pipelines).
+4.  [**Observability**](docs/observability/index.md) - Tracing and OpenTelemetry metrics.
+5.  [**API Reference**](docs/api-reference/index.md) - Deep dive into core interfaces.
+6.  [**Migration Prompt Guide**](docs/migration-prompt-guide.md) - Prompt/checklist to migrate legacy implementations safely.
+
+---
+
+## 📄 License
+
+Licensed under the [Apache License 2.0](LICENSE).
+Copyright 2026 Rolando Rodríguez González.

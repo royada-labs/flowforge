@@ -12,17 +12,99 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java-library'
+    if (project.name == "flowforge-bom") {
+        apply plugin: 'java-platform'
+    } else {
+        // Todos los demás módulos (incluyendo stress-harness) son Java
+        apply plugin: 'java'
+        if (project.name != "flowforge-stress-harness") {
+            apply plugin: 'java-library'
+        }
+    }
+    
+    // Aplicamos el BOM a todos los módulos que no sean el propio BOM
+    if (project.name != "flowforge-bom") {
+        dependencies {
+            implementation platform(libs.spring.boot.dependencies.bom)
+            annotationProcessor platform(libs.spring.boot.dependencies.bom)
+            testAnnotationProcessor platform(libs.spring.boot.dependencies.bom)
+        }
+    }
 
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(
-                    project.findProperty('javaVersion') as int
-            )
+    // EXCLUSIÓN de publicación para stress-harness
+    if (project.name == "flowforge-stress-harness") {
+        return
+    }
+
+    apply plugin: 'maven-publish'
+
+    if (project.name != "flowforge-bom") {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(
+                        project.findProperty('javaVersion') as int
+                )
+            }
         }
     }
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs += ['-Xlint:unchecked']
+    }
+
+    tasks.withType(Jar).configureEach {
+        from(rootProject.file("LICENSE")) {
+            into("META-INF")
+        }
+        from(rootProject.file("NOTICE")) {
+            into("META-INF")
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                if (project.name == "flowforge-bom") {
+                    from components.javaPlatform
+                } else {
+                    from components.java
+                }
+
+                groupId = 'io.flowforge'
+                artifactId = project.name
+                version = project.version
+
+                pom {
+                    name = project.name
+                    description = 'Type-safe, reactive workflow orchestration for Java'
+                    url = 'https://github.com/flowforge/flowforge'
+                    licenses {
+                        license {
+                            name = 'Apache License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                        }
+                    }
+                }
+            }
+        }
+
+        repositories {
+            maven {
+                name = "nexus"
+
+                url = version.endsWith('SNAPSHOT')
+                        ? uri("https://nexus.royadahome.com/repository/maven-snapshots/")
+                        : uri("https://nexus.royadahome.com/repository/maven-releases/")
+
+                credentials {
+                    username = findProperty("nexusUser") ?: System.getenv("NEXUS_USER")
+                    password = findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
+                }
+            }
+        }
     }
 }

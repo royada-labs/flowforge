@@ -1,0 +1,47 @@
+[versions]
+springBoot = "4.0.3"
+springDependencyManagement = "1.1.7"
+
+# slf4j, lombok, junit, assertj, hdrhistogram, reactor vienen del BOM de Spring Boot
+spotbugsAnnotations = "4.9.8"
+hdrhistogram = "2.2.2"
+opentelemetry = "1.47.0"
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+
+[libraries]
+# BOMs / platforms
+spring-boot-dependencies-bom = {module = "org.springframework.boot:spring-boot-dependencies",version.ref = "springBoot"}
+spring_boot_autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure" }
+spring_boot_configuration_processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
+spring_boot_test = { module = "org.springframework.boot:spring-boot-test" }
+
+# Reactor (alineado con Spring Boot)
+reactor-core = { module = "io.projectreactor:reactor-core" } 
+reactor-test = { module = "io.projectreactor:reactor-test" } 
+
+# Logging
+slf4j-api = { module = "org.slf4j:slf4j-api" } 
+slf4j-simple = { module = "org.slf4j:slf4j-simple" } 
+
+# SpotBugs
+spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugsAnnotations" }
+
+# Lombok
+lombok = { module = "org.projectlombok:lombok" } 
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" } 
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" } 
+assertj-core = { module = "org.assertj:assertj-core" } 
+mockito-core = { module = "org.mockito:mockito-core" }
+
+hdrhistogram = { module = "org.hdrhistogram:HdrHistogram", version.ref = "hdrhistogram" }
+
+# OpenTelemetry
+opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk" }
+opentelemetry-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testing" }

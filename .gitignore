@@ -1,0 +1,56 @@
+# Gradle
+.gradle/
+.gradle-local/
+build/
+**/build/
+!**/src/**/build/
+
+# Java
+*.class
+*.log
+*.ctxt
+*.mtp
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/**/out/
+
+# Eclipse
+.settings/
+.classpath
+.project
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.recommenders/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+.history/
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Flowforge specific (if any)
+# logs/
+build_output.txt
