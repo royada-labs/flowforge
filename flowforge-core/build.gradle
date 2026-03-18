@@ -8,10 +8,6 @@ dependencies {
     api(libs.reactor.core)
 
     api(libs.slf4j.api)
-    api(libs.spotbugs.annotations)
-
-    compileOnly(libs.lombok)
-    annotationProcessor(libs.lombok)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.reactor.test)

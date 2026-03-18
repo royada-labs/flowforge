@@ -1,6 +1,5 @@
 package io.flowforge.task;
 
-import io.flowforge.task.FlowKey;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

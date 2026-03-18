@@ -1,15 +1,12 @@
 package io.flowforge.spring.bootstrap;
 
-import java.util.concurrent.Flow;
 import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.annotations.FlowWorkflow;
 import io.flowforge.api.FlowForgeClient;
 import io.flowforge.api.FlowTaskHandler;
 import io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration;
 import io.flowforge.spring.dsl.FlowDsl;
-import io.flowforge.task.TaskId;
 import io.flowforge.task.TaskDefinition;
-import io.flowforge.task.FlowKey;
 import io.flowforge.workflow.ReactiveExecutionContext;
 
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
@@ -84,7 +81,6 @@ public class FlowForgeClientResultIntegrationTest {
 
     @Bean
     @FlowWorkflow(id = "parallel")
-    @SuppressWarnings("unchecked")
     public WorkflowExecutionPlan parallelPlan(FlowDsl dsl) {
       // A -> (B, C)
       return dsl.startTyped(TASK_A)

@@ -1,6 +1,5 @@
 package io.flowforge.workflow;
 
-import io.flowforge.task.TaskId;
 import io.flowforge.task.FlowKey;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.exception.TypeMismatchException;

@@ -5,13 +5,11 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import io.flowforge.validation.TypeMetadata;
 
 import io.opentelemetry.api.trace.SpanContext;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Collection;
 
@@ -32,7 +30,6 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
     private String traceId = "";
 
     private static final int MAX_ATTRIBUTE_LENGTH = 128;
-    private static final int MAX_ATTR_COUNT = 32;
 
     public OpenTelemetryExecutionTracer(Tracer tracer, Map<TaskId, TypeMetadata> typeInfo) {
         this.tracer = tracer;

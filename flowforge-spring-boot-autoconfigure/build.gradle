@@ -1,7 +1,6 @@
 plugins {
     id 'java-library'
     alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependency.management)
 }
 dependencies {
     api project(':flowforge-core')
@@ -9,8 +8,6 @@ dependencies {
     
     compileOnly libs.lombok
     annotationProcessor libs.lombok
-    testCompileOnly libs.lombok
-    testAnnotationProcessor libs.lombok
     annotationProcessor libs.spring.boot.configuration.processor
 
     testImplementation(libs.spring.boot.test)

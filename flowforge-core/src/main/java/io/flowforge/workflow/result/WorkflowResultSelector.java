@@ -3,7 +3,6 @@ package io.flowforge.workflow.result;
 import java.util.List;
 import java.util.Objects;
 
-import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.graph.TaskNode;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
