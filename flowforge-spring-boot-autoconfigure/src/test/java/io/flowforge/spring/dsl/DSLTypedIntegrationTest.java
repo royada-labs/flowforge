@@ -88,7 +88,7 @@ class DSLTypedIntegrationTest {
 
                     FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
 
-                    StepVerifier.create(client.execute("typed-flow", null))
+                    StepVerifier.create(client.<ReactiveExecutionContext>execute("typed-flow", null))
                             .assertNext(execCtx -> {
                                 Integer aResult = execCtx.get(KEY_A).orElse(null);
                                 Integer bResult = execCtx.get(KEY_B).orElse(null);

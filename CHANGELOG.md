@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-18
+
+### Added
+- **Unified Workflow Model**: Introduced `WorkflowDescriptor` as the internal abstraction for workflow registration and resolution.
+- **Class-Based Workflow Definitions**: Added `WorkflowDefinition` and support for class-level `@FlowWorkflow` declarations.
+- **Unified Workflow Registry**: Added `WorkflowRegistry` with centralized descriptor lookup by ID.
+- **Descriptor Adapters**: Added `BeanWorkflowDescriptor` and `ClassWorkflowDescriptor` to support both legacy and class-based workflow styles.
+
+### Changed
+- **Spring Registration Layer**: `WorkflowPlanRegistrar` now discovers and registers both `@Bean + @FlowWorkflow` and class-based `WorkflowDefinition` workflows.
+- **Backward Compatibility Path**: `DefaultWorkflowPlanRegistry` now bridges legacy plan registry APIs over the unified descriptor registry.
+- **FlowForgeClient Resolution**: Execution now resolves workflows through the descriptor registry while preserving runtime execution behavior.
+
+### Fixed
+- **Versioning Consistency**: Aligned release line to `1.x` and corrected changelog continuity after the transition from `0.x`.
+
+## [1.0.0] - 2026-03-15
+
+### Changed
+- **Stable 1.0 Baseline**: Transitioned from pre-1.0 (`0.x`) to stable `1.0.0` release line.
+- **Release Coordinates**: Standardized published artifacts and documentation references under `1.0.0`.
+
 ## [0.3.1] - 2026-03-15
 
 ### Changed
@@ -43,7 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stress Harness**: Load testing utility for validating engine performance under high concurrency.
 - **Documentation**: Initial `README.md` and `AI_CONTEXT.md` documentation.
 
-[Unreleased]: https://github.com/tugrandsolutions/flowforge/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/tugrandsolutions/flowforge/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/tugrandsolutions/flowforge/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/tugrandsolutions/flowforge/compare/v0.3.1...v1.0.0
 [0.3.1]: https://github.com/tugrandsolutions/flowforge/compare/v0.2.0...v0.3.1
 [0.2.0]: https://github.com/tugrandsolutions/flowforge/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/tugrandsolutions/flowforge/releases/tag/v0.1.0

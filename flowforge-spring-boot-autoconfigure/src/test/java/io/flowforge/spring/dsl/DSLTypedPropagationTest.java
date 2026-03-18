@@ -66,7 +66,7 @@ class DSLTypedPropagationTest {
 
                     FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
 
-                    StepVerifier.create(client.execute("typed-pipeline", null))
+                    StepVerifier.create(client.<ReactiveExecutionContext>execute("typed-pipeline", null))
                             .assertNext(execCtx -> {
                                 // Access via FlowKey derived from TaskDefinition
                                 FlowKey<Integer> producerKey = producer().outputKey();
@@ -121,7 +121,7 @@ class DSLTypedPropagationTest {
 
                     FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
 
-                    StepVerifier.create(client.execute("context-test", null))
+                    StepVerifier.create(client.<ReactiveExecutionContext>execute("context-test", null))
                             .assertNext(execCtx -> {
                                 FlowKey<Integer> key = producer().outputKey();
 

@@ -9,7 +9,7 @@ FlowForge requires **Java 17+** and is designed to be used as a library within y
 ### Gradle
 ```gradle
 dependencies {
-    implementation("io.flowforge:flowforge-spring-boot-starter:1.0.0")
+    implementation("io.flowforge:flowforge-spring-boot-starter:1.1.0")
 }
 ```
 
@@ -18,7 +18,7 @@ dependencies {
 <dependency>
   <groupId>io.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
-  <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 

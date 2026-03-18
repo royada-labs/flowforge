@@ -1,39 +1,57 @@
 package io.flowforge.spring.registry;
 
+import io.flowforge.registry.WorkflowDescriptor;
+import io.flowforge.registry.WorkflowRegistry;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
-public final class DefaultWorkflowPlanRegistry implements MutableWorkflowPlanRegistry {
+public class DefaultWorkflowPlanRegistry extends WorkflowRegistry implements MutableWorkflowPlanRegistry {
 
-    private final Map<String, WorkflowExecutionPlan> plans =
-            new ConcurrentHashMap<>();
-
+    @Override
     public void register(String workflowId, WorkflowExecutionPlan plan) {
-        WorkflowExecutionPlan previous = plans.putIfAbsent(workflowId, plan);
-        if (previous != null) {
-            throw new IllegalStateException(
-                    "Duplicate workflow id: " + workflowId
-            );
-        }
+        register(new LegacyPlanWorkflowDescriptor(workflowId, plan));
     }
 
     @Override
     public boolean contains(String workflowId) {
-        return plans.containsKey(workflowId);
+        return super.contains(workflowId);
     }
 
     @Override
     public Optional<WorkflowExecutionPlan> find(String workflowId) {
-        return Optional.ofNullable(plans.get(workflowId));
+        return super.find(workflowId);
     }
 
     @Override
     public Collection<WorkflowExecutionPlan> snapshot() {
-        return Collections.unmodifiableCollection(plans.values());
+        return super.snapshot();
+    }
+
+    private static final class LegacyPlanWorkflowDescriptor implements WorkflowDescriptor {
+
+        private final String id;
+        private final WorkflowExecutionPlan plan;
+
+        private LegacyPlanWorkflowDescriptor(String id, WorkflowExecutionPlan plan) {
+            this.id = id;
+            this.plan = plan;
+        }
+
+        @Override
+        public String id() {
+            return id;
+        }
+
+        @Override
+        public WorkflowExecutionPlan plan() {
+            return plan;
+        }
+
+        @Override
+        public Class<?> source() {
+            return DefaultWorkflowPlanRegistry.class;
+        }
     }
 }

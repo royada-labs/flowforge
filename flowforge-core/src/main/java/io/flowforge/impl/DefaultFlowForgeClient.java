@@ -6,7 +6,8 @@ import java.util.Objects;
 import io.flowforge.api.FlowForgeClient;
 import io.flowforge.exception.UnknownWorkflowException;
 import io.flowforge.exception.WorkflowExecutionException;
-import io.flowforge.registry.WorkflowPlanRegistry;
+import io.flowforge.registry.WorkflowDescriptor;
+import io.flowforge.registry.WorkflowRegistry;
 import io.flowforge.validation.TypeMetadata;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.graph.TaskNode;
@@ -20,30 +21,32 @@ import java.util.Set;
 
 public final class DefaultFlowForgeClient implements FlowForgeClient {
 
-    private final WorkflowPlanRegistry planRegistry;
+    private final WorkflowRegistry workflowRegistry;
     private final ReactiveWorkflowOrchestrator orchestrator;
 
     public DefaultFlowForgeClient(
-            WorkflowPlanRegistry planRegistry,
+        WorkflowRegistry workflowRegistry,
             ReactiveWorkflowOrchestrator orchestrator) {
-        this.planRegistry = Objects.requireNonNull(planRegistry, "planRegistry");
+    this.workflowRegistry = Objects.requireNonNull(workflowRegistry, "workflowRegistry");
         this.orchestrator = Objects.requireNonNull(orchestrator, "orchestrator");
     }
 
     @Override
-    public Mono<ReactiveExecutionContext> execute(String workflowId, Object input) {
-        WorkflowExecutionPlan plan = planRegistry.find(workflowId)
-                .orElseThrow(() -> new UnknownWorkflowException(workflowId));
+    @SuppressWarnings("unchecked")
+    public <T extends ReactiveExecutionContext> Mono<T> execute(String workflowId, Object input) {
+    WorkflowDescriptor descriptor = findDescriptorOrThrow(workflowId);
+    WorkflowExecutionPlan plan = descriptor.plan();
         validateInitialInput(workflowId, plan, input);
 
         return orchestrator.execute(workflowId, plan, input)
+                .map(ctx -> (T) ctx)
                 .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
     }
 
     @Override
     public Mono<ReactiveExecutionContext> execute(String workflowId, Object input, Duration timeout) {
-        WorkflowExecutionPlan plan = planRegistry.find(workflowId)
-                .orElseThrow(() -> new UnknownWorkflowException(workflowId));
+    WorkflowDescriptor descriptor = findDescriptorOrThrow(workflowId);
+    WorkflowExecutionPlan plan = descriptor.plan();
         validateInitialInput(workflowId, plan, input);
 
         return orchestrator.execute(workflowId, plan, input)
@@ -53,8 +56,8 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
 
     @Override
     public Mono<Object> executeResult(String workflowId, Object input) {
-        WorkflowExecutionPlan plan = planRegistry.find(workflowId)
-                .orElseThrow(() -> new UnknownWorkflowException(workflowId));
+        WorkflowDescriptor descriptor = findDescriptorOrThrow(workflowId);
+        WorkflowExecutionPlan plan = descriptor.plan();
         validateInitialInput(workflowId, plan, input);
 
         return orchestrator.execute(workflowId, plan, input)
@@ -65,12 +68,20 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
 
     @Override
     public Mono<ExecutionTrace> executeWithTrace(String workflowId, Object input) {
-        WorkflowExecutionPlan plan = planRegistry.find(workflowId)
-                .orElseThrow(() -> new UnknownWorkflowException(workflowId));
+        WorkflowDescriptor descriptor = findDescriptorOrThrow(workflowId);
+        WorkflowExecutionPlan plan = descriptor.plan();
         validateInitialInput(workflowId, plan, input);
 
         return orchestrator.executeWithTrace(plan, input, plan.typeMetadata())
                 .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
+    }
+
+    private WorkflowDescriptor findDescriptorOrThrow(String workflowId) {
+        try {
+            return workflowRegistry.get(workflowId);
+        } catch (IllegalStateException notFound) {
+            throw new UnknownWorkflowException(workflowId);
+        }
     }
 
     private static void validateInitialInput(String workflowId, WorkflowExecutionPlan plan, Object input) {

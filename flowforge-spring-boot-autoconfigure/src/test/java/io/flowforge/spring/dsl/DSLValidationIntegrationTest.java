@@ -73,7 +73,7 @@ class DSLValidationIntegrationTest {
 
                     FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
 
-                    StepVerifier.create(client.execute("valid-pipeline", null))
+                    StepVerifier.create(client.<ReactiveExecutionContext>execute("valid-pipeline", null))
                             .assertNext(execCtx -> {
                                 assertEquals(42, execCtx.get(producer().outputKey()).orElse(null));
                                 assertEquals("val=42", execCtx.get(transformer().outputKey()).orElse(null));

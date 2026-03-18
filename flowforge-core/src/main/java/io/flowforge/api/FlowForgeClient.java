@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 
 public interface FlowForgeClient {
 
-    Mono<ReactiveExecutionContext> execute(
+        <T extends ReactiveExecutionContext> Mono<T> execute(
             String workflowId,
             Object input);
 

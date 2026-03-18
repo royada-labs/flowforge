@@ -93,7 +93,7 @@ This will cancel the execution and fail if the workflow does not complete in the
 
 ### Gradle
 ```gradle
-implementation("io.flowforge:flowforge-spring-boot-starter:1.0.0")
+implementation("io.flowforge:flowforge-spring-boot-starter:1.1.0")
 ```
 
 ### Maven
@@ -101,7 +101,7 @@ implementation("io.flowforge:flowforge-spring-boot-starter:1.0.0")
 <dependency>
   <groupId>io.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 

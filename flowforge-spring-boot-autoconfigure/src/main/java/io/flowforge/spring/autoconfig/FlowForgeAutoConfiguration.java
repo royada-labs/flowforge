@@ -17,6 +17,7 @@ import io.flowforge.spring.registry.DefaultWorkflowPlanRegistry;
 import io.flowforge.spring.registry.MutableWorkflowPlanRegistry;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
+import io.flowforge.registry.WorkflowRegistry;
 import io.flowforge.registry.WorkflowPlanRegistry;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.monitor.AsyncLoggingWorkflowMonitor;
@@ -47,12 +48,30 @@ public class FlowForgeAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public MutableWorkflowPlanRegistry workflowPlanRegistry() {
+    public DefaultWorkflowPlanRegistry workflowPlanRegistry() {
         return new DefaultWorkflowPlanRegistry();
     }
 
     @Bean
-    public WorkflowPlanRegistrar workflowPlanRegistrar(MutableWorkflowPlanRegistry registry) {
+    @ConditionalOnMissingBean
+    public MutableWorkflowPlanRegistry mutableWorkflowPlanRegistry(DefaultWorkflowPlanRegistry registry) {
+        return registry;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public WorkflowPlanRegistry workflowPlanRegistryView(DefaultWorkflowPlanRegistry registry) {
+        return registry;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public WorkflowRegistry workflowRegistry(DefaultWorkflowPlanRegistry registry) {
+        return registry;
+    }
+
+    @Bean
+    public WorkflowPlanRegistrar workflowPlanRegistrar(WorkflowRegistry registry) {
         return new WorkflowPlanRegistrar(registry);
     }
 
@@ -102,8 +121,8 @@ public class FlowForgeAutoConfiguration {
 
     @Bean
     FlowForgeClient flowForgeClient(
-            WorkflowPlanRegistry workflowPlanRegistry,
+            WorkflowRegistry workflowRegistry,
             ReactiveWorkflowOrchestrator orchestrator) {
-        return new DefaultFlowForgeClient(workflowPlanRegistry, orchestrator);
+        return new DefaultFlowForgeClient(workflowRegistry, orchestrator);
     }
 }
