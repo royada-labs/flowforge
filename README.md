@@ -1,126 +1,205 @@
-# FlowForge
+🚀 FlowForge
 
-**Forge reactive workflows with precision.**
+Forge reactive workflows with precision.
 
-FlowForge is a lightweight, strongly-typed, reactive workflow orchestration engine for Java. It enables you to define, validate, execute, and observe complex business workflows composed of reusable tasks, executed asynchronously using Project Reactor.
+Build type-safe, reactive workflows in Java — without boilerplate, without runtime surprises.
 
-Unlike traditional workflow engines, FlowForge focuses on **embedded, high-concurrency, short-lived workflows** where type safety and observability are paramount.
+⚡ The Problem
 
----
+Most workflow engines force you into:
 
-## 🚀 Quick Start (Annotation-First)
+❌ Map<String, Object> everywhere
 
-```java
-@TaskHandler("customer")
+❌ Runtime casting (ClassCastException)
+
+❌ Hidden coupling between steps
+
+❌ Reflection-heavy execution
+
+❌ Debugging nightmares
+
+Even “modern” solutions still leak complexity.
+
+✅ The FlowForge Approach
+
+FlowForge flips the model:
+
+Workflows are just type-safe function composition.
+
+dsl.flow(CustomerTasks::getUser)
+   .then(CustomerTasks::getOrders)
+   .then(CustomerTasks::calculateDiscount);
+
+That’s it.
+
+🔥 Why This Is Different
+1. 🛡️ Compile-Time Type Safety
+Mono<User> getUser(Void in)
+Mono<OrderSummary> getOrders(User in)
+
+If types don’t match → your code doesn’t compile.
+
+No runtime surprises. Ever.
+
+2. 🔗 Automatic Data Propagation
+
+Output of one task becomes input of the next.
+
+No mapping. No glue code. No context passing.
+
+.then(CustomerTasks::getOrders) // receives User automatically
+3. ⚡ Reactive by Design
+
+Built on Project Reactor:
+
+Non-blocking
+
+Backpressure-aware
+
+High concurrency
+
+4. 💥 Fail-Fast at Startup
+
+Duplicate tasks → ❌ startup fails
+
+Ambiguous mappings → ❌ startup fails
+
+Invalid DAG → ❌ startup fails
+
+If your app starts, your workflow is valid.
+
+5. 🧠 Zero Runtime Reflection
+
+Resolution happens once at startup
+
+Execution uses precompiled plans
+
+👉 Predictable, fast, debuggable.
+
+🧩 Define Tasks (Annotation-First)
+@TaskHandler
 class CustomerTasks {
+
   @FlowTask(id = "getUser")
-  Mono<User> getUser(Void in) { ... } // no context needed
+  Mono<User> getUser(Void in) {
+      return Mono.just(...);
+  }
 
   @FlowTask(id = "getOrders")
-  Mono<OrderSummary> getOrders(User in) { ... } // getUser output -> getOrders input
+  Mono<OrderSummary> getOrders(User user) {
+      return Mono.just(...);
+  }
 
   @FlowTask(id = "discount")
-  Mono<Discount> discount(OrderSummary in, ReactiveExecutionContext ctx) { ... }
+  Mono<Discount> calculateDiscount(OrderSummary summary) {
+      return Mono.just(...);
+  }
 }
 
+No interfaces. No boilerplate. Just methods.
+
+🏗️ Define a Workflow
 @Bean
-WorkflowExecutionPlan plan(FlowDsl dsl) {
+@FlowWorkflow(id = "customer-flow")
+WorkflowExecutionPlan customerFlow(FlowDsl dsl) {
     return dsl.flow(CustomerTasks::getUser)
               .then(CustomerTasks::getOrders)
-              .then(CustomerTasks::discount)
+              .then(CustomerTasks::calculateDiscount)
               .build();
 }
-```
+▶️ Execute
+client.executeResult("customer-flow", null);
 
-Alternative: explicit `TaskDefinition<I,O>` is still available for advanced/centralized contracts.
+Or get full execution context:
 
-```java
-TaskDefinition<Void, User> GET_USER = TaskDefinition.of("getUser", Void.class, User.class);
-TaskDefinition<User, OrderSummary> GET_ORDERS = TaskDefinition.of("getOrders", User.class, OrderSummary.class);
-TaskDefinition<OrderSummary, Discount> DISCOUNT = TaskDefinition.of("discount", OrderSummary.class, Discount.class);
+client.execute("customer-flow", null);
+🧠 How It Works (Simplified)
 
-@Bean
-WorkflowExecutionPlan plan(FlowDsl dsl) {
-  return dsl.startTyped(GET_USER)
-            .then(GET_ORDERS)
-            .then(DISCOUNT)
-            .build();
-}
-```
+@TaskHandler classes are scanned at startup
 
-`ReactiveExecutionContext` is optional in `@FlowTask` methods. Inject it only when the task needs to read/write additional values from context; otherwise keep the signature minimal (`input -> output`).
+Each @FlowTask is registered using full JVM signature
 
-In sequential composition (`flow(...).then(...)`), FlowForge automatically feeds the previous task output as the next task input.
+DSL builds a typed DAG (execution plan)
 
----
+Runtime executes without reflection
 
-## ✨ Key Features
+🧬 Advanced Composition
+Parallel
+dsl.flow(A::task)
+   .parallel(B::task, C::task)
+Fork / Join
+dsl.flow(A::task)
+   .fork(B::task, C::task)
+   .join(D::task)
+🧰 Optional Context (Only When Needed)
+Mono<Discount> discount(OrderSummary in, ReactiveExecutionContext ctx)
 
-*   🛡️ **Bulletproof Type-Safety**: No runtime casting. Type propagation is enforced by the compiler across the DAG.
-*   ⚡ **Reactive Execution**: Built on **Project Reactor**. Fully non-blocking and backpressure-ready.
-*   🧱 **Fail-Fast Validation**: Advanced DAG analysis detects cycles and missing dependencies at startup.
-*   🔍 **Deep Observability**: Native integration with **OpenTelemetry** and structured JSON execution tracing.
-*   📦 **Spring Boot Optimized**: Zero-config starter with auto-discovery of tasks and workflows.
-*   🔐 **Safe Task Registration**: Startup-time detection rejects duplicate/conflicting task metadata and ambiguous method-reference mappings.
+Use context only when necessary.
+Keep tasks pure by default.
 
----
-
-## 🔒 Registration & Resolution Guarantees
-
-FlowForge resolves method references using the **full JVM signature** (`implClass + method + descriptor`), not by heuristic name fallback.
-
-- Duplicate `TaskDefinition` identities are rejected at startup.
-- Conflicting method-reference registrations are rejected at startup.
-- Overloaded task methods are resolved deterministically by signature.
-- Reflection/introspection happens at startup only; runtime executes pre-built task plans.
-
-### Root Input Contract
-
-- If root tasks require non-`Void` input, callers must provide `client.execute(..., input)`.
-- If all roots are `Void`, extra input is ignored for backward compatibility.
-### Client Timeouts
-
-You can also execute workflows with a client-side timeout:
-
-```java
-client.execute("my-workflow", input, Duration.ofMillis(500))
-```
-
-This will cancel the execution and fail if the workflow does not complete in the given duration.
----
-
-## 📦 Installation
-
-### Gradle
-```gradle
+📦 Installation
+Gradle
 implementation("io.flowforge:flowforge-spring-boot-starter:1.1.0")
-```
-
-### Maven
-```xml
+Maven
 <dependency>
   <groupId>io.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
   <version>1.1.0</version>
 </dependency>
-```
+🧭 Philosophy
 
----
+FlowForge is built on a few strict principles:
 
-## 📚 Documentation
+Types over strings
 
-Detailed guides and references are available in the `/docs` directory:
+Compile-time over runtime
 
-1.  [**Getting Started**](docs/getting-started/index.md) - Installation and your first workflow.
-2.  [**Core Concepts**](docs/core-concepts/index.md) - Architecture, types, and the execution model.
-3.  [**Examples**](docs/examples/index.md) - Real-world scenarios (API orchestration, data pipelines).
-4.  [**Observability**](docs/observability/index.md) - Tracing and OpenTelemetry metrics.
-5.  [**API Reference**](docs/api-reference/index.md) - Deep dive into core interfaces.
-6.  [**Migration Prompt Guide**](docs/migration-prompt-guide.md) - Prompt/checklist to migrate legacy implementations safely.
+Explicit over magic
 
----
+Simplicity over flexibility
 
-## 📄 License
+🆚 When to Use FlowForge
 
-Licensed under the [Apache License 2.0](LICENSE).
-Copyright 2026 Rolando Rodríguez González.
+Use it when:
+
+You orchestrate multiple async steps
+
+You care about correctness
+
+You want predictable behavior
+
+You are already using Reactor / WebFlux
+
+🚫 When NOT to Use It
+
+Long-running workflows (days/weeks)
+
+BPMN / business-user-driven flows
+
+Human-in-the-loop processes
+
+📚 Documentation
+
+Getting Started
+
+Core Concepts
+
+DSL Reference
+
+Execution Model
+
+Advanced Usage
+
+💡 Final Thought
+
+Most workflow engines try to hide complexity.
+
+FlowForge removes it.
+
+⭐ Contribute
+
+PRs, ideas, and feedback are welcome.
+
+📄 License
+
+Apache 2.0
