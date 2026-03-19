@@ -102,6 +102,86 @@ The fluent builder for workflows.
 
 In sequential chains, FlowForge automatically wires `previousOutput -> nextInput`.
 
+`flow(...)` vs `start(...)` vs `startTyped(...)`:
+
+- `flow(methodRef)` and `start(methodRef)` are equivalent for method references.
+- `flow(...)` is naming/style sugar for readability; runtime behavior is identical to `start(...)`.
+- `startTyped(taskDef)` is used when starting from explicit `TaskDefinition<I, O>` contracts.
+
+Examples:
+
+```java
+// Equivalent (method-reference start)
+dsl.start(PaymentTasks::getUser)
+    .then(PaymentTasks::getOrders)
+    .build();
+
+dsl.flow(PaymentTasks::getUser)
+    .then(PaymentTasks::getOrders)
+    .build();
+```
+
+```java
+// Explicit contract start
+TaskDefinition<Void, String> GET_USER = TaskDefinition.of("getUser", Void.class, String.class);
+
+dsl.startTyped(GET_USER)
+    .then(PaymentTasks::getOrders)
+    .build();
+```
+
+`fork(...)` vs `parallel(...)`:
+
+- `parallel(...)` is shorthand for common one-step branches from the current tail.
+- `fork(...)` is more flexible and allows each branch to define multi-step subchains.
+- Both produce equivalent DAG semantics; choose by readability and branch complexity.
+
+Equivalent forms:
+
+```java
+dsl.flow(A::start)
+    .parallel(B::task, C::task)
+    .join(D::merge);
+```
+
+```java
+dsl.flow(A::start)
+    .fork(
+        b -> b.then(B::task),
+        b -> b.then(C::task)
+    )
+    .join(D::merge);
+```
+
+Join input contract:
+
+- If a task has **one dependency**, it receives that dependency output directly.
+- If a task has **multiple dependencies** (typical after `fork`/`join`), it receives a `Map<TaskId, Object>` with `dependencyTaskId -> output`.
+
+Example:
+
+```java
+@FlowTask(id = "merge")
+Mono<String> merge(Object input) {
+    Map<TaskId, Object> results = (Map<TaskId, Object>) input;
+    String orders = (String) results.get(TaskId.of("getOrders"));
+    String profile = (String) results.get(TaskId.of("getProfile"));
+    return Mono.just(orders + ":" + profile);
+}
+
+@FlowWorkflow(id = "payment-flow")
+@Bean
+WorkflowExecutionPlan paymentFlow(FlowDsl dsl) {
+    return dsl.flow(PaymentTasks::getUser)
+            .fork(
+                    b -> b.then(PaymentTasks::getOrders),
+                    b -> b.then(PaymentTasks::getProfile)
+            )
+            .join(PaymentTasks::merge)
+            .build();
+}
+```
+
 ---
 
 ## 7. `ExecutionTracer`
