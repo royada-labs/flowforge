@@ -30,12 +30,12 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       - name: Debug Gradle Wrapper
-  run: |
-    pwd
-    ls -la
-    ls -la gradle
-    ls -la gradle/wrapper
-    file gradle/wrapper/gradle-wrapper.jar || true
+        run: |
+          pwd
+          ls -la
+          ls -la gradle
+          ls -la gradle/wrapper
+          file gradle/wrapper/gradle-wrapper.jar || true
 
       - name: Build
         run: |
