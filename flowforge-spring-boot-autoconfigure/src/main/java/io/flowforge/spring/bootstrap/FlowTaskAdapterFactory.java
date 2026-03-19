@@ -1,5 +1,7 @@
 package io.flowforge.spring.bootstrap;
 
+import io.flowforge.exception.TaskRegistrationException;
+import io.flowforge.exception.WorkflowConfigurationException;
 import io.flowforge.spring.adapter.FlowTaskAdapter;
 import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.api.FlowTaskHandler;
@@ -28,7 +30,7 @@ public final class FlowTaskAdapterFactory {
         }
 
         if (!(bean instanceof FlowTaskHandler<?, ?> rawHandler)) {
-            throw new IllegalStateException(
+            throw new TaskRegistrationException(
                     "@FlowTask requires bean implements FlowTaskHandler: "
                             + bean.getClass().getName()
             );
@@ -66,7 +68,7 @@ public final class FlowTaskAdapterFactory {
 
     private static Class<?> resolveEffectiveType(String label, Class<?> explicit, Class<?> inferred, String taskId) {
         if (explicit != Object.class && inferred != Object.class && !explicit.equals(inferred)) {
-            throw new IllegalStateException(
+            throw new WorkflowConfigurationException(
                     "@FlowTask " + label + " type mismatch for task '" + taskId + "': annotation="
                             + explicit.getName() + ", inferred=" + inferred.getName()
             );
@@ -83,14 +85,14 @@ public final class FlowTaskAdapterFactory {
         Class<?> expectedInput = resolveEffectiveType("input", ann.inputType(), inferredInputType, ann.id());
         Class<?> expectedOutput = resolveEffectiveType("output", ann.outputType(), inferredOutputType, ann.id());
         if (!task.inputType().equals(expectedInput) || !task.outputType().equals(expectedOutput)) {
-            throw new IllegalStateException(
+            throw new WorkflowConfigurationException(
                     "@FlowTask type mismatch for Task bean '" + task.id().getValue() + "': expected("
                             + expectedInput.getName() + " -> " + expectedOutput.getName() + "), actual("
                             + task.inputType().getName() + " -> " + task.outputType().getName() + ")"
             );
         }
         if (!task.id().equals(TaskId.of(ann.id()))) {
-            throw new IllegalStateException(
+            throw new WorkflowConfigurationException(
                     "@FlowTask id mismatch for Task bean: annotation=" + ann.id() + ", task.id=" + task.id().getValue()
             );
         }

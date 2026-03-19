@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,9 @@ public final class WorkflowInstance {
 
     // Thread-safe set of tasks that are ready to run (O(1) access)
     private final Set<TaskId> readyTaskIds = ConcurrentHashMap.newKeySet();
+
+    // Cached finished state for O(1) reads
+    private final AtomicBoolean finishedCache = new AtomicBoolean(false);
 
     public WorkflowInstance(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
             ReactiveExecutionContext context) {
@@ -55,6 +59,7 @@ public final class WorkflowInstance {
                 readyTaskIds.add(node.id());
             }
         }
+        updateFinishedCache();
     }
 
     public WorkflowRunMetadata metadata() { return metadata; }
@@ -89,6 +94,7 @@ public final class WorkflowInstance {
     public void markCompleted(TaskNode node) {
         statusMap.put(node.id(), TaskStatus.COMPLETED);
         decrementDependents(node);
+        updateFinishedCache();
     }
 
     public void markFailed(TaskNode node) {
@@ -97,20 +103,20 @@ public final class WorkflowInstance {
             return;
         }
         statusMap.put(node.id(), TaskStatus.FAILED);
-        // Cascade failure to ALL downstream dependents immediately
         failDownstream(node);
+        updateFinishedCache();
     }
 
     public void markSkipped(TaskNode node) {
         statusMap.put(node.id(), TaskStatus.SKIPPED);
         decrementDependents(node);
+        updateFinishedCache();
     }
 
     private void decrementDependents(TaskNode completed) {
         for (TaskNode dependent : completed.dependents()) {
             AtomicInteger remaining = remainingDependencies.get(dependent.id());
             if (remaining != null && remaining.decrementAndGet() == 0) {
-                // All dependencies met
                 statusMap.compute(dependent.id(), (id, current) -> {
                     if (current == TaskStatus.PENDING) {
                         readyTaskIds.add(id);
@@ -127,7 +133,6 @@ public final class WorkflowInstance {
             statusMap.compute(dependent.id(), (id, current) -> {
                 if (current == TaskStatus.PENDING || current == TaskStatus.READY) {
                     readyTaskIds.remove(id);
-                    // Recursively fail
                     failDownstream(dependent);
                     return TaskStatus.FAILED;
                 }
@@ -137,7 +142,14 @@ public final class WorkflowInstance {
     }
 
     public boolean isFinished() {
-        return statusMap.values().stream()
-                .allMatch(s -> s == TaskStatus.COMPLETED || s == TaskStatus.FAILED || s == TaskStatus.SKIPPED);
+        return finishedCache.get();
+    }
+
+    private void updateFinishedCache() {
+        boolean finished = statusMap.values().stream()
+                .allMatch(s -> s == TaskStatus.COMPLETED 
+                              || s == TaskStatus.FAILED 
+                              || s == TaskStatus.SKIPPED);
+        finishedCache.set(finished);
     }
 }

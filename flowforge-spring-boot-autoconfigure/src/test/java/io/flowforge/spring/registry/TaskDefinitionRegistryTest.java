@@ -1,5 +1,6 @@
 package io.flowforge.spring.registry;
 
+import io.flowforge.exception.TaskRegistrationException;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ class TaskDefinitionRegistryTest {
         TaskDefinitionRegistry registry = new TaskDefinitionRegistry();
         registry.register(TaskDefinition.of(TaskId.of("A"), Void.class, Integer.class), "beanA");
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+        TaskRegistrationException ex = assertThrows(TaskRegistrationException.class, () ->
                 registry.register(TaskDefinition.of(TaskId.of("A"), Void.class, String.class), "beanB"));
 
         assertTrue(ex.getMessage().contains("Conflicting TaskDefinition"));
@@ -34,7 +35,7 @@ class TaskDefinitionRegistryTest {
                 TaskDefinition.of(TaskId.of("X"), Void.class, Integer.class)
         );
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+        TaskRegistrationException ex = assertThrows(TaskRegistrationException.class, () ->
                 registry.registerMethodRef(
                         implClass,
                         methodName,

@@ -2,10 +2,13 @@ package io.flowforge.workflow.orchestrator;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import io.flowforge.exception.DeadEndException;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
 import io.flowforge.task.TaskResult;
@@ -38,6 +41,8 @@ import reactor.core.scheduler.Schedulers;
 /**
  * Production-hardened event-driven orchestrator.
  * Stateless and resource-bounded.
+ * 
+ * <p>Use {@link #builder()} to create instances with custom configuration.
  */
 public final class ReactiveWorkflowOrchestrator {
 
@@ -53,35 +58,65 @@ public final class ReactiveWorkflowOrchestrator {
     private final ExecutionTracerFactory tracerFactory;
     private final ExecutionLimits limits;
 
-    public ReactiveWorkflowOrchestrator() {
-        this(Schedulers.boundedElastic(), new NoOpWorkflowMonitor(), new DefaultTaskInputResolver());
+    public static Builder builder() {
+        return new Builder();
     }
 
+    @Deprecated
+    public ReactiveWorkflowOrchestrator() {
+        this(builder());
+    }
+
+    @Deprecated
     public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, WorkflowMonitor monitor,
             TaskInputResolver inputResolver) {
-        this(taskScheduler, Schedulers.newSingle("wf-state"), monitor, inputResolver,
-                ExecutionLimits.defaultLimits());
+        this(builder()
+                .taskScheduler(taskScheduler)
+                .monitor(monitor)
+                .inputResolver(inputResolver));
     }
 
+    @Deprecated
     public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, Scheduler stateScheduler, WorkflowMonitor monitor,
             TaskInputResolver inputResolver, int maxConcurrency) {
-        this(taskScheduler, stateScheduler, monitor, inputResolver,
-             new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK));
+        this(builder()
+                .taskScheduler(taskScheduler)
+                .stateScheduler(stateScheduler)
+                .monitor(monitor)
+                .inputResolver(inputResolver)
+                .limits(new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK)));
     }
 
+    @Deprecated
     public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, Scheduler stateScheduler, WorkflowMonitor monitor,
             TaskInputResolver inputResolver, ExecutionLimits limits) {
-        this(taskScheduler, stateScheduler, monitor, inputResolver, null, limits);
+        this(builder()
+                .taskScheduler(taskScheduler)
+                .stateScheduler(stateScheduler)
+                .monitor(monitor)
+                .inputResolver(inputResolver)
+                .limits(limits));
     }
 
+    @Deprecated
     public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, Scheduler stateScheduler, WorkflowMonitor monitor,
             TaskInputResolver inputResolver, ExecutionTracerFactory tracerFactory, ExecutionLimits limits) {
-        this.taskScheduler = taskScheduler;
-        this.stateScheduler = stateScheduler;
-        this.monitor = monitor;
-        this.inputResolver = inputResolver;
-        this.tracerFactory = tracerFactory != null ? tracerFactory : (types -> new NoOpExecutionTracer());
-        this.limits = limits;
+        this(builder()
+                .taskScheduler(taskScheduler)
+                .stateScheduler(stateScheduler)
+                .monitor(monitor)
+                .inputResolver(inputResolver)
+                .tracerFactory(tracerFactory)
+                .limits(limits));
+    }
+
+    private ReactiveWorkflowOrchestrator(Builder builder) {
+        this.taskScheduler = builder.taskScheduler;
+        this.stateScheduler = builder.stateScheduler;
+        this.monitor = builder.monitor;
+        this.inputResolver = builder.inputResolver;
+        this.tracerFactory = builder.tracerFactory;
+        this.limits = builder.limits;
     }
 
     public Mono<ReactiveExecutionContext> execute(String workflowId, WorkflowExecutionPlan plan, Object initialInput) {
@@ -123,7 +158,7 @@ public final class ReactiveWorkflowOrchestrator {
     }
 
     public Mono<ExecutionTrace> executeWithTrace(WorkflowExecutionPlan plan, Object initialInput,
-            java.util.Map<TaskId, TypeMetadata> typeMetadata) {
+            Map<TaskId, TypeMetadata> typeMetadata) {
         ExecutionTracer internalTracer = new DefaultExecutionTracer(typeMetadata);
         ExecutionTracer configuredTracer = tracerFactory.create(typeMetadata);
         ExecutionTracer composite = new CompositeExecutionTracer(List.of(internalTracer, configuredTracer));
@@ -148,93 +183,15 @@ public final class ReactiveWorkflowOrchestrator {
                 return Mono.empty();
             }
 
-            // Task emission sink - bounded by limits.maxQueueSize
-            Sinks.Many<TaskNode> workSink = Sinks.many().multicast().onBackpressureBuffer(
-                    limits.maxQueueSize(), false);
-            
-            // Internal state events
-            Sinks.Many<Event> stateSink = Sinks.many().unicast().onBackpressureBuffer();
-
+            Sinks.Many<TaskNode> workSink = createWorkSink();
+            Sinks.Many<Event> stateSink = createStateSink();
             AtomicBoolean terminated = new AtomicBoolean(false);
             Sinks.One<Void> done = Sinks.one();
 
-            Runnable emitReady = () -> {
-                // DETERMINISM: Sort tasks by ID to ensure stable execution order for parallel branches
-                List<TaskNode> ready = instance.readyTasks().stream()
-                        .sorted(Comparator.comparing(t -> t.id().getValue()))
-                        .toList();
-                
-                for (TaskNode node : ready) {
-                    if (instance.tryMarkRunning(node)) {
-                        Sinks.EmitResult result = workSink.tryEmitNext(node);
-                        if (result.isFailure()) {
-                            handleBackpressureFailure(result, done, terminated, workSink, stateSink);
-                            return;
-                        }
-                    }
-                }
-            };
-
-            Disposable stateSub = stateSink.asFlux()
-                    .publishOn(stateScheduler)
-                    .subscribe(ev -> {
-                        if (terminated.get()) return;
-
-                        if (ev instanceof TaskDone td) {
-                            applyResult(session, td.node(), td.result());
-                            emitReady.run();
-
-                            if (instance.isFinished()) {
-                                completeWorkflow(session, done, terminated, workSink, stateSink);
-                            } else if (instance.readyTasks().isEmpty() && session.inFlightCount() == 0) {
-                                completeWorkflow(session, done, terminated, workSink, stateSink);
-                            }
-                        }
-                    }, err -> {
-                        if (terminated.compareAndSet(false, true)) {
-                            done.tryEmitError(err);
-                            workSink.tryEmitComplete();
-                            stateSink.tryEmitComplete();
-                        }
-                    });
-
-            Disposable workSub = workSink.asFlux()
-                    .flatMap(node -> {
-                        session.recordTaskStart(node.id());
-                        monitor.onTaskStart(session.instance(), node.id());
-                        
-                        java.util.List<TaskId> depIds = node.dependencies().stream()
-                                .map(TaskNode::id)
-                                .toList();
-                        session.tracer().onTaskStart(node.id(), depIds);
-
-                        return Mono.defer(() -> inputResolver.resolveInput(session.instance(), node, initialInput)
-                                .defaultIfEmpty(NULL_SENTINEL)
-                                .flatMap(input -> {
-                                    Object actualInput = (input == NULL_SENTINEL) ? null : input;
-                                    return node.executeWithResult(actualInput, session.instance().context());
-                                }))
-                                .switchIfEmpty(Mono.just(new TaskResult.Failure(
-                                        new IllegalStateException("Task produced no result: " + node.id()))))
-                                .onErrorResume(err -> Mono.just(new TaskResult.Failure(err)))
-                                .subscribeOn(taskScheduler)
-                                .doOnNext(result -> stateSink.emitNext(new TaskDone(node, result), RETRY_NON_SERIALIZED))
-                                .then();
-                    }, limits.maxInFlightTasks()) // Concurrency limited globally per workflow
-                    .subscribe(ignored -> {}, err -> {
-                        if (terminated.compareAndSet(false, true)) {
-                            done.tryEmitError(err);
-                            workSink.tryEmitComplete();
-                            stateSink.tryEmitComplete();
-                        }
-                    });
-
-            stateScheduler.schedule(() -> {
-                emitReady.run();
-                if (instance.isFinished() || (instance.readyTasks().isEmpty() && session.inFlightCount() == 0)) {
-                    completeWorkflow(session, done, terminated, workSink, stateSink);
-                }
-            });
+            Disposable stateSub = createStateSubscription(session, done, terminated, workSink, stateSink);
+            Disposable workSub = createWorkSubscription(session, initialInput, done, terminated, workSink, stateSink);
+            
+            scheduleInitialExecution(session, done, terminated, workSink, stateSink);
 
             return done.asMono().doFinally(sig -> {
                 workSub.dispose();
@@ -243,8 +200,111 @@ public final class ReactiveWorkflowOrchestrator {
         });
     }
 
+    private Sinks.Many<TaskNode> createWorkSink() {
+        return Sinks.many().multicast().onBackpressureBuffer(limits.maxQueueSize(), false);
+    }
+
+    private Sinks.Many<Event> createStateSink() {
+        return Sinks.many().unicast().onBackpressureBuffer();
+    }
+
+    private void emitReadyTasks(WorkflowInstance instance, Sinks.Many<TaskNode> workSink,
+                               Sinks.One<Void> done, AtomicBoolean terminated, Sinks.Many<Event> stateSink) {
+        List<TaskNode> ready = instance.readyTasks().stream()
+                .sorted(Comparator.comparing(t -> t.id().getValue()))
+                .toList();
+        
+        for (TaskNode node : ready) {
+            if (instance.tryMarkRunning(node)) {
+                Sinks.EmitResult result = workSink.tryEmitNext(node);
+                if (result.isFailure()) {
+                    handleBackpressureFailure(result, done, terminated, workSink, stateSink);
+                    return;
+                }
+            }
+        }
+    }
+
+    private Disposable createStateSubscription(ExecutionSession session, Sinks.One<Void> done,
+                                              AtomicBoolean terminated, Sinks.Many<TaskNode> workSink,
+                                              Sinks.Many<Event> stateSink) {
+        return stateSink.asFlux()
+                .publishOn(stateScheduler)
+                .subscribe(ev -> {
+                    if (terminated.get()) return;
+
+                    if (ev instanceof TaskDone td) {
+                        applyResult(session, td.node(), td.result());
+                        emitReadyTasks(session.instance(), workSink, done, terminated, stateSink);
+
+                        if (session.instance().isFinished()) {
+                            completeWorkflow(session, done, terminated, workSink, stateSink);
+                        } else if (session.instance().readyTasks().isEmpty() && session.inFlightCount() == 0) {
+                            completeWorkflow(session, done, terminated, workSink, stateSink);
+                        }
+                    }
+                }, err -> {
+                    if (terminated.compareAndSet(false, true)) {
+                        done.tryEmitError(err);
+                        workSink.tryEmitComplete();
+                        stateSink.tryEmitComplete();
+                    }
+                });
+    }
+
+    private Disposable createWorkSubscription(ExecutionSession session, Object initialInput,
+                                            Sinks.One<Void> done, AtomicBoolean terminated,
+                                            Sinks.Many<TaskNode> workSink, Sinks.Many<Event> stateSink) {
+        return workSink.asFlux()
+                .flatMap(node -> executeTaskNode(session, node, initialInput, stateSink),
+                        limits.maxInFlightTasks())
+                .subscribe(ignored -> {}, err -> {
+                    if (terminated.compareAndSet(false, true)) {
+                        done.tryEmitError(err);
+                        workSink.tryEmitComplete();
+                        stateSink.tryEmitComplete();
+                    }
+                });
+    }
+
+    private Mono<Void> executeTaskNode(ExecutionSession session, TaskNode node, Object initialInput,
+                                      Sinks.Many<Event> stateSink) {
+        session.recordTaskStart(node.id());
+        monitor.onTaskStart(session.instance(), node.id());
+        
+        List<TaskId> depIds = node.dependencies().stream()
+                .map(TaskNode::id)
+                .toList();
+        session.tracer().onTaskStart(node.id(), depIds);
+
+        return Mono.defer(() -> inputResolver.resolveInput(session.instance(), node, initialInput)
+                .defaultIfEmpty(NULL_SENTINEL)
+                .flatMap(input -> {
+                    Object actualInput = (input == NULL_SENTINEL) ? null : input;
+                    return node.executeWithResult(actualInput, session.instance().context());
+                }))
+                .switchIfEmpty(Mono.just(new TaskResult.Failure(
+                        new IllegalStateException("Task produced no result: " + node.id()))))
+                .onErrorResume(err -> Mono.just(new TaskResult.Failure(err)))
+                .subscribeOn(taskScheduler)
+                .doOnNext(result -> stateSink.emitNext(new TaskDone(node, result), RETRY_NON_SERIALIZED))
+                .then();
+    }
+
+    private void scheduleInitialExecution(ExecutionSession session, Sinks.One<Void> done,
+                                          AtomicBoolean terminated, Sinks.Many<TaskNode> workSink,
+                                          Sinks.Many<Event> stateSink) {
+        WorkflowInstance instance = session.instance();
+        stateScheduler.schedule(() -> {
+            emitReadyTasks(instance, workSink, done, terminated, stateSink);
+            if (instance.isFinished() || (instance.readyTasks().isEmpty() && session.inFlightCount() == 0)) {
+                completeWorkflow(session, done, terminated, workSink, stateSink);
+            }
+        });
+    }
+
     private void handleBackpressureFailure(Sinks.EmitResult result, Sinks.One<Void> done, AtomicBoolean terminated, 
-                                          Sinks.Many<?> work, Sinks.Many<?> state) {
+                                           Sinks.Many<?> work, Sinks.Many<?> state) {
         if (terminated.compareAndSet(false, true)) {
             String msg = "Workflow backpressure limit exceeded: " + result;
             done.tryEmitError(new IllegalStateException(msg));
@@ -258,18 +318,16 @@ public final class ReactiveWorkflowOrchestrator {
         if (!terminated.compareAndSet(false, true)) return;
 
         WorkflowInstance instance = session.instance();
-        // Check for fatal errors (non-optional tasks that failed)
         var fatalError = session.taskErrors().entrySet().stream()
                 .filter(e -> instance.plan().getNode(e.getKey())
                         .map(n -> !n.descriptor().optional() && instance.status(n) == TaskStatus.FAILED)
                         .orElse(false))
-                .map(java.util.Map.Entry::getValue)
+                .map(Map.Entry::getValue)
                 .findFirst();
 
         if (fatalError.isPresent()) {
             done.tryEmitError(fatalError.get());
         } else if (!instance.isFinished()) {
-            // Dead-end
             Set<TaskId> pending = instance.plan().nodes().stream()
                     .filter(node -> {
                         TaskStatus status = instance.status(node);
@@ -319,7 +377,7 @@ public final class ReactiveWorkflowOrchestrator {
 
     private ExecutionReport buildExecutionReport(ExecutionSession session) {
         WorkflowInstance instance = session.instance();
-        java.util.Map<TaskId, TaskStatus> finalStatuses = new java.util.HashMap<>();
+        Map<TaskId, TaskStatus> finalStatuses = new java.util.HashMap<>();
         int completed = 0, failed = 0, skipped = 0;
 
         for (TaskNode node : instance.plan().nodes()) {
@@ -342,4 +400,54 @@ public final class ReactiveWorkflowOrchestrator {
 
     protected sealed interface Event permits TaskDone {}
     private record TaskDone(TaskNode node, TaskResult result) implements Event {}
+
+    public static final class Builder {
+        private Scheduler taskScheduler = Schedulers.boundedElastic();
+        private Scheduler stateScheduler = Schedulers.newSingle("wf-state");
+        private WorkflowMonitor monitor = new NoOpWorkflowMonitor();
+        private TaskInputResolver inputResolver = new DefaultTaskInputResolver();
+        private ExecutionTracerFactory tracerFactory = types -> new NoOpExecutionTracer();
+        private ExecutionLimits limits = ExecutionLimits.defaultLimits();
+
+        private Builder() {}
+
+        public Builder taskScheduler(Scheduler taskScheduler) {
+            this.taskScheduler = Objects.requireNonNull(taskScheduler, "taskScheduler");
+            return this;
+        }
+
+        public Builder stateScheduler(Scheduler stateScheduler) {
+            this.stateScheduler = Objects.requireNonNull(stateScheduler, "stateScheduler");
+            return this;
+        }
+
+        public Builder monitor(WorkflowMonitor monitor) {
+            this.monitor = Objects.requireNonNull(monitor, "monitor");
+            return this;
+        }
+
+        public Builder inputResolver(TaskInputResolver inputResolver) {
+            this.inputResolver = Objects.requireNonNull(inputResolver, "inputResolver");
+            return this;
+        }
+
+        public Builder tracerFactory(ExecutionTracerFactory tracerFactory) {
+            this.tracerFactory = Objects.requireNonNull(tracerFactory, "tracerFactory");
+            return this;
+        }
+
+        public Builder limits(ExecutionLimits limits) {
+            this.limits = Objects.requireNonNull(limits, "limits");
+            return this;
+        }
+
+        public Builder maxConcurrency(int maxConcurrency) {
+            this.limits = new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK);
+            return this;
+        }
+
+        public ReactiveWorkflowOrchestrator build() {
+            return new ReactiveWorkflowOrchestrator(this);
+        }
+    }
 }

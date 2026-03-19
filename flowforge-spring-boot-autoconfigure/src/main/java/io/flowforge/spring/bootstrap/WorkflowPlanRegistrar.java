@@ -14,6 +14,8 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.util.StringUtils;
 
+import io.flowforge.exception.WorkflowConfigurationException;
+import io.flowforge.exception.TaskRegistrationException;
 import io.flowforge.registry.WorkflowRegistry;
 import io.flowforge.spring.annotations.FlowWorkflow;
 import io.flowforge.spring.dsl.FlowDsl;
@@ -44,7 +46,7 @@ public final class WorkflowPlanRegistrar
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         if (!(beanFactory instanceof ConfigurableListableBeanFactory)) {
-            throw new IllegalArgumentException("WorkflowPlanRegistrar requires a ConfigurableListableBeanFactory");
+            throw new WorkflowConfigurationException("WorkflowPlanRegistrar requires a ConfigurableListableBeanFactory");
         }
         this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
     }
@@ -59,12 +61,12 @@ public final class WorkflowPlanRegistrar
 
             String workflowId = ann.id();
             if (!StringUtils.hasText(workflowId)) {
-                throw new IllegalStateException("@FlowWorkflow id must not be blank. Bean: " + beanName);
+                throw new WorkflowConfigurationException("@FlowWorkflow id must not be blank. Bean: " + beanName);
             }
 
             Class<?> beanType = bf.getType(beanName);
             if (beanType == null) {
-                throw new IllegalStateException("Unable to resolve @FlowWorkflow bean type. Bean: " + beanName);
+                throw new WorkflowConfigurationException("Unable to resolve @FlowWorkflow bean type. Bean: " + beanName);
             }
 
             if (WorkflowExecutionPlan.class.isAssignableFrom(beanType)) {
@@ -86,12 +88,12 @@ public final class WorkflowPlanRegistrar
             }
 
             if (beanType.isAnnotationPresent(FlowWorkflow.class)) {
-                throw new IllegalStateException(
+                throw new WorkflowConfigurationException(
                         "Class-level @FlowWorkflow must implement WorkflowDefinition. Bean: " + beanName
                                 + ", type: " + beanType.getName());
             }
 
-            throw new IllegalStateException(
+            throw new WorkflowConfigurationException(
                     "@FlowWorkflow must annotate either a WorkflowExecutionPlan bean or a WorkflowDefinition class. "
                             + "Bean: " + beanName + ", type: " + beanType.getName());
         }
@@ -116,7 +118,7 @@ public final class WorkflowPlanRegistrar
                 WorkflowDefinition definition = resolveDefinition(candidate);
                 WorkflowExecutionPlan plan = definition.define(dsl);
                 if (plan == null) {
-                    throw new IllegalStateException("WorkflowDefinition returned null plan. workflowId=" + workflowId
+                    throw new WorkflowConfigurationException("WorkflowDefinition returned null plan. workflowId=" + workflowId
                             + ", source=" + candidate.sourceClass().getName());
                 }
                 sanityCheck(plan, workflowId);
@@ -154,7 +156,7 @@ public final class WorkflowPlanRegistrar
                 autowireCapableBeanFactory.autowireBean(instance);
             }
             if (!(instance instanceof WorkflowDefinition definition)) {
-                throw new IllegalStateException("Class does not implement WorkflowDefinition: "
+                throw new WorkflowConfigurationException("Class does not implement WorkflowDefinition: "
                         + candidate.sourceClass().getName());
             }
             return definition;
@@ -168,20 +170,20 @@ public final class WorkflowPlanRegistrar
 
     private <T> void registerCandidate(String workflowId, T candidate, Map<String, T> destination) {
         if (beanWorkflowCandidatesById.containsKey(workflowId) || classWorkflowCandidatesById.containsKey(workflowId)) {
-            throw new IllegalStateException("Duplicate workflow id: " + workflowId);
+            throw new WorkflowConfigurationException("Duplicate workflow id: " + workflowId);
         }
         destination.put(workflowId, candidate);
     }
 
     private static void sanityCheck(WorkflowExecutionPlan plan, String workflowId) {
         if (plan == null) {
-            throw new IllegalStateException("WorkflowExecutionPlan is null. workflowId=" + workflowId);
+            throw new WorkflowConfigurationException("WorkflowExecutionPlan is null. workflowId=" + workflowId);
         }
         if (plan.nodes().isEmpty()) {
-            throw new IllegalStateException("WorkflowExecutionPlan has no nodes. workflowId=" + workflowId);
+            throw new WorkflowConfigurationException("WorkflowExecutionPlan has no nodes. workflowId=" + workflowId);
         }
         if (plan.roots() == null || plan.roots().isEmpty()) {
-            throw new IllegalStateException("WorkflowExecutionPlan has no roots. workflowId=" + workflowId);
+            throw new WorkflowConfigurationException("WorkflowExecutionPlan has no roots. workflowId=" + workflowId);
         }
     }
 

@@ -110,13 +110,14 @@ public class FlowForgeAutoConfiguration {
                 properties.getExecution().getBackpressureStrategy()
             );
 
-        return new ReactiveWorkflowOrchestrator(
-                Schedulers.boundedElastic(),
-                flowForgeScheduler,
-                monitor,
-                new DefaultTaskInputResolver(),
-                tracerFactory,
-                limits);
+        return ReactiveWorkflowOrchestrator.builder()
+                .taskScheduler(Schedulers.boundedElastic())
+                .stateScheduler(flowForgeScheduler)
+                .monitor(monitor)
+                .inputResolver(new DefaultTaskInputResolver())
+                .tracerFactory(tracerFactory != null ? tracerFactory : types -> new io.flowforge.workflow.trace.NoOpExecutionTracer())
+                .limits(limits)
+                .build();
     }
 
     @Bean

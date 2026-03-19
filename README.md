@@ -33,13 +33,13 @@ dsl.flow(CustomerTasks::getUser)
 That’s it.
 
 🔥 Why This Is Different
-1. 🛡️ Compile-Time Type Safety
+1. 🛡️ Type-Safe DSL
 Mono<User> getUser(Void in)
 Mono<OrderSummary> getOrders(User in)
 
-If types don’t match → your code doesn’t compile.
+If types don't match → your workflow fails at startup.
 
-No runtime surprises. Ever.
+Catch type errors early. No runtime surprises.
 
 2. 🔗 Automatic Data Propagation
 
@@ -68,11 +68,11 @@ Invalid DAG → ❌ startup fails
 
 If your app starts, your workflow is valid.
 
-5. 🧠 Zero Runtime Reflection
+5. 🧠 Pre-Resolved Method Handles
 
-Resolution happens once at startup
+Resolution happens once at startup using MethodHandles
 
-Execution uses precompiled plans
+Task execution uses precompiled plans — no reflection during execution
 
 👉 Predictable, fast, debuggable.
 
@@ -121,7 +121,7 @@ Each @FlowTask is registered using full JVM signature
 
 DSL builds a typed DAG (execution plan)
 
-Runtime executes without reflection
+Runtime executes using precompiled MethodHandles
 
 🧬 Advanced Composition
 Parallel
@@ -152,7 +152,7 @@ FlowForge is built on a few strict principles:
 
 Types over strings
 
-Compile-time over runtime
+Build-time over runtime
 
 Explicit over magic
 

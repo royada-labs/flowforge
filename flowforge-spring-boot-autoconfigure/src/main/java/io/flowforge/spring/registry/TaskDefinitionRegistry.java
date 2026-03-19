@@ -1,5 +1,6 @@
 package io.flowforge.spring.registry;
 
+import io.flowforge.exception.TaskRegistrationException;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 
@@ -66,7 +67,7 @@ public final class TaskDefinitionRegistry {
     ) {
         TaskDefinition<?, ?> previous = map.putIfAbsent(key, definition);
         if (previous != null && !previous.equals(definition)) {
-            throw new IllegalStateException(
+            throw new TaskRegistrationException(
                     "Conflicting TaskDefinition for " + keyType + " '" + key + "': " + previous + " vs " + definition
             );
         }

@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.flowforge.exception.WorkflowConfigurationException;
 import io.flowforge.task.BasicTask;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
@@ -39,8 +40,8 @@ class WorkflowRegistryTest {
         WorkflowRegistry registry = new WorkflowRegistry();
         registry.register(descriptor("duplicate-flow"));
 
-        IllegalStateException ex = assertThrows(
-                IllegalStateException.class,
+        WorkflowConfigurationException ex = assertThrows(
+                WorkflowConfigurationException.class,
                 () -> registry.register(descriptor("duplicate-flow"))
         );
 
@@ -53,8 +54,8 @@ class WorkflowRegistryTest {
         registry.register(descriptor("flow-sealed"));
         registry.seal();
 
-        IllegalStateException ex = assertThrows(
-                IllegalStateException.class,
+        WorkflowConfigurationException ex = assertThrows(
+                WorkflowConfigurationException.class,
                 () -> registry.register(descriptor("late-flow"))
         );
 

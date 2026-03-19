@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import io.flowforge.task.BasicTask;
 import io.flowforge.task.TaskId;
+import io.flowforge.exception.DeadEndException;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.monitor.NoOpWorkflowMonitor;
-import io.flowforge.workflow.orchestrator.DeadEndException;
 import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.plan.WorkflowPlanBuilder;

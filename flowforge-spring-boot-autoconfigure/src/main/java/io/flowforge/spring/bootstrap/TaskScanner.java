@@ -1,6 +1,8 @@
 package io.flowforge.spring.bootstrap;
 
 import io.flowforge.api.FlowTaskHandler;
+import io.flowforge.exception.TaskRegistrationException;
+import io.flowforge.exception.WorkflowConfigurationException;
 import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.annotations.TaskHandler;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
@@ -82,7 +84,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
                         || beanFactory.isTypeMatch(beanName, Task.class);
 
         if (!supported) {
-            throw new IllegalStateException(
+            throw new TaskRegistrationException(
                     "@FlowTask bean does not implement FlowTaskHandler.  " +
                             "beanName=" + beanName + ", type=" + (type == null ? "unknown" : type.getName())
             );
@@ -133,7 +135,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
                 continue;
             }
             if (!Modifier.isPublic(method.getModifiers())) {
-                throw new IllegalStateException("@FlowTask method must be public: " + method);
+                throw new TaskRegistrationException("@FlowTask method must be public: " + method);
             }
             if (method.isSynthetic() || method.isBridge()) {
                 continue;
@@ -227,7 +229,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
             Class<?> inferredType
     ) {
         if (explicitType != Object.class && inferredType != Object.class && !explicitType.equals(inferredType)) {
-            throw new IllegalStateException(
+            throw new WorkflowConfigurationException(
                     "@FlowTask " + label + " type mismatch for bean '" + beanName + "': annotation="
                             + explicitType.getName() + ", inferred=" + inferredType.getName()
             );
@@ -258,7 +260,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
         if (params.length == 2) {
             return params[0];
         }
-        throw new IllegalStateException("@FlowTask method supports up to 2 parameters: " + method);
+        throw new WorkflowConfigurationException("@FlowTask method supports up to 2 parameters: " + method);
     }
 
     private static Class<?> inferOutputType(Method method) {

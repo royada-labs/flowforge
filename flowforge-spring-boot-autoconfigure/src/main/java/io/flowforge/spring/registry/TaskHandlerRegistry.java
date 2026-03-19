@@ -1,5 +1,6 @@
 package io.flowforge.spring.registry;
 
+import io.flowforge.exception.TaskRegistrationException;
 import io.flowforge.task.TaskId;
 
 import java.util.Collection;
@@ -16,7 +17,7 @@ public final class TaskHandlerRegistry {
     public void register(TaskProvider provider) {
         TaskProvider previous = providers.putIfAbsent(provider.id(), provider);
         if (previous != null) {
-            throw new IllegalStateException("Duplicate FlowTask id: " + provider.id());
+            throw new TaskRegistrationException("Duplicate FlowTask id: " + provider.id());
         }
     }
 
