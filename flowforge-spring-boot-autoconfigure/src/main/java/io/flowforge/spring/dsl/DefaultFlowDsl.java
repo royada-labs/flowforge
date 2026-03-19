@@ -42,4 +42,10 @@ public final class DefaultFlowDsl implements FlowDsl {
         TaskDefinition<I, O> task = referenceResolver.resolve(methodRef);
         return startTyped(task);
     }
+
+    @Override
+    public <B, I, O> TypedFlowBuilder<O> start(TaskCallNoContextRef<B, I, O> methodRef) {
+        TaskDefinition<I, O> task = referenceResolver.resolve(methodRef);
+        return startTyped(task);
+    }
 }

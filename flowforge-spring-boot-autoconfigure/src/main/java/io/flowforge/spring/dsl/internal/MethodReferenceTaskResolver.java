@@ -1,6 +1,7 @@
 package io.flowforge.spring.dsl.internal;
 
 import io.flowforge.spring.dsl.TaskCallRef;
+import io.flowforge.spring.dsl.TaskCallNoContextRef;
 import io.flowforge.spring.dsl.TaskMethodRef;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.task.TaskDefinition;
@@ -31,6 +32,14 @@ public final class MethodReferenceTaskResolver implements TaskReferenceResolver 
     @Override
     @SuppressWarnings("unchecked")
     public <B, I, O> TaskDefinition<I, O> resolve(TaskCallRef<B, I, O> ref) {
+        Objects.requireNonNull(ref, "ref");
+        SerializedLambda lambda = extract(ref);
+        return (TaskDefinition<I, O>) resolve(lambda);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <B, I, O> TaskDefinition<I, O> resolve(TaskCallNoContextRef<B, I, O> ref) {
         Objects.requireNonNull(ref, "ref");
         SerializedLambda lambda = extract(ref);
         return (TaskDefinition<I, O>) resolve(lambda);

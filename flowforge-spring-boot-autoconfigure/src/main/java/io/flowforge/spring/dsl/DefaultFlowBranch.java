@@ -40,6 +40,11 @@ public final class DefaultFlowBranch implements FlowBranch {
         return then(referenceResolver.resolve(methodRef));
     }
 
+    @Override
+    public <B, I, O> TypedFlowBuilder<O> then(TaskCallNoContextRef<B, I, O> methodRef) {
+        return then(referenceResolver.resolve(methodRef));
+    }
+
     @SafeVarargs
     @Override
     public final FlowBranch fork(Consumer<FlowBranch>... branches) {
@@ -69,6 +74,10 @@ public final class DefaultFlowBranch implements FlowBranch {
         }
 
         public <B, I, O> TypedFlowBuilder<O> then(TaskCallRef<B, I, O> methodRef) {
+            return then(referenceResolver.resolve(methodRef));
+        }
+
+        public <B, I, O> TypedFlowBuilder<O> then(TaskCallNoContextRef<B, I, O> methodRef) {
             return then(referenceResolver.resolve(methodRef));
         }
 

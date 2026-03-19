@@ -20,6 +20,7 @@ public interface FlowBranch {
     <I, O> TypedFlowBuilder<O> then(TaskDefinition<I, O> task);
     <B, I, O> TypedFlowBuilder<O> then(TaskMethodRef<B, I, O> methodRef);
     <B, I, O> TypedFlowBuilder<O> then(TaskCallRef<B, I, O> methodRef);
+    <B, I, O> TypedFlowBuilder<O> then(TaskCallNoContextRef<B, I, O> methodRef);
 
     /**
      * Starts nested parallel branches.

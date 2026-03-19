@@ -65,6 +65,10 @@ public final class TypedFlowBuilder<O> {
         return then(referenceResolver.resolve(methodRef));
     }
 
+    public <B, NextO> TypedFlowBuilder<NextO> then(TaskCallNoContextRef<B, O, NextO> methodRef) {
+        return then(referenceResolver.resolve(methodRef));
+    }
+
     /**
      * Joins previous parallel branches into a single task.
      *
@@ -81,6 +85,10 @@ public final class TypedFlowBuilder<O> {
     }
 
     public <B, NextO> TypedFlowBuilder<NextO> join(TaskCallRef<B, O, NextO> methodRef) {
+        return join(referenceResolver.resolve(methodRef));
+    }
+
+    public <B, NextO> TypedFlowBuilder<NextO> join(TaskCallNoContextRef<B, O, NextO> methodRef) {
         return join(referenceResolver.resolve(methodRef));
     }
 
@@ -112,6 +120,17 @@ public final class TypedFlowBuilder<O> {
     @SafeVarargs
     @SuppressWarnings("unchecked")
     public final <B, X> TypedFlowBuilder<O> parallel(TaskCallRef<B, O, X>... branches) {
+        Consumer<FlowBranch>[] consumers = new Consumer[branches.length];
+        for (int i = 0; i < branches.length; i++) {
+            TaskDefinition<O, X> task = referenceResolver.resolve(branches[i]);
+            consumers[i] = b -> b.then(cast(task));
+        }
+        return fork(consumers);
+    }
+
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    public final <B, X> TypedFlowBuilder<O> parallel(TaskCallNoContextRef<B, O, X>... branches) {
         Consumer<FlowBranch>[] consumers = new Consumer[branches.length];
         for (int i = 0; i < branches.length; i++) {
             TaskDefinition<O, X> task = referenceResolver.resolve(branches[i]);

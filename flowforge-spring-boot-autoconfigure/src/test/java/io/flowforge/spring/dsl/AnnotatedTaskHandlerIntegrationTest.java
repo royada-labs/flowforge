@@ -29,6 +29,11 @@ class AnnotatedTaskHandlerIntegrationTest {
                     .withConfiguration(AutoConfigurations.of(FlowForgeAutoConfiguration.class))
                     .withUserConfiguration(AnnotatedHandlerConfig.class);
 
+        private final ApplicationContextRunner noContextRunner =
+            new ApplicationContextRunner()
+                .withConfiguration(AutoConfigurations.of(FlowForgeAutoConfiguration.class))
+                .withUserConfiguration(AnnotatedHandlerNoContextConfig.class);
+
     @Test
     void should_register_and_execute_taskhandler_methods_via_method_references() {
         contextRunner.run(ctx -> {
@@ -50,6 +55,18 @@ class AnnotatedTaskHandlerIntegrationTest {
         });
     }
 
+    @Test
+    void should_accept_method_references_without_context_parameter() {
+        noContextRunner.run(ctx -> {
+            assertNull(ctx.getStartupFailure());
+            FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
+
+            StepVerifier.create(client.executeResult("annotated-noctx-flow", null))
+                    .expectNext("v=11")
+                    .verifyComplete();
+        });
+    }
+
     @Configuration(proxyBeanMethods = false)
     static class AnnotatedHandlerConfig {
         @Bean
@@ -64,6 +81,22 @@ class AnnotatedTaskHandlerIntegrationTest {
                     .parallel(Ops::profileLookup, Ops::ordersLookup)
                     .join(Ops::aggregate)
                     .then(Ops::finalizeResult)
+                    .build();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class AnnotatedHandlerNoContextConfig {
+        @Bean
+        OpsNoContext opsNoContext() {
+            return new OpsNoContext();
+        }
+
+        @FlowWorkflow(id = "annotated-noctx-flow")
+        @Bean
+        WorkflowExecutionPlan planNoContext(FlowDsl dsl) {
+            return dsl.flow(OpsNoContext::start)
+                    .then(OpsNoContext::format)
                     .build();
         }
     }
@@ -96,6 +129,19 @@ class AnnotatedTaskHandlerIntegrationTest {
         @FlowTask(id = "finalizeResult")
         public Mono<String> finalizeResult(Integer branches, ReactiveExecutionContext ctx) {
             return Mono.just("branches=" + branches);
+        }
+    }
+
+    @TaskHandler("customer-noctx")
+    static class OpsNoContext {
+        @FlowTask(id = "start")
+        public Mono<Integer> start(Void input) {
+            return Mono.just(11);
+        }
+
+        @FlowTask(id = "format")
+        public Mono<String> format(Integer input) {
+            return Mono.just("v=" + input);
         }
     }
 }

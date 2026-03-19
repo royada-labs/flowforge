@@ -45,6 +45,12 @@ public interface FlowDsl {
     <B, I, O> TypedFlowBuilder<O> start(TaskCallRef<B, I, O> methodRef);
 
     /**
+     * Starts a workflow from a typed method reference to a {@code @TaskHandler} method
+     * that does not declare {@code ReactiveExecutionContext}.
+     */
+    <B, I, O> TypedFlowBuilder<O> start(TaskCallNoContextRef<B, I, O> methodRef);
+
+    /**
      * Ultra-fluent alias for method-reference-based starts.
      */
     default <B, I, O> TypedFlowBuilder<O> flow(TaskMethodRef<B, I, O> methodRef) {
@@ -52,6 +58,10 @@ public interface FlowDsl {
     }
 
     default <B, I, O> TypedFlowBuilder<O> flow(TaskCallRef<B, I, O> methodRef) {
+        return start(methodRef);
+    }
+
+    default <B, I, O> TypedFlowBuilder<O> flow(TaskCallNoContextRef<B, I, O> methodRef) {
         return start(methodRef);
     }
 }
