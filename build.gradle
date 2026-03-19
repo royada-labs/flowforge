@@ -1,5 +1,6 @@
 plugins {
     id 'base'
+    id 'signing'
 }
 
 allprojects {
@@ -15,14 +16,12 @@ subprojects {
     if (project.name == "flowforge-bom") {
         apply plugin: 'java-platform'
     } else {
-        // Todos los demás módulos (incluyendo stress-harness) son Java
         apply plugin: 'java'
         if (project.name != "flowforge-stress-harness") {
             apply plugin: 'java-library'
         }
     }
     
-    // Aplicamos el BOM a todos los módulos que no sean el propio BOM
     if (project.name != "flowforge-bom") {
         dependencies {
             implementation platform(libs.spring.boot.dependencies.bom)
@@ -31,7 +30,6 @@ subprojects {
         }
     }
 
-    // EXCLUSIÓN de publicación para stress-harness
     if (project.name == "flowforge-stress-harness") {
         return
     }
@@ -65,6 +63,24 @@ subprojects {
         }
     }
 
+    // Generate sources and javadoc jars (only for java-library projects)
+    if (project.plugins.hasPlugin('java-library')) {
+        task sourcesJar(type: Jar, dependsOn: classes) {
+            archiveClassifier = 'sources'
+            from sourceSets.main.allSource
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            archiveClassifier = 'javadoc'
+            from javadoc.destinationDir
+        }
+
+        artifacts {
+            archives sourcesJar
+            archives javadocJar
+        }
+    }
+
     publishing {
         publications {
             mavenJava(MavenPublication) {
@@ -72,6 +88,11 @@ subprojects {
                     from components.javaPlatform
                 } else {
                     from components.java
+                }
+
+                if (project.plugins.hasPlugin('java-library')) {
+                    artifact sourcesJar
+                    artifact javadocJar
                 }
 
                 groupId = 'io.flowforge'
@@ -82,10 +103,28 @@ subprojects {
                     name = project.name
                     description = 'Type-safe, reactive workflow orchestration for Java'
                     url = 'https://github.com/flowforge/flowforge'
+                    
+                    inceptionYear = '2024'
+                    
+                    scm {
+                        url = 'https://github.com/flowforge/flowforge'
+                        connection = 'scm:git:https://github.com/flowforge/flowforge.git'
+                        developerConnection = 'scm:git:https://github.com/flowforge/flowforge.git'
+                    }
+                    
                     licenses {
                         license {
                             name = 'Apache License, Version 2.0'
                             url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                            distribution = 'repo'
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id = 'flowforge'
+                            name = 'FlowForge Team'
+                            email = 'team@flowforge.io'
                         }
                     }
                 }
@@ -94,17 +133,27 @@ subprojects {
 
         repositories {
             maven {
-                name = "nexus"
-
-                url = version.endsWith('SNAPSHOT')
-                        ? uri("https://nexus.royadahome.com/repository/maven-snapshots/")
-                        : uri("https://nexus.royadahome.com/repository/maven-releases/")
+                name = "MavenCentral"
+                
+                def releasesRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
+                
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
                 credentials {
-                    username = findProperty("nexusUser") ?: System.getenv("NEXUS_USER")
-                    password = findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
+                    username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+                    password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
                 }
             }
         }
+    }
+
+    // Signing must come after publishing block
+    signing {
+        required { 
+            gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenCentralRepository") && 
+            (project.version.endsWith('SNAPSHOT') == false) 
+        }
+        sign publishing.publications.mavenJava
     }
 }
