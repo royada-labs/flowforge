@@ -31,7 +31,9 @@ jobs:
           cache: 'gradle'
 
       - name: Build
-        run: ./gradlew build --no-daemon
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --no-daemon
 
       - name: Run Tests
         run: ./gradlew test --no-daemon
@@ -68,7 +70,9 @@ jobs:
           cache: 'gradle'
 
       - name: Build (no tests for faster analysis)
-        run: ./gradlew classes --no-daemon
+        run: |
+          chmod +x ./gradlew
+          ./gradlew classes --no-daemon
 
       - name: Checkstyle
         run: ./gradlew checkstyleMain --no-daemon || true
@@ -92,7 +96,9 @@ jobs:
           cache: 'gradle'
 
       - name: Generate Javadoc
-        run: ./gradlew javadoc --no-daemon || true
+        run: |
+          chmod +x ./gradlew
+          ./gradlew javadoc --no-daemon || true
 
       - name: Upload Javadoc
         if: github.ref == 'refs/heads/main'
@@ -127,6 +133,7 @@ jobs:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           SIGNING_KEYRING_FILE: ${{ secrets.SIGNING_KEYRING_FILE }}
         run: |
+          chmod +x ./gradlew
           echo "${{ secrets.SIGNING_KEYRING_FILE }}" | base64 -d > signing-key.gpg
           ./gradlew publish --no-daemon \
             -Psigning.keyId=${{ secrets.SIGNING_KEY_ID }} \
