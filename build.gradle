@@ -136,7 +136,7 @@ subprojects {
                 name = "MavenCentral"
 
                 def releasesRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
-                def snapshotsRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
+def snapshotsRepoUrl = "https://s01.ossrh.com/content/repositories/snapshots/"
 
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
@@ -150,18 +150,14 @@ subprojects {
 
     // Signing must come after publishing block
     signing {
-    def signingKey = findProperty("signing.key") ?: System.getenv("SIGNING_KEY")
-    def signingPassword = findProperty("signing.password") ?: System.getenv("SIGNING_PASSWORD")
+        def signingKey = findProperty("signing.key") ?: System.getenv("SIGNING_KEY")
+        def signingPassword = findProperty("signing.password") ?: System.getenv("SIGNING_PASSWORD")
 
-    if (signingKey && signingPassword) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
+        def isRelease = !project.version.endsWith("SNAPSHOT")
+
+        if (isRelease && signingKey && signingPassword) {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign publishing.publications.mavenJava
+        }
     }
-
-    required {
-        gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenCentralRepository") &&
-        !project.version.endsWith('SNAPSHOT')
-    }
-
-    sign publishing.publications.mavenJava
-}
 }
