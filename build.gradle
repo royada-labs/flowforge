@@ -135,8 +135,8 @@ subprojects {
             maven {
                 name = "MavenCentral"
 
-                def releasesRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
-def snapshotsRepoUrl = "https://s01.ossrh.com/content/repositories/snapshots/"
+                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
 
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
