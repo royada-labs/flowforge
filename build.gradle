@@ -21,7 +21,7 @@ subprojects {
             apply plugin: 'java-library'
         }
     }
-    
+
     if (project.name != "flowforge-bom") {
         dependencies {
             implementation platform(libs.spring.boot.dependencies.bom)
@@ -103,15 +103,15 @@ subprojects {
                     name = project.name
                     description = 'Type-safe, reactive workflow orchestration for Java'
                     url = 'https://github.com/flowforge/flowforge'
-                    
+
                     inceptionYear = '2024'
-                    
+
                     scm {
                         url = 'https://github.com/flowforge/flowforge'
                         connection = 'scm:git:https://github.com/flowforge/flowforge.git'
                         developerConnection = 'scm:git:https://github.com/flowforge/flowforge.git'
                     }
-                    
+
                     licenses {
                         license {
                             name = 'Apache License, Version 2.0'
@@ -119,7 +119,7 @@ subprojects {
                             distribution = 'repo'
                         }
                     }
-                    
+
                     developers {
                         developer {
                             id = 'flowforge'
@@ -134,10 +134,10 @@ subprojects {
         repositories {
             maven {
                 name = "MavenCentral"
-                
+
                 def releasesRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
                 def snapshotsRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
-                
+
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
                 credentials {
@@ -150,10 +150,18 @@ subprojects {
 
     // Signing must come after publishing block
     signing {
-        required { 
-            gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenCentralRepository") && 
-            (project.version.endsWith('SNAPSHOT') == false) 
-        }
-        sign publishing.publications.mavenJava
+    def signingKey = findProperty("signing.key") ?: System.getenv("SIGNING_KEY")
+    def signingPassword = findProperty("signing.password") ?: System.getenv("SIGNING_PASSWORD")
+
+    if (signingKey && signingPassword) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
     }
+
+    required {
+        gradle.taskGraph.hasTask("publishMavenJavaPublicationToMavenCentralRepository") &&
+        !project.version.endsWith('SNAPSHOT')
+    }
+
+    sign publishing.publications.mavenJava
+}
 }
