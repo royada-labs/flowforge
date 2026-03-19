@@ -1,6 +1,9 @@
 package io.flowforge.workflow.monitor;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -16,6 +19,7 @@ import io.flowforge.workflow.instance.WorkflowInstance;
 
 public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(AsyncLoggingWorkflowMonitor.class);
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final Clock clock;
     private final ExecutorService executor;
@@ -40,11 +44,13 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
     @Override
     public void onWorkflowStart(WorkflowInstance instance) {
         long now = clock.millis();
-        workflowStart.put(instanceKey(instance), now);
+        Object key = instanceKey(instance);
+        workflowStart.put(key, now);
 
         submit(() -> {
-            String msg = String.format("Workflow started: workflowId=%s instance=%s at=%d",
-                    instance.workflowId(), instanceKey(instance), now);
+            String at = formatTimestamp(now);
+            String msg = String.format("Workflow started: workflowId=%s instance=%s at=%s",
+                    instance.workflowId(), key, at);
             log(msg);
         });
     }
@@ -57,8 +63,9 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         long durationMs = (start == null) ? -1L : (now - start);
 
         submit(() -> {
-            String msg = String.format("Workflow completed: workflowId=%s instance=%s durationMs=%d",
-                    instance.workflowId(), key, durationMs);
+            String finishedAt = formatTimestamp(now);
+            String msg = String.format("Workflow completed: workflowId=%s instance=%s finishedAt=%s durationMs=%d",
+                    instance.workflowId(), key, finishedAt, durationMs);
             log(msg);
         });
 
@@ -75,8 +82,9 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         taskStart.put(tKey, now);
 
         submit(() -> {
-            String msg = String.format("Task started: workflowId=%s instance=%s taskId=%s at=%d",
-                    instance.workflowId(), iKey, taskId.getValue(), now);
+            String at = formatTimestamp(now);
+            String msg = String.format("Task started: workflowId=%s instance=%s taskId=%s at=%s",
+                    instance.workflowId(), iKey, taskId.getValue(), at);
             log(msg);
         });
     }
@@ -108,14 +116,16 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         long durationMs = (start == null) ? -1L : (now - start);
 
         submit(() -> {
+            String finishedAt = formatTimestamp(now);
             String msg;
             if (error == null) {
-                msg = String.format("Task finished: workflowId=%s instance=%s taskId=%s outcome=%s durationMs=%d",
-                        instance.workflowId(), iKey, taskId.getValue(), outcome, durationMs);
+                msg = String.format(
+                    "Task finished: workflowId=%s instance=%s taskId=%s outcome=%s finishedAt=%s durationMs=%d",
+                    instance.workflowId(), iKey, taskId.getValue(), outcome, finishedAt, durationMs);
             } else {
                 msg = String.format(
-                        "Task finished: workflowId=%s instance=%s taskId=%s outcome=%s durationMs=%d error=%s",
-                        instance.workflowId(), iKey, taskId.getValue(), outcome, durationMs, error.toString());
+                    "Task finished: workflowId=%s instance=%s taskId=%s outcome=%s finishedAt=%s durationMs=%d error=%s",
+                    instance.workflowId(), iKey, taskId.getValue(), outcome, finishedAt, durationMs, error.toString());
             }
 
             if (error != null) {
@@ -148,6 +158,10 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         } catch (RejectedExecutionException ignored) {
             // Monitor is shutting down; ignore to avoid impacting workflow execution
         }
+    }
+
+    private String formatTimestamp(long epochMillis) {
+        return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(epochMillis).atOffset(ZoneOffset.UTC));
     }
 
     /**
