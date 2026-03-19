@@ -30,8 +30,8 @@ class LoadAndConcurrencyTest {
   @Test
   void should_not_starve_with_many_tasks_and_low_concurrency() {
     // 4.2 No starvation
-    // 50 tasks, maxConcurrency = 4
-    int taskCount = 50;
+    // 40 tasks, maxConcurrency = 4
+    int taskCount = 40;
     int maxConcurrency = 4;
 
     AtomicInteger completedCount = new AtomicInteger(0);
@@ -41,7 +41,7 @@ class LoadAndConcurrencyTest {
 
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
-            return Mono.delay(Duration.ofMillis(10))
+            return Mono.delay(Duration.ofMillis(50))
                 .doOnNext(x -> completedCount.incrementAndGet())
                 .thenReturn("done");
           }
@@ -56,11 +56,12 @@ class LoadAndConcurrencyTest {
         new DefaultTaskInputResolver(),
         maxConcurrency);
 
-    StepVerifier.create(orchestrator.execute(plan, null))
+    StepVerifier.create(orchestrator.execute(plan, null)
+            .timeout(Duration.ofSeconds(30)))
         .expectNextCount(1)
         .verifyComplete();
 
-    assertTrue(completedCount.get() == taskCount, "All tasks should have completed");
+    assertTrue(completedCount.get() == taskCount, "All tasks should have completed: " + completedCount.get() + "/" + taskCount);
   }
 
   @Test
