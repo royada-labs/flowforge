@@ -1,8 +1,8 @@
 package io.flowforge.spring.dsl;
 
-import reactor.core.publisher.Mono;
-
 import java.io.Serializable;
+
+import reactor.core.publisher.Mono;
 
 /**
  * Serializable instance-method reference to a {@code @FlowTask} method in a {@code @TaskHandler} bean

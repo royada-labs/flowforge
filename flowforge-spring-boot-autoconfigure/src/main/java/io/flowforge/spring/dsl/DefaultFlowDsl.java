@@ -1,14 +1,14 @@
 package io.flowforge.spring.dsl;
 
+import java.util.Objects;
+
 import io.flowforge.spring.dsl.internal.FlowGraph;
-import io.flowforge.spring.dsl.internal.MethodReferenceTaskResolver;
 import io.flowforge.spring.dsl.internal.FlowPlanMaterializer;
+import io.flowforge.spring.dsl.internal.MethodReferenceTaskResolver;
 import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.task.TaskDefinition;
-
-import java.util.Objects;
 
 public final class DefaultFlowDsl implements FlowDsl {
 

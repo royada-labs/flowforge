@@ -1,14 +1,14 @@
 package io.flowforge.spring.dsl.internal;
 
-import io.flowforge.spring.dsl.TaskCallRef;
-import io.flowforge.spring.dsl.TaskCallNoContextRef;
-import io.flowforge.spring.dsl.TaskMethodRef;
-import io.flowforge.spring.registry.TaskDefinitionRegistry;
-import io.flowforge.task.TaskDefinition;
-
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;
 import java.util.Objects;
+
+import io.flowforge.spring.dsl.TaskCallNoContextRef;
+import io.flowforge.spring.dsl.TaskCallRef;
+import io.flowforge.spring.dsl.TaskMethodRef;
+import io.flowforge.spring.registry.TaskDefinitionRegistry;
+import io.flowforge.task.TaskDefinition;
 
 /**
  * Resolves typed task method references at workflow build-time.

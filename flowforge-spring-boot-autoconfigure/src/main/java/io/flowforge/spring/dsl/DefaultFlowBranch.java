@@ -1,12 +1,12 @@
 package io.flowforge.spring.dsl;
 
-import io.flowforge.spring.dsl.internal.FlowGraph;
-import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
-import io.flowforge.task.TaskDefinition;
-
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
+
+import io.flowforge.spring.dsl.internal.FlowGraph;
+import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
+import io.flowforge.task.TaskDefinition;
 
 public final class DefaultFlowBranch implements FlowBranch {
 

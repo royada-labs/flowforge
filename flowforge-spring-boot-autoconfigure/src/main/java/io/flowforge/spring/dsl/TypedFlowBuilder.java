@@ -1,11 +1,11 @@
 package io.flowforge.spring.dsl;
 
+import java.util.Objects;
+import java.util.function.Consumer;
+
 import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
-
-import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * A typed wrapper around {@link FlowBuilder} that tracks the output type of the

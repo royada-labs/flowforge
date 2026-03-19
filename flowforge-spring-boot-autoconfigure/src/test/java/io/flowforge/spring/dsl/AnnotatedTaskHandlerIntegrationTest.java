@@ -1,5 +1,16 @@
 package io.flowforge.spring.dsl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.flowforge.api.FlowForgeClient;
 import io.flowforge.spring.annotations.FlowTask;
 import io.flowforge.spring.annotations.FlowWorkflow;
@@ -9,18 +20,8 @@ import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AnnotatedTaskHandlerIntegrationTest {
 

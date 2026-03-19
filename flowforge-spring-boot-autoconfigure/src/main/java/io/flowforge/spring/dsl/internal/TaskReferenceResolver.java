@@ -1,7 +1,7 @@
 package io.flowforge.spring.dsl.internal;
 
-import io.flowforge.spring.dsl.TaskCallRef;
 import io.flowforge.spring.dsl.TaskCallNoContextRef;
+import io.flowforge.spring.dsl.TaskCallRef;
 import io.flowforge.spring.dsl.TaskMethodRef;
 import io.flowforge.task.TaskDefinition;
 
