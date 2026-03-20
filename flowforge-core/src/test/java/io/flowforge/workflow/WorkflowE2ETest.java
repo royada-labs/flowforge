@@ -42,11 +42,11 @@ class WorkflowE2ETest {
         WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
 
         ReactiveWorkflowOrchestrator orchestrator =
-                new ReactiveWorkflowOrchestrator(
-                        Schedulers.immediate(),
-                        new NoOpWorkflowMonitor(),
-                        new DefaultTaskInputResolver()
-                );
+                ReactiveWorkflowOrchestrator.builder()
+                    .taskScheduler(Schedulers.immediate())
+                    .monitor(new NoOpWorkflowMonitor())
+                    .inputResolver(new DefaultTaskInputResolver())
+                    .build();
 
         StepVerifier.create(orchestrator.execute(plan, "hello"))
                 .assertNext(ctx -> {

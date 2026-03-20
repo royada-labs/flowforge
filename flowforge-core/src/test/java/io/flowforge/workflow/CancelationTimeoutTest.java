@@ -67,10 +67,11 @@ class CancelationTimeoutTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA, taskB));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        reactor.core.scheduler.Schedulers.parallel(),
-        monitor,
-        new io.flowforge.workflow.input.DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(reactor.core.scheduler.Schedulers.parallel())
+        .monitor(monitor)
+        .inputResolver(new io.flowforge.workflow.input.DefaultTaskInputResolver())
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectSubscription()
@@ -103,7 +104,7 @@ class CancelationTimeoutTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     // Expect TimeoutException
     StepVerifier.create(orchestrator.execute(plan, null, Duration.ofMillis(100)))

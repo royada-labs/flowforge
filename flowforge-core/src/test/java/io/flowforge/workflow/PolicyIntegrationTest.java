@@ -17,6 +17,8 @@ import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.instance.WorkflowInstance;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
+import io.flowforge.workflow.orchestrator.BackpressureStrategy;
+import io.flowforge.workflow.orchestrator.ExecutionLimits;
 import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.policy.ExecutionPolicy;
@@ -53,7 +55,7 @@ class PolicyIntegrationTest {
     WorkflowExecutionPlan plan = WorkflowExecutionPlan.from(
         io.flowforge.workflow.graph.WorkflowGraph.build(List.of(descriptor)));
 
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
@@ -112,12 +114,13 @@ class PolicyIntegrationTest {
       }
     };
 
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        Schedulers.parallel(),
-        Schedulers.newSingle("state"),
-        monitor,
-        new DefaultTaskInputResolver(),
-        2);
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(Schedulers.parallel())
+        .stateScheduler(Schedulers.newSingle("state"))
+        .monitor(monitor)
+        .inputResolver(new DefaultTaskInputResolver())
+        .limits(new ExecutionLimits(2, 1000, BackpressureStrategy.BLOCK))
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError()

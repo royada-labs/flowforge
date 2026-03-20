@@ -42,10 +42,11 @@ class DeadEndExceptionTest {
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
 
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        Schedulers.parallel(),
-        new NoOpWorkflowMonitor(),
-        new DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+    .taskScheduler(Schedulers.parallel())
+    .monitor(new NoOpWorkflowMonitor())
+    .inputResolver(new DefaultTaskInputResolver())
+    .build();
 
     StepVerifier.create(orchestrator.execute(plan, "input"))
         .expectErrorSatisfies(err -> {

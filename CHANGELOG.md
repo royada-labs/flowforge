@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Migration guide** for deprecated constructor removal
+
+### Changed
+- **Removed deprecated constructors** from `ReactiveWorkflowOrchestrator`. Only Builder pattern is now supported.
+- All constructors marked `@Deprecated` in v1.x have been removed. See [migration guide](docs/migration/deprecated-constructors-to-builder.md) for details.
+- Updated all internal tests to use `ReactiveWorkflowOrchestrator.builder()`.
+
+### Fixed
+- `WorkflowResultSelector` terminal node detection now uses `isEmpty()` instead of incorrect `== null` check.
+- `InvalidPlanException` now extends `FlowForgeException` for consistency.
+
 ## [1.1.0] - 2026-03-18
 
 ### Added

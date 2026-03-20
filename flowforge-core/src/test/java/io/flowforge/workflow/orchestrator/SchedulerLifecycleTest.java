@@ -23,12 +23,13 @@ public class SchedulerLifecycleTest {
 
     try {
       // 2. Create Orchestrator with the shared scheduler
-      ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-          Schedulers.boundedElastic(),
-          sharedStateScheduler,
-          new NoOpWorkflowMonitor(),
-          new DefaultTaskInputResolver(),
-          2);
+      ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+          .taskScheduler(Schedulers.boundedElastic())
+          .stateScheduler(sharedStateScheduler)
+          .monitor(new NoOpWorkflowMonitor())
+          .inputResolver(new DefaultTaskInputResolver())
+          .limits(new ExecutionLimits(2, 1000, BackpressureStrategy.BLOCK))
+          .build();
 
       // 3. Define a trivial plan (empty is fine)
       WorkflowExecutionPlan emptyPlan = WorkflowExecutionPlan.from(

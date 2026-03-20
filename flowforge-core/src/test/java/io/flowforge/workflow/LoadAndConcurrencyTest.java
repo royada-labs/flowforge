@@ -18,6 +18,8 @@ import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.instance.WorkflowInstance;
 import io.flowforge.workflow.monitor.NoOpWorkflowMonitor;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
+import io.flowforge.workflow.orchestrator.BackpressureStrategy;
+import io.flowforge.workflow.orchestrator.ExecutionLimits;
 import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.plan.WorkflowPlanBuilder;
@@ -49,12 +51,13 @@ class LoadAndConcurrencyTest {
         .collect(Collectors.toList());
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        Schedulers.parallel(),
-        Schedulers.newSingle("state"),
-        new NoOpWorkflowMonitor(),
-        new DefaultTaskInputResolver(),
-        maxConcurrency);
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(Schedulers.parallel())
+        .stateScheduler(Schedulers.newSingle("state"))
+        .monitor(new NoOpWorkflowMonitor())
+        .inputResolver(new DefaultTaskInputResolver())
+        .limits(new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK))
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null)
             .timeout(Duration.ofSeconds(30)))
@@ -94,12 +97,13 @@ class LoadAndConcurrencyTest {
         .collect(Collectors.toList());
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        Schedulers.parallel(),
-        Schedulers.newSingle("state"),
-        new NoOpWorkflowMonitor(),
-        new DefaultTaskInputResolver(),
-        maxConcurrency);
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(Schedulers.parallel())
+        .stateScheduler(Schedulers.newSingle("state"))
+        .monitor(new NoOpWorkflowMonitor())
+        .inputResolver(new DefaultTaskInputResolver())
+        .limits(new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK))
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectNextCount(1)

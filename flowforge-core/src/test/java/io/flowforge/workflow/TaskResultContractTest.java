@@ -34,7 +34,7 @@ class TaskResultContractTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectErrorSatisfies(err -> {
@@ -59,7 +59,7 @@ class TaskResultContractTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError(RuntimeException.class)
@@ -96,7 +96,7 @@ class TaskResultContractTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError()
@@ -140,7 +140,7 @@ class TaskResultContractTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
@@ -181,7 +181,7 @@ class TaskResultContractTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError(IllegalStateException.class)
@@ -225,7 +225,7 @@ class TaskResultContractTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {

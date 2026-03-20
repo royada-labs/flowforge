@@ -15,6 +15,8 @@ import io.flowforge.task.TaskId;
 import io.flowforge.workflow.input.DefaultTaskInputResolver;
 import io.flowforge.workflow.instance.WorkflowInstance;
 import io.flowforge.workflow.monitor.WorkflowMonitor;
+import io.flowforge.workflow.orchestrator.BackpressureStrategy;
+import io.flowforge.workflow.orchestrator.ExecutionLimits;
 import io.flowforge.workflow.orchestrator.ReactiveWorkflowOrchestrator;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.plan.WorkflowPlanBuilder;
@@ -43,7 +45,7 @@ class LifecycleAndMonitoringTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .thenAwait(Duration.ofMillis(100)) // wait for start
@@ -78,12 +80,13 @@ class LifecycleAndMonitoringTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        Schedulers.immediate(),
-        Schedulers.newSingle("state"),
-        monitor,
-        new DefaultTaskInputResolver(),
-        2);
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(Schedulers.immediate())
+        .stateScheduler(Schedulers.newSingle("state"))
+        .monitor(monitor)
+        .inputResolver(new DefaultTaskInputResolver())
+        .limits(new ExecutionLimits(2, 1000, BackpressureStrategy.BLOCK))
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectNextCount(1)

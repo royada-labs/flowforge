@@ -115,10 +115,11 @@ class ObservabilityTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        reactor.core.scheduler.Schedulers.immediate(),
-        monitor,
-        new io.flowforge.workflow.input.DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(reactor.core.scheduler.Schedulers.immediate())
+        .monitor(monitor)
+        .inputResolver(new io.flowforge.workflow.input.DefaultTaskInputResolver())
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError()
@@ -166,10 +167,11 @@ class ObservabilityTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        reactor.core.scheduler.Schedulers.boundedElastic(),
-        monitor,
-        new io.flowforge.workflow.input.DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(reactor.core.scheduler.Schedulers.boundedElastic())
+        .monitor(monitor)
+        .inputResolver(new io.flowforge.workflow.input.DefaultTaskInputResolver())
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectNextCount(1)
@@ -259,10 +261,11 @@ class ObservabilityTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        reactor.core.scheduler.Schedulers.immediate(),
-        monitor,
-        new io.flowforge.workflow.input.DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(reactor.core.scheduler.Schedulers.immediate())
+        .monitor(monitor)
+        .inputResolver(new io.flowforge.workflow.input.DefaultTaskInputResolver())
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError()

@@ -62,54 +62,6 @@ public final class ReactiveWorkflowOrchestrator {
         return new Builder();
     }
 
-    @Deprecated
-    public ReactiveWorkflowOrchestrator() {
-        this(builder());
-    }
-
-    @Deprecated
-    public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, WorkflowMonitor monitor,
-            TaskInputResolver inputResolver) {
-        this(builder()
-                .taskScheduler(taskScheduler)
-                .monitor(monitor)
-                .inputResolver(inputResolver));
-    }
-
-    @Deprecated
-    public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, Scheduler stateScheduler, WorkflowMonitor monitor,
-            TaskInputResolver inputResolver, int maxConcurrency) {
-        this(builder()
-                .taskScheduler(taskScheduler)
-                .stateScheduler(stateScheduler)
-                .monitor(monitor)
-                .inputResolver(inputResolver)
-                .limits(new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK)));
-    }
-
-    @Deprecated
-    public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, Scheduler stateScheduler, WorkflowMonitor monitor,
-            TaskInputResolver inputResolver, ExecutionLimits limits) {
-        this(builder()
-                .taskScheduler(taskScheduler)
-                .stateScheduler(stateScheduler)
-                .monitor(monitor)
-                .inputResolver(inputResolver)
-                .limits(limits));
-    }
-
-    @Deprecated
-    public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, Scheduler stateScheduler, WorkflowMonitor monitor,
-            TaskInputResolver inputResolver, ExecutionTracerFactory tracerFactory, ExecutionLimits limits) {
-        this(builder()
-                .taskScheduler(taskScheduler)
-                .stateScheduler(stateScheduler)
-                .monitor(monitor)
-                .inputResolver(inputResolver)
-                .tracerFactory(tracerFactory)
-                .limits(limits));
-    }
-
     private ReactiveWorkflowOrchestrator(Builder builder) {
         this.taskScheduler = builder.taskScheduler;
         this.stateScheduler = builder.stateScheduler;

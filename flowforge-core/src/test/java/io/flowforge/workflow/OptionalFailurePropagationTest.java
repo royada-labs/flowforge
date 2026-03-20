@@ -39,11 +39,11 @@ class OptionalFailurePropagationTest {
         WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
 
         ReactiveWorkflowOrchestrator orchestrator =
-                new ReactiveWorkflowOrchestrator(
-                        Schedulers.parallel(),
-                        new NoOpWorkflowMonitor(),
-                        new DefaultTaskInputResolver()
-                );
+                ReactiveWorkflowOrchestrator.builder()
+                        .taskScheduler(Schedulers.parallel())
+                        .monitor(new NoOpWorkflowMonitor())
+                        .inputResolver(new DefaultTaskInputResolver())
+                        .build();
 
         StepVerifier.create(orchestrator.execute(plan, "input"))
                 .assertNext(ctx -> {
@@ -77,11 +77,11 @@ class OptionalFailurePropagationTest {
         WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
 
         ReactiveWorkflowOrchestrator orchestrator =
-                new ReactiveWorkflowOrchestrator(
-                        Schedulers.parallel(),
-                        new NoOpWorkflowMonitor(),
-                        new DefaultTaskInputResolver()
-                );
+                ReactiveWorkflowOrchestrator.builder()
+                        .taskScheduler(Schedulers.parallel())
+                        .monitor(new NoOpWorkflowMonitor())
+                        .inputResolver(new DefaultTaskInputResolver())
+                        .build();
 
         StepVerifier.create(orchestrator.execute(plan, "input"))
                 .expectError()

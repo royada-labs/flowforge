@@ -52,8 +52,11 @@ class SemanticsTest {
         }));
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        Schedulers.parallel(), new NoOpWorkflowMonitor(), new DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(Schedulers.parallel())
+        .monitor(new NoOpWorkflowMonitor())
+        .inputResolver(new DefaultTaskInputResolver())
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, "input"))
         .expectNextCount(1)
@@ -78,7 +81,7 @@ class SemanticsTest {
         new RunnableTask(B, Set.of(), () -> executionLog.add("B")));
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectNextCount(1)
@@ -116,7 +119,7 @@ class SemanticsTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError()
@@ -151,7 +154,7 @@ class SemanticsTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .assertNext(ctx -> {
@@ -188,7 +191,7 @@ class SemanticsTest {
         });
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(tasks);
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator();
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectError()

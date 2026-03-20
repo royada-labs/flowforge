@@ -48,10 +48,11 @@ class ProductionReadinessTest {
     };
 
     WorkflowExecutionPlan plan = WorkflowPlanBuilder.build(List.of(taskA));
-    ReactiveWorkflowOrchestrator orchestrator = new ReactiveWorkflowOrchestrator(
-        reactor.core.scheduler.Schedulers.immediate(),
-        monitor,
-        new io.flowforge.workflow.input.DefaultTaskInputResolver());
+    ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder()
+        .taskScheduler(reactor.core.scheduler.Schedulers.immediate())
+        .monitor(monitor)
+        .inputResolver(new io.flowforge.workflow.input.DefaultTaskInputResolver())
+        .build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
         .expectSubscription()
@@ -113,7 +114,7 @@ class ProductionReadinessTest {
     WorkflowExecutionPlan plan1 = WorkflowExecutionPlan.from(
         io.flowforge.workflow.graph.WorkflowGraph.build(List.of(dReq)));
 
-    StepVerifier.create(new ReactiveWorkflowOrchestrator().execute(plan1, null))
+    StepVerifier.create(ReactiveWorkflowOrchestrator.builder().build().execute(plan1, null))
         .expectError()
         .verify();
 
@@ -124,7 +125,7 @@ class ProductionReadinessTest {
     WorkflowExecutionPlan plan2 = WorkflowExecutionPlan.from(
         io.flowforge.workflow.graph.WorkflowGraph.build(List.of(dOpt, dDep)));
 
-        StepVerifier.create(new ReactiveWorkflowOrchestrator().execute(plan2, null))
+        StepVerifier.create(ReactiveWorkflowOrchestrator.builder().build().execute(plan2, null))
             .assertNext(ctx -> {
               FlowKey<String> dependentKey = TaskDefinition.of(Dependent, Object.class, String.class).outputKey();
               assertEquals("DependentRan", ctx.get(dependentKey).orElse(null));
