@@ -29,10 +29,20 @@ public final class WorkflowPlanBuilder {
                 .map(TaskDescriptor::new)
                 .toList();
 
-        // Validate plan before building graph
-        WorkflowPlanValidator.validate(descriptors);
+        return buildFromDescriptors(descriptors, typeMetadata);
+    }
 
-        WorkflowGraph graph = WorkflowGraph.build(descriptors, typeMetadata);
+    public static WorkflowExecutionPlan buildFromDescriptors(
+            Collection<TaskDescriptor> descriptors,
+            Map<TaskId, TypeMetadata> typeMetadata
+    ) {
+        Objects.requireNonNull(descriptors, "descriptors");
+        List<TaskDescriptor> descriptorList = List.copyOf(descriptors);
+
+        // Validate plan before building graph
+        WorkflowPlanValidator.validate(descriptorList);
+
+        WorkflowGraph graph = WorkflowGraph.build(descriptorList, typeMetadata);
 
         return WorkflowExecutionPlan.from(graph);
     }

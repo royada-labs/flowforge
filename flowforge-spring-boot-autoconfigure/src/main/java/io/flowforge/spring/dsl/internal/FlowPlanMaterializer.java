@@ -3,8 +3,10 @@ package io.flowforge.spring.dsl.internal;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.spring.registry.TaskProvider;
 import io.flowforge.task.Task;
+import io.flowforge.task.TaskDescriptor;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import io.flowforge.workflow.policy.ExecutionPolicy;
 
 import java.util.*;
 
@@ -36,14 +38,26 @@ public final class FlowPlanMaterializer {
             deps.get(e.to()).add(e.from());
         }
 
-        // 3) wrap tasks with workflow-scoped deps
-        List<Task<?, ?>> scopedTasks = new ArrayList<>();
+        // 3) wrap tasks with workflow-scoped deps and effective policies
+        List<TaskDescriptor> descriptors = new ArrayList<>();
         for (Map.Entry<TaskId, Task<?, ?>> entry : baseTasksById.entrySet()) {
-            scopedTasks.add(wrap(entry.getValue(), deps.get(entry.getKey())));
+            TaskId taskId = entry.getKey();
+            TaskProvider provider = registry.find(taskId)
+                    .orElseThrow(() -> new IllegalStateException("Unknown task id: " + taskId.getValue()));
+
+            Task<?, ?> scopedTask = wrap(entry.getValue(), deps.get(taskId));
+
+            ExecutionPolicy effective = provider.policy();
+            Optional<ExecutionPolicy> flowPolicy = graph.policy(taskId);
+            if (flowPolicy.isPresent()) {
+                effective = effective.andThen(flowPolicy.get());
+            }
+
+            descriptors.add(new TaskDescriptor(scopedTask, effective));
         }
 
         // 4) Build plan using core builder
-        return io.flowforge.workflow.plan.WorkflowPlanBuilder.build(scopedTasks, graph.typeMetadata());
+        return io.flowforge.workflow.plan.WorkflowPlanBuilder.buildFromDescriptors(descriptors, graph.typeMetadata());
     }
 
     private static Task<?, ?> wrap(Task<?, ?> base, Set<TaskId> deps) {

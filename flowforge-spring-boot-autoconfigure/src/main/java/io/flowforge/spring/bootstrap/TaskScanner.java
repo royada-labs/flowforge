@@ -12,6 +12,9 @@ import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
+import io.flowforge.workflow.policy.ExecutionPolicy;
+import io.flowforge.workflow.policy.RetryPolicy;
+import io.flowforge.workflow.policy.TimeoutPolicy;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -23,6 +26,7 @@ import reactor.core.publisher.Mono;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
@@ -91,6 +95,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
         }
 
         TaskId taskId = TaskId.of(annotation.id());
+        ExecutionPolicy taskPolicy = policy(annotation);
         Class<?>[] inferredTypes = inferTypes(beanFactory, beanName, annotation, bd);
         TaskDefinition<?, ?> definition = definition(taskId, inferredTypes[0], inferredTypes[1]);
         definitionRegistry.register(definition, beanName);
@@ -113,6 +118,11 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
             public Task<?, ?> get() {
                 Object bean = beanSupplier.get();
                 return adapterFactory.adapt(bean, annotation, inferredTypes[0], inferredTypes[1]);
+            }
+
+            @Override
+            public ExecutionPolicy policy() {
+                return taskPolicy;
             }
         });
     }
@@ -143,6 +153,7 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
 
             Class<?>[] inferred = inferMethodTypes(ann, method);
             TaskId taskId = TaskId.of(ann.id());
+            ExecutionPolicy taskPolicy = policy(ann);
             TaskDefinition<?, ?> definition = definition(taskId, inferred[0], inferred[1]);
             definitionRegistry.register(definition, beanName + "#" + method.getName() + "#" + descriptor(method));
             definitionRegistry.registerMethodRef(implClass, method.getName(), descriptor(method), definition);
@@ -158,8 +169,30 @@ public final class TaskScanner implements BeanFactoryPostProcessor {
                     Object bean = beanSupplier.get();
                     return methodAdapterFactory.adapt(bean, method, ann, inferred[0], inferred[1]);
                 }
+
+                @Override
+                public ExecutionPolicy policy() {
+                    return taskPolicy;
+                }
             });
         }
+    }
+
+    private static ExecutionPolicy policy(FlowTask ann) {
+        ExecutionPolicy policy = ExecutionPolicy.defaultPolicy();
+
+        if (ann.retryMaxRetries() >= 0) {
+            ExecutionPolicy retry = ann.retryBackoffMillis() >= 0
+                    ? RetryPolicy.backoff(ann.retryMaxRetries(), Duration.ofMillis(ann.retryBackoffMillis()))
+                    : RetryPolicy.fixed(ann.retryMaxRetries());
+            policy = policy.andThen(retry);
+        }
+
+        if (ann.timeoutMillis() >= 0) {
+            policy = policy.andThen(TimeoutPolicy.of(Duration.ofMillis(ann.timeoutMillis())));
+        }
+
+        return policy;
     }
 
     private static Class<?>[] inferTypes(

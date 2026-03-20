@@ -4,10 +4,12 @@ import io.flowforge.spring.dsl.internal.FlowGraph;
 import io.flowforge.spring.dsl.internal.FlowPlanMaterializer;
 import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
+import io.flowforge.task.TaskId;
 import io.flowforge.validation.DefaultFlowValidator;
 import io.flowforge.validation.FlowValidationException;
 import io.flowforge.validation.FlowValidationResult;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import io.flowforge.workflow.policy.ExecutionPolicy;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -43,6 +45,11 @@ final class DefaultFlowBuilder implements FlowBuilder {
         Objects.requireNonNull(task, "task");
         graph.join(task);
         return new TypedFlowBuilder<>(this, task, referenceResolver);
+    }
+
+    @Override
+    public void applyPolicy(TaskId taskId, ExecutionPolicy policy) {
+        graph.applyPolicy(taskId, policy);
     }
 
 

@@ -26,7 +26,7 @@ A type-safe address to a value in the execution context. When a task with output
 
 ## 3. Execution Model (DAG + Reactor)
 
-Workflows are modeled as a **Directed Acyclic Graph (DAG)**. 
+Workflows are modeled as a **Directed Acyclic Graph (DAG)**.
 In sequential edges (`then(...)`), task output is automatically used as input of the next task.
 
 *   **Parallelism**: Tasks that do not depend on each other are executed concurrently.
@@ -46,7 +46,7 @@ For practical diagnosis steps and remediation patterns, see the [Troubleshooting
 
 ## 5. Observability
 
-FlowForge is "observability-first". 
+FlowForge is "observability-first".
 
 *   **Internal Tracing**: Every execution produces an `ExecutionReport` and an optional `ExecutionTrace` (JSON).
 *   **OpenTelemetry**: If enabled, every task becomes a Span in your distributed trace, complete with attributes for input/output types and links to dependent tasks.

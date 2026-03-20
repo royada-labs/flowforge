@@ -6,6 +6,7 @@ import io.flowforge.spring.dsl.FlowBuilder;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 import io.flowforge.validation.TypeMetadata;
+import io.flowforge.workflow.policy.ExecutionPolicy;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -14,6 +15,7 @@ public class FlowGraph {
 
     private final Map<TaskId, TaskDefinition<?, ?>> definitions = new LinkedHashMap<>();
     private final Set<Edge> edges = new LinkedHashSet<>();
+    private final Map<TaskId, ExecutionPolicy> policies = new LinkedHashMap<>();
 
     private final TaskId start;
     protected Set<TaskId> tails;
@@ -65,6 +67,20 @@ public class FlowGraph {
 
         tails = new LinkedHashSet<>();
         tails.add(taskId);
+    }
+
+    public Optional<ExecutionPolicy> policy(TaskId taskId) {
+        Objects.requireNonNull(taskId, "taskId");
+        return Optional.ofNullable(policies.get(taskId));
+    }
+
+    public void applyPolicy(TaskId taskId, ExecutionPolicy policy) {
+        Objects.requireNonNull(taskId, "taskId");
+        Objects.requireNonNull(policy, "policy");
+        if (!definitions.containsKey(taskId)) {
+            throw new IllegalArgumentException("Unknown task id for policy assignment: " + taskId.getValue());
+        }
+        policies.merge(taskId, policy, ExecutionPolicy::andThen);
     }
 
     public void join(TaskDefinition<?, ?> task) {
@@ -138,6 +154,16 @@ public class FlowGraph {
         @Override
         public Map<TaskId, TypeMetadata> typeMetadata() {
             return parent.typeMetadata();
+        }
+
+        @Override
+        public Optional<ExecutionPolicy> policy(TaskId taskId) {
+            return parent.policy(taskId);
+        }
+
+        @Override
+        public void applyPolicy(TaskId taskId, ExecutionPolicy policy) {
+            parent.applyPolicy(taskId, policy);
         }
 
         @Override

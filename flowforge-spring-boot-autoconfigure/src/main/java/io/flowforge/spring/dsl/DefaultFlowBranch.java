@@ -7,6 +7,8 @@ import java.util.function.Consumer;
 import io.flowforge.spring.dsl.internal.FlowGraph;
 import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
+import io.flowforge.task.TaskId;
+import io.flowforge.workflow.policy.ExecutionPolicy;
 
 public final class DefaultFlowBranch implements FlowBranch {
 
@@ -102,6 +104,11 @@ public final class DefaultFlowBranch implements FlowBranch {
             Objects.requireNonNull(task, "task");
             branchGraph.join(task);
             return new TypedFlowBuilder<>(this, task, referenceResolver);
+        }
+
+        @Override
+        public void applyPolicy(TaskId taskId, ExecutionPolicy policy) {
+            branchGraph.applyPolicy(taskId, policy);
         }
 
         @Override

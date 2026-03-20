@@ -34,12 +34,17 @@ class CustomerTasks {
 - `optional = true`: marks a task as skippable if its dependencies fail.
 - `dependsOn = {"taskA", "taskB"}`: declares extra dependency edges beyond the sequential/DSL flow.
 - `inputType = X.class` / `outputType = Y.class`: manually override inferred input/output types (useful for complex generics or when the compiler cannot infer the types reliably).
+- `retryMaxRetries = N`: applies task-level retry policy.
+- `retryBackoffMillis = N`: when `retryMaxRetries` is set, enables backoff retries using this minimum backoff.
+- `timeoutMillis = N`: applies a task-level timeout for that handler.
 
 #### FAQ: ¿Cuándo usar cada opción?
 
 - **`optional=true`**: usa esto cuando la tarea no sea crítica y deba poder saltarse si una dependencia falla (p.ej., notificaciones secundarias).
 - **`dependsOn`**: útil cuando necesitas expresar dependencias adicionales que no aparecen en el flujo principal del DSL (ej. un task de limpieza que siempre debe ejecutarse después de un grupo de tareas).
 - **`inputType/outputType`**: útil cuando el compilador no puede inferir correctamente el tipo (por ejemplo, `Mono<?>` retornado o cuando se usan wrappers genéricos). Evita `ClassCastException` en tiempo de ejecución.
+- **`retryMaxRetries/retryBackoffMillis`**: útil para errores transitorios en dependencias externas (HTTP/DB). Usa backoff para evitar ráfagas de reintentos.
+- **`timeoutMillis`**: útil para cortar tareas lentas y evitar que bloqueen el flujo completo.
 
 You can still use `FlowTaskHandler` bean methods and `TaskDefinition` where needed.
 
@@ -95,6 +100,8 @@ The fluent builder for workflows.
 - **`flow(methodRef)`**: Alias of `start(methodRef)` for ultra-fluent style.
 - **`then(taskDef)`**: Adds a sequential typed dependency.
 - **`then(methodRef)`**: Adds a sequential typed dependency using method references.
+- **`withRetry(retryPolicy)`**: Applies retry policy to the current tail task.
+- **`withTimeout(duration)`**: Applies timeout policy to the current tail task.
 - **`fork(builders...)`**: Creates parallel branches.
 - **`parallel(methodRef...)`**: Convenience varargs for parallel branches from the current tail.
 - **`join(taskDef)`**: Synchronizes parallel branches into a single typed task.

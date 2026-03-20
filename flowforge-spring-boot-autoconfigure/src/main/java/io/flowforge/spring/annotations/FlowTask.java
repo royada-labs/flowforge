@@ -11,4 +11,7 @@ public @interface FlowTask {
     String[] dependsOn() default {};
     Class<?> inputType() default Object.class;
     Class<?> outputType() default Object.class;
+    int retryMaxRetries() default -1;
+    long retryBackoffMillis() default -1;
+    long timeoutMillis() default -1;
 }

@@ -38,8 +38,8 @@ public class OnboardingFlow {
 }
 ```
 
-**Behavior**: 
-- `CREATE_ACCOUNT` runs first. 
+**Behavior**:
+- `CREATE_ACCOUNT` runs first.
 - Once finished, `SEND_WELCOME_EMAIL` and `PROVISION_RESOURCE` run in parallel.
 - `NOTIFY_SLACK_ADMIN` only runs after both parallel branches succeed.
 - `ReactiveExecutionContext` is injected only in tasks that need it (`notifySlackAdmin` in this example).
@@ -112,6 +112,22 @@ TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
 ```
 
 This ensures retries/timeout are applied to the task at runtime.
+
+DSL-style policy configuration is also supported:
+
+```java
+dsl.flow(tasks::fetch)
+    .withRetry(RetryPolicy.backoff(3, Duration.ofSeconds(1)))
+    .withTimeout(Duration.ofSeconds(30))
+    .build();
+```
+
+Annotation-first policy configuration is also available:
+
+```java
+@FlowTask(id = "fetch", retryMaxRetries = 3, retryBackoffMillis = 1000, timeoutMillis = 10_000)
+Mono<User> fetchUser(String id) { ... }
+```
 
 ---
 

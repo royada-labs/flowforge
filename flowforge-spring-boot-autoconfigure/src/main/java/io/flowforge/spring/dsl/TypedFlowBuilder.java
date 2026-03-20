@@ -1,11 +1,15 @@
 package io.flowforge.spring.dsl;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import io.flowforge.workflow.policy.ExecutionPolicy;
+import io.flowforge.workflow.policy.RetryPolicy;
+import io.flowforge.workflow.policy.TimeoutPolicy;
 
 /**
  * A typed wrapper around {@link FlowBuilder} that tracks the output type of the
@@ -90,6 +94,19 @@ public final class TypedFlowBuilder<O> {
 
     public <B, NextO> TypedFlowBuilder<NextO> join(TaskCallNoContextRef<B, O, NextO> methodRef) {
         return join(referenceResolver.resolve(methodRef));
+    }
+
+    public TypedFlowBuilder<O> withPolicy(ExecutionPolicy policy) {
+        builder.applyPolicy(tailTask.id(), Objects.requireNonNull(policy, "policy"));
+        return this;
+    }
+
+    public TypedFlowBuilder<O> withRetry(RetryPolicy retryPolicy) {
+        return withPolicy(retryPolicy);
+    }
+
+    public TypedFlowBuilder<O> withTimeout(Duration timeout) {
+        return withPolicy(TimeoutPolicy.of(timeout));
     }
 
 

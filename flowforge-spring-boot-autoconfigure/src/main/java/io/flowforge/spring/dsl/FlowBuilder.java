@@ -1,7 +1,9 @@
 package io.flowforge.spring.dsl;
 
 import io.flowforge.task.TaskDefinition;
+import io.flowforge.task.TaskId;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
+import io.flowforge.workflow.policy.ExecutionPolicy;
 
 import java.util.function.Consumer;
 
@@ -40,6 +42,14 @@ public interface FlowBuilder {
      * @return a {@link TypedFlowBuilder}
      */
     <I, O> TypedFlowBuilder<O> join(TaskDefinition<I, O> task);
+
+    /**
+     * Applies an execution policy to an already registered task in the current flow.
+     *
+     * @param taskId the task id to configure
+     * @param policy the policy to apply
+     */
+    void applyPolicy(TaskId taskId, ExecutionPolicy policy);
 
 
     /**
