@@ -1,6 +1,5 @@
 plugins {
     id "maven-publish"
-    id "signing"
 }
 
 allprojects {
@@ -35,15 +34,6 @@ subprojects {
     }
 
     apply plugin: 'maven-publish'
-    signing {
-        def signingKey = project.findProperty("signingKey") ?: System.getenv("SIGNING_KEY")
-        def signingPassword = project.findProperty("signingPassword") ?: System.getenv("SIGNING_PASSWORD")
-        
-        if (signingKey) {
-            useInMemoryPgpKeys(signingKey, signingPassword)
-            sign publishing.publications
-        }
-    }
 
     if (project.name != "flowforge-bom") {
         java {
@@ -143,14 +133,14 @@ subprojects {
             maven {
                 name = "MavenCentral"
                 
-                def releasesRepoUrl = "https://s01.ossrh.com/service/local/staging/deploy/maven2/"
-                def snapshotsRepoUrl = "https://s01.ossrh.com/snapshots/m2"
+                def releasesRepoUrl = "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://central.sonatype.com/repository/maven-snapshots/"
                 
                 url = version.toString().endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
                 credentials {
-                    username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
-                    password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+                    username = project.findProperty("mavenCentralUsername") ?: System.getenv("MAVEN_CENTRAL_USERNAME")
+                    password = project.findProperty("mavenCentralPassword") ?: System.getenv("MAVEN_CENTRAL_PASSWORD")
                 }
             }
         }
