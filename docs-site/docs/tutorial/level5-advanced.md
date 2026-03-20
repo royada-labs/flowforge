@@ -1,8 +1,10 @@
 ---
-id: level5-advanced
-title: "Level 5: Mastering the Flow"
+title: "Level 5: Advanced"
 sidebar_label: "L5: Advanced"
 ---
+
+
+
 
 # Level 5: Mastering the Flow (Advanced Features) 🧠
 
@@ -30,13 +32,3 @@ public Mono<Void> trackAnalytics(Order in) {
     // If this Mono returns an error, the main workflow CONTINUES.
 }
 ```
-
----
-
-## 🎉 Congratulations, FlowForge Master!
-You have completed the tutorial. You now have all the tools to build reactive, typed, and extremely robust systems.
-
-### What's Next?
-- Check the [DSL Reference](../api-reference/index.md).
-- Explore the [Observability Guide](../observability/index.md).
-- Join the community and contribute!

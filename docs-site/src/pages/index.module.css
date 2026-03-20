@@ -21,3 +21,16 @@
   align-items: center;
   justify-content: center;
 }
+
+.section {
+  padding: 5rem 0;
+}
+
+.sectionAlt {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.sectionContent {
+  font-size: 1.2rem;
+  line-height: 1.6;
+}

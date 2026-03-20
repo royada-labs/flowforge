@@ -1,8 +1,10 @@
 ---
-id: level3-parallel
-title: "Level 3: Divide and Conquer"
+title: "Level 3: Parallel"
 sidebar_label: "L3: Parallel"
 ---
+
+
+
 
 # Level 3: Divide and Conquer (Parallelism) ⚡
 
@@ -34,15 +36,5 @@ public WorkflowExecutionPlan orderPlan(FlowDsl dsl) {
 ### How does Join work?
 The `finalNotification` task will execute only when both parallel branches have finished successfully.
 
----
-
-## ✅ Level 3 Checklist
-1.  Executed tasks concurrently using `.fork()`.
-2.  Joined parallel results using `.join()`.
-3.  Optimized response times for independent actions.
-
-**Great progress!** In **Level 4**, we'll build workflows that handle transient failures gracefully.
-
----
 
 **[Next Level: Resilience at Scale (Retries and Timeouts) >>](./level4-resilience.md)**

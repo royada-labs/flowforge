@@ -1,3 +1,11 @@
+---
+title: "Examples"
+sidebar_label: "Examples"
+---
+
+
+
+
 # Real-World Examples
 
 The following examples demonstrate how to use FlowForge in production scenarios.
@@ -44,41 +52,6 @@ public class OnboardingFlow {
 - `NOTIFY_SLACK_ADMIN` only runs after both parallel branches succeed.
 - `ReactiveExecutionContext` is injected only in tasks that need it (`notifySlackAdmin` in this example).
 
----
-
-## 2. API Orchestration (Annotation-First)
-
-**Context**: A gateway service that aggregates data from two microservices (User and Order) and calculates a discount.
-
-```java
-@TaskHandler
-class PricingTasks {
-    @FlowTask(id = "start")
-    Mono<Object> start(Void in, ReactiveExecutionContext ctx) { ... }
-    @FlowTask(id = "getUser")
-    Mono<Object> getUser(Object in, ReactiveExecutionContext ctx) { ... }
-    @FlowTask(id = "getOrder")
-    Mono<Object> getOrder(Object in, ReactiveExecutionContext ctx) { ... }
-    @FlowTask(id = "calc")
-    Mono<Double> calc(Object in, ReactiveExecutionContext ctx) { ... }
-}
-
-dsl.flow(PricingTasks::start)
-   .parallel(PricingTasks::getUser, PricingTasks::getOrder)
-   .join(PricingTasks::calc)
-   .build();
-```
-
-Alternative for advanced use-cases: explicit `TaskDefinition` contracts are still supported.
-
-Overloaded method references are supported and resolved by full signature:
-
-```java
-TaskCallRef<MyTasks, Integer, String> intMapper = MyTasks::map;
-TaskCallRef<MyTasks, Long, String> longMapper = MyTasks::map;
-```
-
----
 
 ## 3. Data Transformation Pipeline
 
@@ -91,45 +64,6 @@ dsl.startTyped(VALIDATE_JSON)
    .build();
 ```
 
----
-
-## 4. Error Handling & Policies
-
-You can make workflows resilient by combining execution timeout at client level with task policies.
-
-```java
-client.execute("resilient-flow", null, Duration.ofMillis(500));
-```
-
-**Behavior**:
-- The workflow execution is canceled if it takes longer than 500ms.
-- Task-level retry/timeout policies are configured in core task descriptors (`RetryPolicy`, `TimeoutPolicy`).
-
-A task descriptor example (used internally by the framework) looks like this:
-
-```java
-TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
-```
-
-This ensures retries/timeout are applied to the task at runtime.
-
-DSL-style policy configuration is also supported:
-
-```java
-dsl.flow(tasks::fetch)
-    .withRetry(RetryPolicy.backoff(3, Duration.ofSeconds(1)))
-    .withTimeout(Duration.ofSeconds(30))
-    .build();
-```
-
-Annotation-first policy configuration is also available:
-
-```java
-@FlowTask(id = "fetch", retryMaxRetries = 3, retryBackoffMillis = 1000, timeoutMillis = 10_000)
-Mono<User> fetchUser(String id) { ... }
-```
-
----
 
 ## 5. Retry Exhausted Example
 
@@ -144,22 +78,6 @@ TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
 - If all attempts fail, the final error is propagated and the branch fails.
 - Dependent tasks are not executed unless modeled as optional/fallback paths.
 
----
-
-## 6. Timeout Example
-
-**Context**: A task calls a slow API and must fail fast after 2 seconds.
-
-```java
-TaskDescriptor descriptor = new TaskDescriptor(task, TimeoutPolicy.of(Duration.ofSeconds(2)));
-```
-
-**Observed behavior**:
-- If the task takes longer than 2 seconds, it fails with timeout.
-- This is task-level timeout and is independent from client-level execution timeout.
-- Use `client.execute(..., timeout)` when you need a global cap for the entire workflow run.
-
----
 
 ## 7. Optional Tasks Example
 

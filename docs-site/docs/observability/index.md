@@ -1,29 +1,9 @@
-# Observability
-
-FlowForge is designed to give you total visibility into how your workflows execute.
-
-## 1. Execution Trace
-
-When debugging, you often want to see exactly what happened step-by-step. FlowForge provides a detailed `ExecutionTrace`.
-
-```java
-client.executeWithTrace("my-flow", input)
-      .subscribe(trace -> {
-          System.out.println("Trace ID: " + trace.traceId());
-
-          trace.tasks().forEach(task -> {
-              System.out.printf("[%s] %s - %dms\n",
-                  task.status(), task.taskId(), task.durationMs());
-          });
-      });
-```
-
-The trace includes:
-- Start and end timestamps for the workflow and every task.
-- Success, Error, or Skipped status for each task.
-- Detailed error messages and stack traces if a task fails.
-
 ---
+title: "Observability Guide"
+sidebar_label: "Observability"
+---
+
+
 
 ## 2. OpenTelemetry Integration
 
@@ -53,16 +33,3 @@ Each span is enriched with library-specific attributes:
 - `flowforge.task.input.type`
 - `flowforge.task.output.type`
 - `flowforge.task.status` (SUCCESS, ERROR, SKIPPED)
-
----
-
-## 3. Visualizing the workflow
-
-FlowForge can export your workflow definition to **Mermaid** format, which can be rendered directly in GitHub or VS Code.
-
-```java
-FlowVisualization viz = FlowVisualizer.visualize(plan, FlowValidationResult.of(List.of()));
-String mermaid = viz.toMermaid();
-```
-
-This ensures that your documentation and your code stay in sync perfectly.

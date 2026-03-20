@@ -1,8 +1,10 @@
 ---
-id: level4-resilience
-title: "Level 4: Resilience at Scale"
+title: "Level 4: Resilience"
 sidebar_label: "L4: Resilience"
 ---
+
+
+
 
 # Level 4: Resilience (Retries and Timeouts) 🛡️
 
@@ -34,15 +36,5 @@ return dsl.flow(tasks::processPayment)
           .build();
 ```
 
----
-
-## ✅ Level 4 Checklist
-1.  Applied a `RetryPolicy` to a transient service.
-2.  Set a `timeout` for potentially slow operations.
-3.  Isolated failure handling from business logic.
-
-**Almost there!** In **Level 5**, we'll learn about advanced features like execution context and optional paths.
-
----
 
 **[Next Level: Mastering the Flow (Advanced Features) >>](./level5-advanced.md)**

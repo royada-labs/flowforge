@@ -1,8 +1,10 @@
 ---
-id: level2-sequential
-title: "Level 2: Connecting the Dots"
+title: "Level 2: Sequential"
 sidebar_label: "L2: Sequential"
 ---
+
+
+
 
 # Level 2: Sequential Flows 🔗
 
@@ -48,15 +50,5 @@ public WorkflowExecutionPlan orderPlan(FlowDsl dsl) {
 > [!IMPORTANT]
 > **Type Safety**: If you tried to connect a task returning a `String` to another expecting an `Integer`, FlowForge **will fail during startup**, warning you of the mistake before it reaches production.
 
----
-
-## ✅ Level 2 Checklist
-1.  Connected two tasks sequentially using `.then()`.
-2.  Observed automatic data propagation.
-3.  Learned about build-time type validation.
-
-**Well done!** You're moving fast. In **Level 3**, we'll learn how to execute independent tasks concurrently.
-
----
 
 **[Next Level: Divide and Conquer (Parallelism) >>](./level3-parallel.md)**

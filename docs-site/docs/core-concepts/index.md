@@ -1,3 +1,9 @@
+---
+title: "Core Concepts"
+sidebar_label: "Core Concepts"
+---
+
+
 # Core Concepts
 
 FlowForge is built on the philosophy that workflows should be as type-safe as the code that defines them.

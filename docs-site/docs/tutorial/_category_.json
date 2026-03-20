@@ -1,0 +1,8 @@
+{
+  "label": "Incremental Tutorial",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn FlowForge step-by-step by building a real-world e-commerce pipeline."
+  }
+}
