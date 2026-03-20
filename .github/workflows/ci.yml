@@ -1,26 +1,26 @@
-name: Build & Publish
+name: Publish to Maven Central
 
 on:
   push:
     branches:
-      - develop-v2   # snapshots
-      - main         # releases
+      - main
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      - name: Build & Publish to Maven Local
+      # 🔹 Build + publish to local repo
+      - name: Build artifacts
         run: |
           chmod +x ./gradlew
           ./gradlew clean publishToMavenLocal --no-daemon
@@ -28,34 +28,26 @@ jobs:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
-      # -----------------------------
-      # Crear bundle automáticamente
-      # -----------------------------
+      # 🔹 Generate checksums (REQUIRED)
+      - name: Generate checksums
+        run: |
+          cd ~/.m2/repository
+          find io/github/rrguez/flowforge -type f \( -name "*.jar" -o -name "*.pom" \) | while read f; do
+            md5sum "$f" > "$f.md5"
+            sha1sum "$f" > "$f.sha1"
+          done
+
+      # 🔹 Create bundle (CRITICAL: relative paths)
       - name: Create bundle
         run: |
-          mkdir -p bundle
-          find ~/.m2/repository/io/github/rrguez/flowforge -type f \
-            \( -name "*.jar" -o -name "*.pom" -o -name "*.asc" -o -name "maven-metadata.xml" \) \
-            -exec cp --parents {} bundle/ \;
-          cd bundle
-          zip -r ../bundle.zip .
+          cd ~/.m2/repository
+          zip -r bundle.zip io/github/rrguez/flowforge
 
-      # -----------------------------
-      # Publicar SNAPSHOT
-      # -----------------------------
-      - name: Publish Snapshot to Central
-        if: github.ref == 'refs/heads/develop-v2'
+      # 🔹 Upload to Central Portal
+      - name: Upload to Maven Central
         run: |
           curl -X POST "https://central.sonatype.com/api/v1/publisher/upload" \
-            -H "Authorization: Bearer ${{ secrets.MAVEN_CENTRAL_TOKEN }}" \
+            -H "Authorization: Bearer $MAVEN_CENTRAL_TOKEN" \
             -F "bundle=@bundle.zip"
-
-      # -----------------------------
-      # Publicar RELEASE
-      # -----------------------------
-      - name: Publish Release to Central
-        if: github.ref == 'refs/heads/main'
-        run: |
-          curl -X POST "https://central.sonatype.com/api/v1/publisher/upload" \
-            -u "${{ secrets.MAVEN_CENTRAL_USERNAME }}:${{ secrets.MAVEN_CENTRAL_PASSWORD }}" \
-            -F "bundle=@bundle.zip"
+        env:
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
