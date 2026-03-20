@@ -41,6 +41,7 @@ jobs:
       - name: Create bundle
         run: |
           cd ~/.m2/repository
+          find io/github/rrguez/flowforge -name "maven-metadata-local.xml" -delete
           zip -r bundle.zip io/github/rrguez/flowforge
 
       # 🔹 Upload to Central Portal
