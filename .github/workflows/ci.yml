@@ -34,7 +34,9 @@ jobs:
       - name: Create bundle
         run: |
           mkdir -p bundle
-          cp -r ~/.m2/repository/io/github/rrguez/flowforge/* bundle/
+          find ~/.m2/repository/io/github/rrguez/flowforge -type f \
+            \( -name "*.jar" -o -name "*.pom" -o -name "*.asc" -o -name "maven-metadata.xml" \) \
+            -exec cp --parents {} bundle/ \;
           cd bundle
           zip -r ../bundle.zip .
 
