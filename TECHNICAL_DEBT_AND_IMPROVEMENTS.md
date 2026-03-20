@@ -55,49 +55,30 @@ public ReactiveWorkflowOrchestrator(Scheduler taskScheduler, WorkflowMonitor mon
 
 ---
 
-### **2. Missing Execution Policies DSL**
+### **2. Execution Policies DSL - Implementado ✅**
 
-**Ubicación:** `flowforge-core/src/main/java/io/flowforge/workflow/policy/`
+**Ubicación:** `flowforge-core/src/main/java/org/royada/flowforge/workflow/policy/`
 
-**Problema:**
-Las clases `RetryPolicy` y `TimeoutPolicy` existen pero **no están expuestas en el DSL de Spring**. Los usuarios NO pueden configurar policies desde `@FlowWorkflow` o `FlowDsl`— deben hacerlo programáticamente en `TaskDescriptor`.
+**Estado actual:**
+Las policies de ejecución ya están expuestas en el stack Spring y en el DSL tipado.
 
-```java
-// CÓMO SE HACE AHORA (programático, no DSL):
-TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
-```
+- ✅ Soporte en anotación `@FlowTask` (`retryMaxRetries`, `retryBackoffMillis`, `timeoutMillis`)
+- ✅ Soporte fluido en DSL (`withRetry`, `withTimeout`, `withPolicy`)
+- ✅ Cobertura por tests de integración en autoconfigure
 
-**Riesgo:**
-- Los usuarios esperan poder configurar retries/timeouts en las anotaciones o DSL
-- La configuración programática es verbosa y no fluye con el DSL
-- **Feature invisible**—muchos users ni saben que existe
+**Acción restante recomendada:**
+- Mantener ejemplos en `docs/examples` y `docs/api-reference` sincronizados con nuevos casos (retry/backoff/timeout)
 
-**Recomendación:**
-```java
-// ADD THIS TO @FlowTask annotation:
-@FlowTask(id = "fetchUser", retry = "fixed(3, 500ms)", timeout = "5s")
-Mono<User> fetchUser(String id) { ... }
-
-// O en el DSL:
-dsl.flow(tasks::fetchUser)
-   .withRetry(RetryPolicy.fixed(3))
-   .withTimeout(Duration.ofSeconds(5))
-   .then(...)
-   .build();
-```
-
-**Prioridad:** 🔴 CRÍTICO (feature expectation mismatch)
+**Prioridad:** 🟡 IMPORTANTE (mantenimiento de documentación, no gap funcional)
 
 ---
 
-### **3. GroupId Inconsistency - Partially Fixed**
+### **3. GroupId Consistency - Resuelto ✅**
 
-**Estado:** ✅ Parcheado en este commit (3279171)
+**Estado:** ✅ Resuelto y validado en build/release local
 
 **Problema anterior:**
-- `gradle.properties` → `org.royada.flowforge` ❌ (unavailable)
-- `build.gradle` → `io.github.rrguez.flowforge`
-- `BOM` → hardcodeaba `org.royada.flowforge`
+- Coordenadas y referencias inconsistentes entre módulos
 
 **Estado actual:**
 - ✅ Todo cambiado a `org.royada.flowforge`
@@ -106,46 +87,44 @@ dsl.flow(tasks::fetchUser)
 
 **Falta:**
 - [ ] Taggear release v1.1.0 con las nuevas coordinates
-- [ ] Actualizar todos los ejemplos de código en docs (además de los 2 ya cambiados)
-- [ ] Revisar que no queden referencias en tests (pueden tener hardcoded groupIds en integración tests)
 
 ---
 
-### **4. Integration Test Coverage Gaps**
+### **4. Integration Test Coverage - Mejorado ✅**
 
-**Estadísticas:**
-- Core: 28 test files
-- Spring autoconfigure: 12 integration test files
-- Stress harness: 1 application
+**Estadísticas (actualizadas):**
+- Core: suite amplia con pruebas unitarias/concurrencia/observabilidad
+- Spring autoconfigure: cobertura de integración ampliada (context runner + escenarios end-to-end)
+- Starter + harness: smoke e integración activos
 
-**Problema:**
-No hay **dedicated integration test suite** para probar **Spring Boot auto-configuration end-to-end**. Los tests actuales son unit tests o integration tests a nivel bajo, pero falta:
+**Estado actual:**
+Ya existe cobertura de auto-config y ejecución por id de workflow con pruebas de integración en `flowforge-spring-boot-autoconfigure`.
 
-1. **Full Spring Context Tests** que arranquen `@SpringBootApplication` con FlowForge y verifiquen:
+**Gap restante:**
+No hay un módulo dedicado de contract tests cross-module (consumer-style) para validar compatibilidad hacia atrás entre versiones.
+
+1. **Cross-module contract tests** que validen:
    - Auto-configuration efectiva
    - Bean registration correcta
-   - Profile activation/deactivation
-   - Property binding
-
-2. **Cross-module integration tests** (core + spring boot) en un módulo separado
+    - Compatibilidad de API entre versiones
+    - Property binding en escenarios de upgrade
 
 **Riesgo:**
-- Config errors en producción difíciles de detectar
-- Cambios en auto-config pueden romper sin que los tests unitarios lo atrapen
+- Regresiones de compatibilidad al publicar minors/patches sin suite de contrato
 
 **Recomendación:**
 ```java
-// En flowforge-spring-boot-autoconfigure/src/test/java/.../
-@SpringBootTest(classes = {FlowForgeAutoConfiguration.class, TestConfig.class})
-class FullStackIntegrationTest {
+// Nuevo módulo sugerido: flowforge-compat-tests
+@SpringBootTest
+class BackwardCompatibilityIT {
     @Test
-    void should_autoConfigure_FlowForgeClient() {
-        // verify bean exists, is properly configured
+    void should_keep_workflow_execution_contract_between_versions() {
+        // verify execution and output contract for previous-version clients
     }
 }
 ```
 
-**Prioridad:** 🟡 IMPORTANTE (pero no blocker)
+**Prioridad:** 🟡 IMPORTANTE
 
 ---
 
@@ -153,7 +132,7 @@ class FullStackIntegrationTest {
 
 ### **5. Execution Policies - JavaDoc & Examples Missing**
 
-**Ubicación:** `flowforge-core/src/main/java/io/flowforge/workflow/policy/`
+**Ubicación:** `flowforge-core/src/main/java/org/royada/flowforge/workflow/policy/`
 
 **Problema:**
 Las clases `RetryPolicy` y `TimeoutPolicy` tienen **JavaDoc escaso** y **no hay ejemplos de uso** en docs.
@@ -185,7 +164,7 @@ public final class RetryPolicy {
 
 ### **6. Observability - Missing Micrometer Metrics**
 
-**Ubicación:** `flowforge-core/src/main/java/io/flowforge/workflow/trace/`
+**Ubicación:** `flowforge-core/src/main/java/org/royada/flowforge/workflow/trace/`
 
 **Problema:**
 Tienes `ExecutionTracer` y OpenTelemetry ✅, pero **NO expones metrics via Micrometer**.
@@ -219,7 +198,7 @@ public interface WorkflowMetrics {
 
 ### **7. Error Handling - Generic Exceptions**
 
-**Ubicación:** `flowforge-core/src/main/java/io/flowforge/exception/`
+**Ubicación:** `flowforge-core/src/main/java/org/royada/flowforge/exception/`
 
 **Problema:**
 Tienes una jerarquía de excepciones buen base (`FlowForgeException`, `WorkflowExecutionException`, `TypeMismatchException`, `UnknownWorkflowException`, etc.), pero:
@@ -250,7 +229,7 @@ public class TaskExecutionException extends FlowForgeException {
 
 ### **8. TaskDescriptor - Duplication with TaskDefinition**
 
-**Ubicación:** `flowforge-core/src/main/java/io/flowforge/task/TaskDescriptor.java`
+**Ubicación:** `flowforge-core/src/main/java/org/royada/flowforge/task/TaskDescriptor.java`
 
 **Problema:**
 `TaskDescriptor` wrapper around `Task<?,>` que almacena metadatos (policies, optional flag). Pero `TaskDefinition<I,O>` ya captura task ID + types.
@@ -313,7 +292,7 @@ public sealed interface WorkflowDescriptor permits BeanWorkflowDescriptor, Class
 
 ### **11. Configuration Properties - Validation**
 
-**Ubicación:** `flowforge-spring-boot-autoconfigure/src/main/java/io/flowforge/spring/autoconfig/FlowForgeProperties.java`
+**Ubicación:** `flowforge-spring-boot-autoconfigure/src/main/java/org/royada/flowforge/spring/autoconfig/FlowForgeProperties.java`
 
 **Problema:**
 `FlowForgeProperties` tiene campos pero sin validación (`@Min`, `@Max`, `@NotBlank`).
@@ -383,7 +362,7 @@ Algunas clases usan `System.out.println` o logging sin categoría (`AsyncLogging
 ## 📋 **CHECKLIST DE ACCIÓN**
 
 ### **Para v1.1.1 (patch)**
-- [ ] Fix groupId en TODAS las referencias (ya casi completo)
+- [x] Fix groupId en TODAS las referencias
 - [ ] Tag v1.1.0 con nuevas coordinates
 - [ ] Add Javadoc a métodos públicos faltantes
 - [ ] Fix logging inconsistencies
@@ -391,8 +370,8 @@ Algunas clases usan `System.out.println` o logging sin categoría (`AsyncLogging
 
 ### **Para v1.2.0 (minor)**
 - [ ] **REMOVER constructores @Deprecated** de ReactiveWorkflowOrchestrator
-- [ ] **ADD Execution Policies DSL** (annotation + DSL integration)
-- [ ] **ADD Integration test** para full Spring context
+- [x] **ADD Execution Policies DSL** (annotation + DSL integration)
+- [x] **ADD Integration test** para full Spring context
 - [ ] Unificar `TaskDefinition` y `TaskDescriptor`
 - [ ] Add comprehensive policy JavaDoc + examples
 - [ ] Add migration guide 0.x → 1.x
@@ -408,10 +387,10 @@ Algunas clases usan `System.out.println` o logging sin categoría (`AsyncLogging
 ## 🎯 **Recomendación Priorizada**
 
 ### **Sprint 1 (Próximas 2 semanas):**
-1. Fix groupId completely + release v1.1.0
-2. Add Policies DSL (la feature más solicitada)
-3. Add integration test para SpringBoot full context
-4. Expand Javadoc para RetryPolicy/TimeoutPolicy
+1. Tag/release v1.1.0 con coordinates finales
+2. Expand Javadoc para RetryPolicy/TimeoutPolicy
+3. Completar guía de migración deconstructors→builder
+4. Endurecer observabilidad base (métricas mínimas)
 
 ### **Sprint 2 (1-2 meses):**
 1. Remove @Deprecated constructors (breaking but necessary)
@@ -453,8 +432,8 @@ Algunas clases usan `System.out.println` o logging sin categoría (`AsyncLogging
 3. 📢 Announce en GitHub, Reddit r/java, Spring community
 
 **Luego:**
-4. Implementar Policies DSL (feature alta demanda)
-5. Add integration tests robustos
+4. Consolidar docs de policies con ejemplos productivos
+5. Add suite de contract tests cross-module
 6. Remove deprecated APIs
 
 ---
