@@ -93,7 +93,7 @@ subprojects {
                     artifact javadocJar
                 }
 
-                groupId = 'io.flowforge'
+                groupId = 'io.github.rrguez.flowforge'
                 artifactId = project.name
                 version = project.version
 
