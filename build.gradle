@@ -87,7 +87,7 @@ subprojects {
 
     signing {
         def isRelease = !project.version.toString().endsWith("SNAPSHOT")
-        required { isRelease }
+        required = isRelease
         def signingKey = findProperty("signingKey") ?: System.getenv("SIGNING_KEY")
         def signingPassword = findProperty("signingPassword") ?: System.getenv("SIGNING_PASSWORD")
         if (signingKey && signingPassword) {

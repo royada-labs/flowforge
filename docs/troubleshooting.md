@@ -45,7 +45,7 @@ Type mismatch in workflow definition: task 'X' expects input type A but received
 - The failing operation is not idempotent and keeps failing under retry.
 
 **How to debug**:
-- Enable debug logging for `io.flowforge`.
+- Enable debug logging for `org.royada.flowforge`.
 - Inspect task-level failure messages and final exception cause.
 - Verify that the downstream dependency recovers within your retry window.
 
@@ -74,7 +74,7 @@ Type mismatch in workflow definition: task 'X' expects input type A but received
 
 ## 3. Workflow Debugging Checklist
 
-- Enable `DEBUG` for `io.flowforge` and task packages.
+- Enable `DEBUG` for `org.royada.flowforge` and task packages.
 - Use `executeWithTrace(...)` to capture execution trace and task order.
 - Verify task IDs are unique and method references resolve to expected handlers.
 - Reproduce with a minimal workflow: start task + failing task + single dependency.
@@ -93,14 +93,14 @@ Type mismatch in workflow definition: task 'X' expects input type A but received
 Suggested baseline by environment:
 
 - **Local/Dev**:
-  - `io.flowforge=DEBUG`
+  - `org.royada.flowforge=DEBUG`
   - app task packages=`DEBUG`
 - **Staging**:
-  - `io.flowforge=INFO`
+  - `org.royada.flowforge=INFO`
   - app task packages=`INFO`
   - temporary `DEBUG` only during investigations
 - **Production**:
-  - `io.flowforge=INFO`
+  - `org.royada.flowforge=INFO`
   - app task packages=`INFO`
   - enable `DEBUG` selectively and time-box it
 

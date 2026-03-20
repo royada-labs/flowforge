@@ -1,2 +1,2 @@
-io.flowforge.spring.autoconfig.FlowForgeAutoConfiguration
-io.flowforge.spring.autoconfig.FlowForgeOpenTelemetryAutoConfiguration
+org.royada.flowforge.spring.autoconfig.FlowForgeAutoConfiguration
+org.royada.flowforge.spring.autoconfig.FlowForgeOpenTelemetryAutoConfiguration

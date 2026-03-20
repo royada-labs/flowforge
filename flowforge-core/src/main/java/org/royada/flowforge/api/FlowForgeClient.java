@@ -1,0 +1,33 @@
+/*
+ * Licensed under the Apache License, Version 2.0
+ */
+package org.royada.flowforge.api;
+
+import java.time.Duration;
+
+import org.royada.flowforge.workflow.ReactiveExecutionContext;
+import org.royada.flowforge.workflow.trace.ExecutionTrace;
+import reactor.core.publisher.Mono;
+
+public interface FlowForgeClient {
+
+        <T extends ReactiveExecutionContext> Mono<T> execute(
+            String workflowId,
+            Object input);
+
+    Mono<ReactiveExecutionContext> execute(
+            String workflowId,
+            Object input,
+            Duration timeout);
+
+    /**
+     * Executes a workflow and extracts its result based on the structure.
+     * Use this for simple workflows where you expect a single output.
+     */
+    Mono<Object> executeResult(String workflowId, Object input);
+
+    /**
+     * Executes a workflow and returns a detailed execution trace.
+     */
+    Mono<ExecutionTrace> executeWithTrace(String workflowId, Object input);
+}

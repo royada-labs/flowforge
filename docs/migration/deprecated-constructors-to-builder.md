@@ -76,8 +76,8 @@ grep -r "new ReactiveWorkflowOrchestrator(" src/
 If you use `ExecutionLimits` or `BackpressureStrategy`, add these imports:
 
 ```java
-import io.flowforge.workflow.orchestrator.BackpressureStrategy;
-import io.flowforge.workflow.orchestrator.ExecutionLimits;
+import org.royada.flowforge.workflow.orchestrator.BackpressureStrategy;
+import org.royada.flowforge.workflow.orchestrator.ExecutionLimits;
 ```
 
 ### Step 4: Verify Behavior

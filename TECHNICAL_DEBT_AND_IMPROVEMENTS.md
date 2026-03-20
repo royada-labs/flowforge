@@ -95,9 +95,9 @@ dsl.flow(tasks::fetchUser)
 **Estado:** ✅ Parcheado en este commit (3279171)
 
 **Problema anterior:**
-- `gradle.properties` → `io.flowforge` ❌ (unavailable)
+- `gradle.properties` → `org.royada.flowforge` ❌ (unavailable)
 - `build.gradle` → `io.github.rrguez.flowforge`
-- `BOM` → hardcodeaba `io.flowforge`
+- `BOM` → hardcodeaba `org.royada.flowforge`
 
 **Estado actual:**
 - ✅ Todo cambiado a `org.royada.flowforge`
