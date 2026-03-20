@@ -1,145 +1,59 @@
-name: CI
+name: Build & Publish
 
 on:
   push:
-    branches: [ main, develop, develop-v2, 'release/**' ]
-  pull_request:
-    branches: [ main, develop, develop-v2 ]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches:
+      - develop-v2   # snapshots
+      - main         # releases
 
 jobs:
   build:
-    name: Build and Test
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        java: [ '21', '22' ]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK ${{ matrix.java }}
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
-          distribution: 'temurin'
-          cache: 'gradle'
-      - name: Debug Gradle Wrapper
-        run: |
-          pwd
-          ls -la
-          ls -la gradle
-          ls -la gradle/wrapper
-          file gradle/wrapper/gradle-wrapper.jar || true
+          distribution: temurin
+          java-version: 21
 
-      - name: Build
+      - name: Build & Publish to Maven Local
         run: |
           chmod +x ./gradlew
-          ./gradlew build --no-daemon
+          ./gradlew clean publishToMavenLocal --no-daemon
+        env:
+          ORG_GRADLE_PROJECT_signing.key: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signing.password: ${{ secrets.SIGNING_PASSWORD }}
 
-      - name: Run Tests
-        run: ./gradlew test --no-daemon
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-java-${{ matrix.java }}
-          path: '**/build/test-results/**/*.xml'
-          retention-days: 7
-
-      - name: Upload Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports-java-${{ matrix.java }}
-          path: '**/build/reports/tests/**'
-          retention-days: 7
-
-  analyze:
-    name: Code Quality
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Build (no tests for faster analysis)
+      # -----------------------------
+      # Crear bundle automáticamente
+      # -----------------------------
+      - name: Create bundle
         run: |
-          chmod +x ./gradlew
-          ./gradlew classes --no-daemon
+          mkdir -p bundle
+          cp -r ~/.m2/repository/io/github/rrguez/flowforge/* bundle/
+          cd bundle
+          zip -r ../bundle.zip .
 
-      - name: Checkstyle
-        run: ./gradlew checkstyleMain --no-daemon || true
-
-      - name: SpotBugs
-        run: ./gradlew spotbugsMain --no-daemon || true
-
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Generate Javadoc
-        run: |
-          chmod +x ./gradlew
-          ./gradlew javadoc --no-daemon || true
-
-      - name: Upload Javadoc
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: javadoc
-          path: '**/build/docs/javadoc/**'
-          retention-days: 7
-
-  publish-snapshots:
-    name: Publish Snapshots
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/develop-v2' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Publish Snapshot
+      # -----------------------------
+      # Publicar SNAPSHOT
+      # -----------------------------
+      - name: Publish Snapshot to Central
         if: github.ref == 'refs/heads/develop-v2'
         run: |
-          chmod +x ./gradlew
-          ./gradlew publish --no-daemon || true
-        env:
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-        continue-on-error: true
+          curl -X POST "https://central.sonatype.com/api/v1/publisher/upload" \
+            -u "${{ secrets.MAVEN_CENTRAL_USERNAME }}:${{ secrets.MAVEN_CENTRAL_PASSWORD }}" \
+            -F "bundle=@bundle.zip"
+
+      # -----------------------------
+      # Publicar RELEASE
+      # -----------------------------
+      - name: Publish Release to Central
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST "https://central.sonatype.com/api/v1/publisher/upload" \
+            -u "${{ secrets.MAVEN_CENTRAL_USERNAME }}:${{ secrets.MAVEN_CENTRAL_PASSWORD }}" \
+            -F "bundle=@bundle.zip"

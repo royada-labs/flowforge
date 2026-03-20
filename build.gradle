@@ -1,9 +1,10 @@
 plugins {
     id "maven-publish"
+    id "signing"
 }
 
 allprojects {
-    group = project.group
+    group = "io.github.rrguez.flowforge"
     version = project.version
 
     repositories {
@@ -20,7 +21,7 @@ subprojects {
             apply plugin: 'java-library'
         }
     }
-    
+
     if (project.name != "flowforge-bom") {
         dependencies {
             implementation platform(libs.spring.boot.dependencies.bom)
@@ -34,6 +35,7 @@ subprojects {
     }
 
     apply plugin: 'maven-publish'
+    apply plugin: 'signing'
 
     if (project.name != "flowforge-bom") {
         java {
@@ -63,19 +65,14 @@ subprojects {
     }
 
     if (project.plugins.hasPlugin('java-library')) {
-        task sourcesJar(type: Jar, dependsOn: classes) {
+        tasks.register('sourcesJar', Jar) {
             archiveClassifier = 'sources'
             from sourceSets.main.allSource
         }
 
-        task javadocJar(type: Jar, dependsOn: javadoc) {
+        tasks.register('javadocJar', Jar) {
             archiveClassifier = 'javadoc'
             from javadoc.destinationDir
-        }
-
-        artifacts {
-            archives sourcesJar
-            archives javadocJar
         }
     }
 
@@ -89,11 +86,11 @@ subprojects {
                 }
 
                 if (project.plugins.hasPlugin('java-library')) {
-                    artifact sourcesJar
-                    artifact javadocJar
+                    artifact tasks.named("sourcesJar")
+                    artifact tasks.named("javadocJar")
                 }
 
-                groupId = 'io.github.rrguez.flowforge'
+                groupId = "io.github.rrguez.flowforge"
                 artifactId = project.name
                 version = project.version
 
@@ -101,15 +98,15 @@ subprojects {
                     name = project.name
                     description = 'Type-safe, reactive workflow orchestration for Java'
                     url = 'https://github.com/flowforge/flowforge'
-                    
+
                     inceptionYear = '2024'
-                    
+
                     scm {
                         url = 'https://github.com/flowforge/flowforge'
                         connection = 'scm:git:https://github.com/flowforge/flowforge.git'
                         developerConnection = 'scm:git:https://github.com/flowforge/flowforge.git'
                     }
-                    
+
                     licenses {
                         license {
                             name = 'Apache License, Version 2.0'
@@ -117,7 +114,7 @@ subprojects {
                             distribution = 'repo'
                         }
                     }
-                    
+
                     developers {
                         developer {
                             id = 'flowforge'
@@ -128,21 +125,14 @@ subprojects {
                 }
             }
         }
-        
-        repositories {
-            maven {
-                name = "MavenCentral"
-                
-                def releasesRepoUrl = "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
-                def snapshotsRepoUrl = "https://central.sonatype.com/repository/maven-snapshots/"
-                
-                url = version.toString().endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+    }
 
-                credentials {
-                    username = project.findProperty("mavenCentralUsername") ?: System.getenv("MAVEN_CENTRAL_USERNAME")
-                    password = project.findProperty("mavenCentralPassword") ?: System.getenv("MAVEN_CENTRAL_PASSWORD")
-                }
-            }
-        }
+    // Signing requerido por Central
+    signing {
+        useInMemoryPgpKeys(
+                findProperty("signing.key"),
+                findProperty("signing.password")
+        )
+        sign publishing.publications.mavenJava
     }
 }
