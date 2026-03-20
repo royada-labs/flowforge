@@ -3,7 +3,7 @@ name: Publish to Maven Central
 on:
   push:
     branches:
-      - main
+      - develop-v2
 
 jobs:
   publish:
