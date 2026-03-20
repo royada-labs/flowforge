@@ -1,1 +1,2 @@
-io.tugrandsolutions.flowforge.spring.autoconfig.FlowForgeAutoConfiguration
+org.royada.flowforge.spring.autoconfig.FlowForgeAutoConfiguration
+org.royada.flowforge.spring.autoconfig.FlowForgeOpenTelemetryAutoConfiguration

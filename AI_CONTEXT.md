@@ -14,9 +14,9 @@ This document provides comprehensive context for AI agents working with the Flow
 **Key Characteristics:**
 *   **Reactive**: Fully non-blocking.
 *   **Declarative DSL**: Fluent API for defining workflows.
-*   **Fail-Fast**: Validates workflows (cycles, usage) at startup.
-*   **Type-Safe**: Generic task handlers.
-*   **Observability**: Detailed execution reports and monitoring hooks.
+*   **Bulletproof Type-Safety**: End-to-end type safety from DSL definition to context retrieval using `TaskDefinition` and `FlowKey`.
+*   **Observability-first**: Deep integration with **OpenTelemetry** with span linking for DAG dependencies.
+*   **Defensive Runtime**: Explicit type validation at the context level and custom exception hierarchy.
 
 ## 2. Project Structure
 
@@ -38,24 +38,15 @@ The project is a multi-module Gradle project:
 
 ### 3.2. Interfaces & Classes
 
-*   **`FlowTaskHandler<I, O>`**: Interface for implementing task logic.
-    *   `Mono<O> execute(I input, ReactiveExecutionContext ctx)`: The core execution method.
-*   **`FlowDsl`**: Entry point for defining workflows.
-    *   `FlowBuilder start(String taskId)`: Starts a workflow definition.
-*   **`FlowBuilder`**: Fluent API for building the workflow graph.
-    *   `then(String taskId)`: Sequential execution.
-    *   `fork(Consumer<FlowBranch>... branches)`: Parallel execution.
-    *   `join(String taskId)`: Merge parallel branches.
-    *   `build()`: Finalizes the workflow and returns `WorkflowExecutionPlan`.
+*   **`TaskDefinition<I, O>`**: Metadata for a task, defining its ID, input type, and output type. It is the core of the type-safe API.
+*   **`FlowKey<T>`**: A type-safe handle for retrieving task results. Created via `TaskDefinition.outputKey()`.
+*   **`TypedFlowBuilder<O>`**: An evolved builder that tracks the output type of the current tail, enabling chaining via `.then(TaskDefinition)`.
 *   **`ReactiveExecutionContext`**: Context passed to tasks.
-    *   `put(TaskId id, T value)`: Store intermediate results.
-    *   `get(TaskId id, Class<T> type)`: Retrieve results from other tasks.
-*   **`FlowForgeClient`**: The primary interface for triggering workflows.
-    *   `Mono<ReactiveExecutionContext> execute(String workflowId, Object input)`: Executes a workflow.
-    *   `Mono<ReactiveExecutionContext> execute(String workflowId, Object input, Duration timeout)`: Executes with a global timeout.
-    *   `Mono<Object> executeResult(String workflowId, Object input)`: Executes and extracts the final result (for simple single-output flows).
-*   **`WorkflowMonitor`**: Interface for listening to workflow lifecycle events (start, complete, task start/fail/success).
-*   **`ExecutionReport`**: A summary object containing final statuses, durations, and errors for all tasks, generated upon workflow completion.
+    *   `get(FlowKey<T> key)`: Retrieve results with runtime type safety.
+    *   `getOrThrow(FlowKey<T> key)`: Retrieve or throw `NoSuchElementException` / `TypeMismatchException`.
+    *   `getOrDefault(FlowKey<T> key, T defaultValue)`: Retrieve with a fallback value.
+*   **`WorkflowMonitor` / `ExecutionTracer`**: Interfaces for observability. `OpenTelemetryExecutionTracer` provides distributed tracing with dependency links.
+*   **`ExecutionReport`**: A summary object containing final statuses, durations, and errors.
 
 ### 3.3. **Execution Policies**
 
@@ -63,13 +54,17 @@ The project is a multi-module Gradle project:
 *   **`TimeoutPolicy`**: Enforces a maximum duration for individual task execution.
 *   *(Note: Policies are currently modeled in Core `TaskDescriptor`. Spring DSL support for attaching policies is internal or forthcoming.)*
 
-### 3.4. Architecture
+### 3.4. Exception Hierarchy
 
-*   **Directed Acyclic Graph (DAG)**: Workflows are modeled as DAGs. The engine prevents cycles.
-*   **Orchestration**: Uses a `ReactiveWorkflowOrchestrator` which implements a **Single-Writer** model:
-    *   **State Scheduler**: A dedicated single-threaded scheduler manages all state mutations (transitions, queueing) to ensure concurrency safety without locks.
-    *   **Task Scheduler**: Tasks execution involves IO/Computation and runs on `Schedulers.boundedElastic()` to avoid blocking the state loop.
-*   **Observability**: The orchestrator tracks metrics (durations, in-flight count) and generates an `ExecutionReport` at the end of every run.
+*   **`FlowForgeException`**: Base class for all library exceptions.
+*   **`TypeMismatchException`**: Thrown when a context value exists but does not match the expected type in `FlowKey`.
+*   **`WorkflowExecutionException`**: Thrown when a workflow fails execution.
+
+### 3.5. Architecture
+
+*   **Directed Acyclic Graph (DAG)**: Workflows are modeled as DAGs.
+*   **Orchestration**: Uses a `ReactiveWorkflowOrchestrator` with a **Single-Writer** model for state safety.
+*   **Observability**: Integrated with OpenTelemetry via `ExecutionTracer`. Spans for tasks include links to their dependent spans for clear DAG visualization in tools like Jaeger.
 
 ## 4. Usage Examples
 
@@ -86,28 +81,48 @@ public class FetchUserDataTask implements FlowTaskHandler<String, UserProfile> {
 }
 ```
 
-### 4.2. Defining a Workflow
+### 4.2. Defining a Workflow (Typed DSL)
 
 ```java
 @Configuration
 public class UserOnboardingWorkflow {
 
+    public static TaskDefinition<String, UserProfile> FETCH = TaskDefinition.of("fetchUserData", String.class, UserProfile.class);
+    public static TaskDefinition<UserProfile, UserProfile> VALIDATE = TaskDefinition.of("validateUser", UserProfile.class, UserProfile.class);
+    public static TaskDefinition<UserProfile, Void> SEND_WELCOME = TaskDefinition.of("sendWelcomeEmail", UserProfile.class, Void.class);
+    public static TaskDefinition<UserProfile, Void> PROVISION = TaskDefinition.of("provisionResources", UserProfile.class, Void.class);
+
     @FlowWorkflow(id = "onboarding")
     @Bean
     public WorkflowExecutionPlan onboardingFlow(FlowDsl dsl) {
-        return dsl.start("fetchUserData")
-                  .then("validateUser")
+        return dsl.startTyped(FETCH)
+                  .then(VALIDATE)
                   .fork(
-                      b -> b.then("sendWelcomeEmail"),
-                      b -> b.then("provisionResources")
+                      b -> b.then(SEND_WELCOME),
+                      b -> b.then(PROVISION)
                   )
-                  .join("finalizeOnboarding")
                   .build();
     }
 }
 ```
 
-### 4.3. Executing a Workflow (Full Context)
+### 4.3. Safe Data Access in Tasks
+
+```java
+@FlowTask(id = "validateUser")
+public class ValidateTask implements FlowTaskHandler<UserProfile, UserProfile> {
+    @Override
+    public Mono<UserProfile> execute(UserProfile user, ReactiveExecutionContext ctx) {
+        // Access data from unreachable or previous tasks using FlowKey
+        FlowKey<Status> statusKey = TaskDefinition.of("getStatus", Void.class, Status.class).outputKey();
+        Status s = ctx.getOrDefault(statusKey, Status.PENDING);
+        
+        return Mono.just(user);
+    }
+}
+```
+
+### 4.4. Executing a Workflow (Full Context)
 
 ```java
 @Service
@@ -128,7 +143,7 @@ public class OnboardingService {
 }
 ```
 
-### 4.4. Executing a Workflow (Result Only)
+### 4.5. Executing a Workflow (Result Only)
 
 ```java
 public Mono<String> processData(String input) {
@@ -138,14 +153,14 @@ public Mono<String> processData(String input) {
 }
 ```
 
-### 4.5. Core / Standalone Usage (No Spring)
+### 4.6. Core / Standalone Usage (No Spring)
 
 FlowForge can be used without Spring by manually creating tasks and the orchestrator.
 
 ```java
 // 1. Define Tasks
 class MyTask extends BasicTask<String, Integer> {
-    public MyTask() { super(new TaskId("myTask")); }
+    public MyTask() { super(TaskId.of("myTask"), String.class, Integer.class); }
     
     @Override
     protected Mono<Integer> doExecute(String input, ReactiveExecutionContext ctx) {
@@ -180,4 +195,12 @@ orchestrator.execute("myWorkflow", plan, "Hello World")
 *   **Missing Task**: Ensure all task IDs referenced in the DSL correspond to beans annotated with `@FlowTask`.
 *   **Timeout**: If a workflow hangs, ensure you are using the `timeout` overload or that your tasks have internal timeouts.
 
-This context is sufficient to understand the library's scope and implementation details.
+## 7. Licensing
+
+FlowForge is licensed under the **Apache License 2.0**.
+*   **Copyright 2026 Rolando Rodríguez González**
+*   All artifacts (JARs) include `LICENSE` and `NOTICE` files in `META-INF`.
+*   Public API classes include a standard license header.
+*   The `build.gradle` file is configured to include license metadata in Maven POMs.
+
+This context is sufficient to understand the library's scope, implementation details, and compliance requirements.

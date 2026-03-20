@@ -1,0 +1,50 @@
+package org.royada.flowforge.workflow.plan;
+
+import org.royada.flowforge.task.TaskId;
+import org.royada.flowforge.workflow.graph.TaskNode;
+import org.royada.flowforge.workflow.graph.WorkflowGraph;
+import org.royada.flowforge.validation.TypeMetadata;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+public final class WorkflowExecutionPlan {
+
+    private final WorkflowGraph graph;
+    private final Set<TaskNode> roots;
+
+    private WorkflowExecutionPlan(
+            WorkflowGraph graph,
+            Set<TaskNode> roots
+    ) {
+        this.graph = graph;
+        this.roots = roots;
+    }
+
+    public static WorkflowExecutionPlan from(WorkflowGraph graph) {
+        Objects.requireNonNull(graph, "graph");
+        return new WorkflowExecutionPlan(
+                graph,
+                graph.roots()
+        );
+    }
+
+    public Set<TaskNode> roots() {
+        return roots;
+    }
+
+    public Optional<TaskNode> getNode(TaskId taskId) {
+        return graph.get(taskId);
+    }
+
+    public Collection<TaskNode> nodes() {
+        return graph.nodes();
+    }
+
+    public Map<TaskId, TypeMetadata> typeMetadata() {
+        return graph.typeMetadata();
+    }
+}

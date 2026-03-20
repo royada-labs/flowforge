@@ -8,15 +8,6 @@ javaPlatform {
 dependencies {
     constraints {
         // Fijamos la versión del core para que coincida con la del BOM
-        api "io.tugrandsolutions.flowforge:flowforge-core:${project.version}"
-        
-        // Usamos el catálogo de versiones para evitar hardcoding.
-        // Aplicamos 'strictly' usando la versión definida en libs.versions.toml
-        api(libs.json.schema.validator) {
-            version {
-                strictly libs.versions.jsonSchemaValidator.get()
-            }
-            because "Versión validada internamente para asegurar compatibilidad con Flowforge"
-        }
+        api "org.royada.flowforge:flowforge-core:${project.version}"
     }
 }
