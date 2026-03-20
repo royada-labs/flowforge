@@ -17,11 +17,18 @@ public class DeadEndException extends FlowForgeException {
 
   private final Set<TaskId> pendingTasks;
 
+  /**
+   * @param message exception message
+   * @param pendingTasks tasks still pending when dead-end was detected
+   */
   public DeadEndException(String message, Set<TaskId> pendingTasks) {
     super(message);
     this.pendingTasks = pendingTasks;
   }
 
+  /**
+   * @return pending tasks at dead-end detection time
+   */
   public Set<TaskId> getPendingTasks() {
     return pendingTasks;
   }

@@ -23,6 +23,18 @@ public final class ExecutionReport {
   private final int skippedTasks;
   private final int maxInFlight;
 
+  /**
+   * Creates an immutable execution report.
+   *
+   * @param finalStatuses final status by task id
+   * @param durations duration by task id
+   * @param errors failure by task id
+   * @param totalTasks total task count
+   * @param completedTasks completed task count
+   * @param failedTasks failed task count
+   * @param skippedTasks skipped task count
+   * @param maxInFlight maximum concurrent tasks observed
+   */
   public ExecutionReport(
       Map<TaskId, TaskStatus> finalStatuses,
       Map<TaskId, Duration> durations,
@@ -42,42 +54,74 @@ public final class ExecutionReport {
     this.maxInFlight = maxInFlight;
   }
 
+  /**
+   * @return final status map
+   */
   public Map<TaskId, TaskStatus> getFinalStatuses() {
     return finalStatuses;
   }
 
+  /**
+   * @return task durations map
+   */
   public Map<TaskId, Duration> getDurations() {
     return durations;
   }
 
+  /**
+   * @return task errors map
+   */
   public Map<TaskId, Throwable> getErrors() {
     return errors;
   }
 
+  /**
+   * @param taskId task id
+   * @return duration for task if available
+   */
   public Optional<Duration> getDuration(TaskId taskId) {
     return Optional.ofNullable(durations.get(taskId));
   }
 
+  /**
+   * @param taskId task id
+   * @return error for task if available
+   */
   public Optional<Throwable> getError(TaskId taskId) {
     return Optional.ofNullable(errors.get(taskId));
   }
 
+  /**
+   * @return total tasks in workflow
+   */
   public int getTotalTasks() {
     return totalTasks;
   }
 
+  /**
+   * @return completed tasks count
+   */
   public int getCompletedTasks() {
     return completedTasks;
   }
 
+  /**
+   * @return failed tasks count
+   */
   public int getFailedTasks() {
     return failedTasks;
   }
 
+  /**
+   * @return skipped tasks count
+   */
   public int getSkippedTasks() {
     return skippedTasks;
   }
 
+  /**
+   * @return maximum tasks in flight observed
+   */
   public int getMaxInFlight() {
     return maxInFlight;
   }

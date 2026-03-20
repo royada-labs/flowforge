@@ -24,20 +24,42 @@ public final class ExecutionSession {
     private final AtomicInteger maxInFlightObserved = new AtomicInteger(0);
     private final AtomicInteger inFlightCount = new AtomicInteger(0);
 
+    /**
+     * @param instance workflow instance
+     * @param tracer execution tracer
+     */
     public ExecutionSession(WorkflowInstance instance, ExecutionTracer tracer) {
         this.instance = Objects.requireNonNull(instance, "instance");
         this.tracer = Objects.requireNonNull(tracer, "tracer");
     }
 
+    /**
+     * @return workflow instance
+     */
     public WorkflowInstance instance() { return instance; }
+
+    /**
+     * @return execution tracer
+     */
     public ExecutionTracer tracer() { return tracer; }
 
+    /**
+     * Marks task start and updates in-flight metrics.
+     *
+     * @param taskId task id
+     */
     public void recordTaskStart(TaskId taskId) {
         taskStartTimes.put(taskId, System.nanoTime());
         int currentInFlight = inFlightCount.incrementAndGet();
         maxInFlightObserved.updateAndGet(max -> Math.max(max, currentInFlight));
     }
 
+    /**
+     * Marks task completion and records duration.
+     *
+     * @param taskId task id
+     * @return task duration or {@link Duration#ZERO} when start timestamp was unavailable
+     */
     public Duration recordTaskCompletion(TaskId taskId) {
         inFlightCount.decrementAndGet();
         Long startNanos = taskStartTimes.remove(taskId);
@@ -48,12 +70,33 @@ public final class ExecutionSession {
         return duration;
     }
 
+    /**
+     * Records task error.
+     *
+     * @param taskId task id
+     * @param error failure
+     */
     public void recordTaskError(TaskId taskId, Throwable error) {
         taskErrors.put(taskId, error);
     }
 
+    /**
+     * @return task durations map
+     */
     public Map<TaskId, Duration> taskDurations() { return taskDurations; }
+
+    /**
+     * @return task errors map
+     */
     public Map<TaskId, Throwable> taskErrors() { return taskErrors; }
+
+    /**
+     * @return maximum concurrent tasks observed
+     */
     public int maxInFlightObserved() { return maxInFlightObserved.get(); }
+
+    /**
+     * @return current in-flight task count
+     */
     public int inFlightCount() { return inFlightCount.get(); }
 }

@@ -40,10 +40,29 @@ public final class ExecutionTrace {
         this.traceId = Objects.requireNonNull(traceId != null ? traceId : "", "traceId must be non-null");
     }
 
+    /**
+     * @return task traces
+     */
     public List<TaskExecutionTrace> tasks() { return tasks; }
+
+    /**
+     * @return workflow start timestamp (epoch millis)
+     */
     public long startTime() { return startTime; }
+
+    /**
+     * @return workflow end timestamp (epoch millis)
+     */
     public long endTime() { return endTime; }
+
+    /**
+     * @return trace identifier
+     */
     public String traceId() { return traceId; }
+
+    /**
+     * @return workflow duration in milliseconds
+     */
     public long durationMs() { return endTime - startTime; }
 
     /**

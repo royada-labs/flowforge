@@ -17,6 +17,10 @@ import org.slf4j.LoggerFactory;
 import org.royada.flowforge.task.TaskId;
 import org.royada.flowforge.workflow.instance.WorkflowInstance;
 
+/**
+ * Asynchronous implementation of {@link WorkflowMonitor} that logs workflow and task
+ * lifecycle events.
+ */
 public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(AsyncLoggingWorkflowMonitor.class);
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -28,6 +32,9 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
     private final ConcurrentMap<Object, Long> workflowStart = new ConcurrentHashMap<>();
     private final ConcurrentMap<TaskKey, Long> taskStart = new ConcurrentHashMap<>();
 
+    /**
+     * Creates a monitor using UTC clock and a single daemon logging thread.
+     */
     public AsyncLoggingWorkflowMonitor() {
         this(Clock.systemUTC(), Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "flowforge-monitor");
@@ -36,6 +43,12 @@ public final class AsyncLoggingWorkflowMonitor implements WorkflowMonitor, AutoC
         }));
     }
 
+    /**
+     * Creates a monitor with explicit dependencies.
+     *
+     * @param clock clock used to measure timestamps
+     * @param executor executor used to publish log events asynchronously
+     */
     public AsyncLoggingWorkflowMonitor(Clock clock, ExecutorService executor) {
         this.clock = Objects.requireNonNull(clock, "clock");
         this.executor = Objects.requireNonNull(executor, "executor");

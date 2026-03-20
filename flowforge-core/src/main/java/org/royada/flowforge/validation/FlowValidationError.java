@@ -59,17 +59,38 @@ public final class FlowValidationError {
         this.severity = Objects.requireNonNull(severity, "severity");
     }
 
-    /** Creates an ERROR-severity validation error. */
+    /**
+     * Creates an ERROR-severity validation error.
+     *
+     * @param code machine-readable code
+     * @param taskId task id related to the error (or empty)
+     * @param message human-readable message
+     * @return error instance
+     */
     public static FlowValidationError error(String code, String taskId, String message) {
         return new FlowValidationError(code, message, taskId, Severity.ERROR);
     }
 
-    /** Creates a WARNING-severity validation error. */
+    /**
+     * Creates a WARNING-severity validation error.
+     *
+     * @param code machine-readable code
+     * @param taskId task id related to the warning (or empty)
+     * @param message human-readable message
+     * @return warning instance
+     */
     public static FlowValidationError warning(String code, String taskId, String message) {
         return new FlowValidationError(code, message, taskId, Severity.WARNING);
     }
 
+    /**
+     * @return machine-readable error code
+     */
     public String code() { return code; }
+
+    /**
+     * @return human-readable message
+     */
     public String message() { return message; }
     public String taskId() { return taskId; }
     public Severity severity() { return severity; }

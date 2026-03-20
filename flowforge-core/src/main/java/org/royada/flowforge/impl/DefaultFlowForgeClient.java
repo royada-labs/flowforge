@@ -18,11 +18,19 @@ import org.royada.flowforge.workflow.plan.WorkflowExecutionPlan;
 import org.royada.flowforge.workflow.trace.ExecutionTrace;
 import reactor.core.publisher.Mono;
 
+/**
+ * Default implementation of {@link FlowForgeClient} backed by a {@link WorkflowRegistry}
+ * and a {@link ReactiveWorkflowOrchestrator}.
+ */
 public final class DefaultFlowForgeClient implements FlowForgeClient {
 
     private final WorkflowRegistry workflowRegistry;
     private final ReactiveWorkflowOrchestrator orchestrator;
 
+    /**
+     * @param workflowRegistry workflow descriptor registry
+     * @param orchestrator workflow orchestrator
+     */
     public DefaultFlowForgeClient(
         WorkflowRegistry workflowRegistry,
             ReactiveWorkflowOrchestrator orchestrator) {

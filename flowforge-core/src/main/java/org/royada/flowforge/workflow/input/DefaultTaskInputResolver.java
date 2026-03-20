@@ -8,7 +8,16 @@ import reactor.core.publisher.Mono;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Default {@link TaskInputResolver} implementation.
+ */
 public final class DefaultTaskInputResolver implements TaskInputResolver {
+
+    /**
+     * Creates resolver instance.
+     */
+    public DefaultTaskInputResolver() {
+    }
 
     @Override
     public Mono<Object> resolveInput(

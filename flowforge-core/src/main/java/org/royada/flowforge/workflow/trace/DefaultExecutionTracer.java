@@ -21,6 +21,9 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
     private final Map<TaskId, TaskStartInfo> taskStarts = new ConcurrentHashMap<>();
     private final List<TaskExecutionTrace> completedTraces = new CopyOnWriteArrayList<>();
 
+    /**
+     * @param typeInfo type metadata per task id
+     */
     public DefaultExecutionTracer(Map<TaskId, TypeMetadata> typeInfo) {
         this.typeInfo = Map.copyOf(typeInfo != null ? typeInfo : Collections.emptyMap());
     }

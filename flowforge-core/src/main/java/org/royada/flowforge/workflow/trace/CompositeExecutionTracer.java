@@ -13,6 +13,9 @@ public final class CompositeExecutionTracer implements ExecutionTracer {
 
     private final List<ExecutionTracer> tracers;
 
+    /**
+     * @param tracers delegate tracers
+     */
     public CompositeExecutionTracer(List<ExecutionTracer> tracers) {
         this.tracers = List.copyOf(Objects.requireNonNull(tracers, "tracers"));
     }
