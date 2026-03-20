@@ -55,7 +55,7 @@ const config = {
         title: 'FlowForge',
         logo: {
           alt: 'FlowForge Logo',
-          src: 'img/logo.svg',
+          src: 'img/flowforge-logo.png',
         },
         items: [
           {

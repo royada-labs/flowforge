@@ -35,6 +35,31 @@ public class OrderTasks {
 > **Input in First Tasks**: In this example, the first task needs an `orderId` to know what to fetch. Using `Void` as input is also possible for workflows that don't require any initial data from the client, such as a startup cleanup task.
 
 
+## 🔗 Step 2: Orchestrate the Flow
+Once the tasks are ready, use the `FlowDsl` to create your workflow blueprint. This is where you connect the tasks into a process.
+
+```java
+import org.royada.flowforge.api.dsl.FlowDsl;
+import org.royada.flowforge.api.model.FlowDefinition;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class MyWorkflows {
+
+    @Bean
+    public FlowDefinition getOrderFlow(FlowDsl dsl) {
+        return dsl.create("get-order-flow")
+                  .task("fetchOrder") // Connect to our task by its ID
+                  .build();
+    }
+}
+```
+
+> [!TIP]
+> **Task IDs**: The name you pass to `.task("id")` MUST match the ID defined in the `@FlowTask` annotation in Step 1.
+
+
 ## ▶️ Step 3: Run the Workflow
 Finally, use the `FlowForgeClient` to trigger the execution from any service in your app.
 

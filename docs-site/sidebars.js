@@ -1,29 +1,14 @@
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
-  // Sidebar para la documentación base
+  // Sidebar para la documentación base - FLATTENED as per user request
   docsSidebar: [
-    {
-      type: 'category',
-      label: 'Getting Started',
-      items: ['getting-started/index'],
-    },
-    {
-      type: 'category',
-      label: 'Core Documentation',
-      items: [
-        'core-concepts/index',
-        'api-reference/index',
-        'observability/index',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Community & Help',
-      items: [
-        'examples/index',
-        'troubleshooting',
-      ],
-    },
+    'getting-started/index',
+    'project-structure',
+    'core-concepts/index',
+    'api-reference/index',
+    'observability/index',
+    'examples/index',
+    'troubleshooting',
   ],
 
   // Sidebar exclusivo para el tutorial incremental
@@ -35,7 +20,7 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Incremental Tutorial',
+      label: 'Beginners Tutorial',
       items: [
         'tutorial/level1-basics',
         'tutorial/level2-sequential',
