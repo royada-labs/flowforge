@@ -9,8 +9,8 @@ import java.util.Objects;
 import io.flowforge.task.Task;
 import io.flowforge.task.TaskDescriptor;
 import io.flowforge.task.TaskId;
-import io.flowforge.workflow.graph.WorkflowGraph;
 import io.flowforge.validation.TypeMetadata;
+import io.flowforge.workflow.graph.WorkflowGraph;
 
 public final class WorkflowPlanBuilder {
 

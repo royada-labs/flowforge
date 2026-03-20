@@ -1,5 +1,19 @@
 package io.flowforge.spring.bootstrap;
 
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.function.Supplier;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.core.ResolvableType;
+
 import io.flowforge.api.FlowTaskHandler;
 import io.flowforge.exception.TaskRegistrationException;
 import io.flowforge.exception.WorkflowConfigurationException;
@@ -8,27 +22,14 @@ import io.flowforge.spring.annotations.TaskHandler;
 import io.flowforge.spring.registry.TaskDefinitionRegistry;
 import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.spring.registry.TaskProvider;
-import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.Task;
+import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.ReactiveExecutionContext;
 import io.flowforge.workflow.policy.ExecutionPolicy;
 import io.flowforge.workflow.policy.RetryPolicy;
 import io.flowforge.workflow.policy.TimeoutPolicy;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.core.ResolvableType;
 import reactor.core.publisher.Mono;
-
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Method;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.function.Supplier;
 
 public final class TaskScanner implements BeanFactoryPostProcessor {
 

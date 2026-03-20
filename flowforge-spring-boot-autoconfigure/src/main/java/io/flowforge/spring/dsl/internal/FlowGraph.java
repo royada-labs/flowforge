@@ -1,5 +1,15 @@
 package io.flowforge.spring.dsl.internal;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+
 import io.flowforge.spring.dsl.DefaultFlowBranch;
 import io.flowforge.spring.dsl.FlowBranch;
 import io.flowforge.spring.dsl.FlowBuilder;
@@ -7,9 +17,6 @@ import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 import io.flowforge.validation.TypeMetadata;
 import io.flowforge.workflow.policy.ExecutionPolicy;
-
-import java.util.*;
-import java.util.function.Consumer;
 
 public class FlowGraph {
 

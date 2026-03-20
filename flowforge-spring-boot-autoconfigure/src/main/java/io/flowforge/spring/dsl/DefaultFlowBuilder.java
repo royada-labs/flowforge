@@ -1,5 +1,9 @@
 package io.flowforge.spring.dsl;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Consumer;
+
 import io.flowforge.spring.dsl.internal.FlowGraph;
 import io.flowforge.spring.dsl.internal.FlowPlanMaterializer;
 import io.flowforge.spring.dsl.internal.TaskReferenceResolver;
@@ -10,10 +14,6 @@ import io.flowforge.validation.FlowValidationException;
 import io.flowforge.validation.FlowValidationResult;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.policy.ExecutionPolicy;
-
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.function.Consumer;
 
 final class DefaultFlowBuilder implements FlowBuilder {
 

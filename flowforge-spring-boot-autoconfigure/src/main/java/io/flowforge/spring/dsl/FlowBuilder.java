@@ -1,11 +1,11 @@
 package io.flowforge.spring.dsl;
 
+import java.util.function.Consumer;
+
 import io.flowforge.task.TaskDefinition;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.policy.ExecutionPolicy;
-
-import java.util.function.Consumer;
 
 /**
  * Fluent builder for constructing a workflow execution plan.

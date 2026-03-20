@@ -1,5 +1,14 @@
 package io.flowforge.spring.dsl.internal;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
 import io.flowforge.spring.registry.TaskHandlerRegistry;
 import io.flowforge.spring.registry.TaskProvider;
 import io.flowforge.task.Task;
@@ -7,8 +16,6 @@ import io.flowforge.task.TaskDescriptor;
 import io.flowforge.task.TaskId;
 import io.flowforge.workflow.plan.WorkflowExecutionPlan;
 import io.flowforge.workflow.policy.ExecutionPolicy;
-
-import java.util.*;
 
 public final class FlowPlanMaterializer {
 
