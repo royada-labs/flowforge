@@ -48,11 +48,16 @@ public interface ReactiveExecutionContext {
      * @param key the typed key; must not be null
      * @param <T> the value type
      * @return the stored value
-     * @throws NoSuchElementException if no value is found for the given key
+     * @throws java.util.NoSuchElementException if no value is found for the given key
      * @throws TypeMismatchException if the stored value is of the wrong type
      */
     default <T> T getOrThrow(FlowKey<T> key) {
-        return get(key).orElseThrow(() -> new NoSuchElementException("No value found for task: " + key.taskId().getValue()));
+        return get(key).orElseGet(() -> {
+            if (key.isVoid() && isCompleted(key)) {
+                return null;
+            }
+            throw new NoSuchElementException("No value found for task: " + key.taskId().getValue());
+        });
     }
 
     /**

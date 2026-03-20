@@ -23,15 +23,20 @@ public class InMemoryReactiveExecutionContext
 
     private final ConcurrentMap<TaskId, Object> store = new ConcurrentHashMap<>();
 
+    private static final Object NULL_VALUE = new Object();
+
     @Override
     public <T> void put(FlowKey<T> key, T value) {
-        store.put(key.taskId(), value);
+        store.put(key.taskId(), value == null ? NULL_VALUE : value);
     }
 
     @Override
     public <T> Optional<T> get(FlowKey<T> key) {
         Object val = store.get(key.taskId());
         if (val == null) {
+            return Optional.empty();
+        }
+        if (val == NULL_VALUE) {
             return Optional.empty();
         }
         if (!key.type().isInstance(val)) {

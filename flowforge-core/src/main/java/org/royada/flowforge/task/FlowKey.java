@@ -47,6 +47,15 @@ public final class FlowKey<T> {
         return type;
     }
 
+    /**
+     * Returns whether this key is bound to {@link Void}.
+     * 
+     * @return {@code true} if the type is {@code Void.class}
+     */
+    public boolean isVoid() {
+        return type == Void.class;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
