@@ -84,15 +84,31 @@ public final class FlowValidationError {
     }
 
     /**
+     * Returns the machine-readable error code.
+     * 
      * @return machine-readable error code
      */
     public String code() { return code; }
 
     /**
+     * Returns the human-readable message.
+     * 
      * @return human-readable message
      */
     public String message() { return message; }
+
+    /**
+     * Returns the ID of the affected task.
+     * 
+     * @return the task ID
+     */
     public String taskId() { return taskId; }
+
+    /**
+     * Returns the severity level of the validation error.
+     * 
+     * @return the severity
+     */
     public Severity severity() { return severity; }
 
     /**

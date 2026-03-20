@@ -35,6 +35,8 @@ public interface ExecutionPolicy {
     }
 
     /**
+     * Returns a default no-op execution policy.
+     * 
      * @return no-op policy
      */
     static ExecutionPolicy defaultPolicy() {

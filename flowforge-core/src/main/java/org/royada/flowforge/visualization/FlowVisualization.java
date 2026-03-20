@@ -34,8 +34,25 @@ public final class FlowVisualization {
         this.errors = List.copyOf(Objects.requireNonNull(errors, "errors"));
     }
 
+    /**
+     * Returns the list of visual nodes.
+     * 
+     * @return the list of nodes
+     */
     public List<VisualNode> nodes() { return nodes; }
+
+    /**
+     * Returns the list of visual edges.
+     * 
+     * @return the list of edges
+     */
     public List<VisualEdge> edges() { return edges; }
+
+    /**
+     * Returns the list of visual errors.
+     * 
+     * @return the list of errors
+     */
     public List<VisualError> errors() { return errors; }
 
     /**

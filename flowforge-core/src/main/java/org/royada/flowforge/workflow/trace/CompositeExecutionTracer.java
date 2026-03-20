@@ -14,6 +14,8 @@ public final class CompositeExecutionTracer implements ExecutionTracer {
     private final List<ExecutionTracer> tracers;
 
     /**
+     * Creates a new composite execution tracer with the given delegates.
+     * 
      * @param tracers delegate tracers
      */
     public CompositeExecutionTracer(List<ExecutionTracer> tracers) {

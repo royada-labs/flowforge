@@ -9,6 +9,11 @@ import java.util.Collections;
  */
 public final class NoOpExecutionTracer implements ExecutionTracer {
 
+    /**
+     * Creates a new no-op execution tracer.
+     */
+    public NoOpExecutionTracer() {}
+
     @Override
     public void onWorkflowStart(String workflowId, String executionId) {}
 

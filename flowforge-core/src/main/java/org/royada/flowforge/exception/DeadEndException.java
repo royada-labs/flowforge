@@ -15,9 +15,12 @@ import org.royada.flowforge.task.TaskId;
  */
 public class DeadEndException extends FlowForgeException {
 
+  /** The set of tasks that were still pending when the dead-end was detected. */
   private final Set<TaskId> pendingTasks;
 
   /**
+   * Creates a new dead-end exception.
+   * 
    * @param message exception message
    * @param pendingTasks tasks still pending when dead-end was detected
    */
@@ -27,6 +30,8 @@ public class DeadEndException extends FlowForgeException {
   }
 
   /**
+   * Returns the set of pending tasks at the time the dead-end was detected.
+   * 
    * @return pending tasks at dead-end detection time
    */
   public Set<TaskId> getPendingTasks() {

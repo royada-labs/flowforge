@@ -35,7 +35,11 @@ public final class FlowValidationResult {
         return new FlowValidationResult(errors);
     }
 
-    /** Returns a valid (empty) result. */
+    /**
+     * Returns a valid (empty) result.
+     * 
+     * @return the valid result instance
+     */
     public static FlowValidationResult valid() {
         return VALID;
     }

@@ -25,6 +25,8 @@ public final class ExecutionSession {
     private final AtomicInteger inFlightCount = new AtomicInteger(0);
 
     /**
+     * Creates a new execution session.
+     * 
      * @param instance workflow instance
      * @param tracer execution tracer
      */
@@ -34,11 +36,15 @@ public final class ExecutionSession {
     }
 
     /**
+     * Returns the workflow instance.
+     * 
      * @return workflow instance
      */
     public WorkflowInstance instance() { return instance; }
 
     /**
+     * Returns the execution tracer.
+     * 
      * @return execution tracer
      */
     public ExecutionTracer tracer() { return tracer; }
@@ -81,21 +87,29 @@ public final class ExecutionSession {
     }
 
     /**
+     * Returns the task durations map.
+     * 
      * @return task durations map
      */
     public Map<TaskId, Duration> taskDurations() { return taskDurations; }
 
     /**
+     * Returns the task errors map.
+     * 
      * @return task errors map
      */
     public Map<TaskId, Throwable> taskErrors() { return taskErrors; }
 
     /**
+     * Returns the maximum concurrent tasks observed.
+     * 
      * @return maximum concurrent tasks observed
      */
     public int maxInFlightObserved() { return maxInFlightObserved.get(); }
 
     /**
+     * Returns the current in-flight task count.
+     * 
      * @return current in-flight task count
      */
     public int inFlightCount() { return inFlightCount.get(); }

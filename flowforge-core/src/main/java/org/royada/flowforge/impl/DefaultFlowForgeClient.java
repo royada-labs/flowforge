@@ -28,6 +28,8 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
     private final ReactiveWorkflowOrchestrator orchestrator;
 
     /**
+     * Creates a new default flow forge client.
+     * 
      * @param workflowRegistry workflow descriptor registry
      * @param orchestrator workflow orchestrator
      */

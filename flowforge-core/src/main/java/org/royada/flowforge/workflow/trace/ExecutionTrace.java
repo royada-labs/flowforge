@@ -41,26 +41,36 @@ public final class ExecutionTrace {
     }
 
     /**
+     * Returns the list of task execution traces.
+     * 
      * @return task traces
      */
     public List<TaskExecutionTrace> tasks() { return tasks; }
 
     /**
+     * Returns the workflow start timestamp.
+     * 
      * @return workflow start timestamp (epoch millis)
      */
     public long startTime() { return startTime; }
 
     /**
+     * Returns the workflow end timestamp.
+     * 
      * @return workflow end timestamp (epoch millis)
      */
     public long endTime() { return endTime; }
 
     /**
+     * Returns the trace identifier.
+     * 
      * @return trace identifier
      */
     public String traceId() { return traceId; }
 
     /**
+     * Returns the total workflow execution duration.
+     * 
      * @return workflow duration in milliseconds
      */
     public long durationMs() { return endTime - startTime; }

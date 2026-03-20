@@ -7,6 +7,9 @@ import org.royada.flowforge.validation.TypeMetadata;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Represents the dependency graph of tasks in a workflow.
+ */
 public final class WorkflowGraph {
 
     private final Map<TaskId, TaskNode> nodes;
@@ -17,10 +20,27 @@ public final class WorkflowGraph {
         this.typeMetadata = Map.copyOf(typeMetadata != null ? typeMetadata : Collections.emptyMap());
     }
 
+    /**
+     * Builds a workflow graph from a collection of task descriptors.
+     * 
+     * @param tasks the collection of task descriptors
+     * @return the built workflow graph
+     * @throws IllegalArgumentException if duplicate task IDs are found
+     * @throws IllegalStateException if a task depends on a missing task or if a cycle is detected
+     */
     public static WorkflowGraph build(Collection<TaskDescriptor> tasks) {
         return build(tasks, Collections.emptyMap());
     }
 
+    /**
+     * Builds a workflow graph from a collection of task descriptors and type metadata.
+     * 
+     * @param tasks the collection of task descriptors
+     * @param typeMetadata the map of type metadata for the tasks
+     * @return the built workflow graph
+     * @throws IllegalArgumentException if duplicate task IDs are found
+     * @throws IllegalStateException if a task depends on a missing task or if a cycle is detected
+     */
     public static WorkflowGraph build(Collection<TaskDescriptor> tasks, Map<TaskId, TypeMetadata> typeMetadata) {
         Objects.requireNonNull(tasks, "tasks");
 
@@ -58,18 +78,39 @@ public final class WorkflowGraph {
         return new WorkflowGraph(nodeMap, typeMetadata);
     }
 
+    /**
+     * Returns the type metadata for the tasks in the graph.
+     * 
+     * @return the map of type metadata
+     */
     public Map<TaskId, TypeMetadata> typeMetadata() {
         return typeMetadata;
     }
 
+    /**
+     * Returns all task nodes in the graph.
+     * 
+     * @return the collection of nodes
+     */
     public Collection<TaskNode> nodes() {
         return nodes.values();
     }
 
+    /**
+     * Returns the task node for the given task ID, if it exists.
+     * 
+     * @param taskId the task ID
+     * @return an optional containing the node, or empty if not found
+     */
     public Optional<TaskNode> get(TaskId taskId) {
         return Optional.ofNullable(nodes.get(taskId));
     }
 
+    /**
+     * Returns the root nodes of the graph (those with no dependencies).
+     * 
+     * @return an unmodifiable set of root nodes
+     */
     public Set<TaskNode> roots() {
         return nodes.values().stream()
                 .filter(TaskNode::isRoot)

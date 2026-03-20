@@ -9,8 +9,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Implementation of {@link ReactiveExecutionContext} that stores task results in memory
+ * using a {@link ConcurrentHashMap}.
+ */
 public class InMemoryReactiveExecutionContext
         implements ReactiveExecutionContext {
+
+    /**
+     * Creates a new in-memory reactive execution context.
+     */
+    public InMemoryReactiveExecutionContext() {}
 
     private final ConcurrentMap<TaskId, Object> store = new ConcurrentHashMap<>();
 

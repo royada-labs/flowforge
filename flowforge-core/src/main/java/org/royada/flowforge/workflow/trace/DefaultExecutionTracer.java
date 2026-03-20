@@ -22,6 +22,8 @@ public final class DefaultExecutionTracer implements ExecutionTracer {
     private final List<TaskExecutionTrace> completedTraces = new CopyOnWriteArrayList<>();
 
     /**
+     * Creates a new default execution tracer.
+     * 
      * @param typeInfo type metadata per task id
      */
     public DefaultExecutionTracer(Map<TaskId, TypeMetadata> typeInfo) {

@@ -5,6 +5,8 @@ package org.royada.flowforge.exception;
  */
 public class ExecutionException extends FlowForgeException {
     /**
+     * Creates a new execution exception with the given message.
+     * 
      * @param message exception message
      */
     public ExecutionException(String message) {
@@ -12,6 +14,8 @@ public class ExecutionException extends FlowForgeException {
     }
 
     /**
+     * Creates a new execution exception with the given message and cause.
+     * 
      * @param message exception message
      * @param cause root cause
      */

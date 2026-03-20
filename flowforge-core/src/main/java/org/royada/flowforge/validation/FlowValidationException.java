@@ -18,7 +18,9 @@ import java.util.Optional;
  */
 public class FlowValidationException extends RuntimeException {
 
+    /** The validation result containing errors and warnings. */
     private final FlowValidationResult result;
+    /** The execution plan that failed validation, if available. */
     private final WorkflowExecutionPlan plan;
 
     /**

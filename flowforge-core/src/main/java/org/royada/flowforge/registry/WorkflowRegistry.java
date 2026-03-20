@@ -21,6 +21,18 @@ public class WorkflowRegistry implements WorkflowPlanRegistry {
     private final Map<String, WorkflowDescriptor> workflows = new ConcurrentHashMap<>();
     private volatile boolean sealed;
 
+    /**
+     * Creates a new workflow registry.
+     */
+    public WorkflowRegistry() {}
+
+    /**
+     * Registers a new workflow descriptor.
+     * 
+     * @param descriptor the workflow descriptor to register
+     * @throws WorkflowConfigurationException if the registry is sealed, the descriptor is null, 
+     * the ID is blank, or a duplicate ID is found.
+     */
     public void register(WorkflowDescriptor descriptor) {
         if (sealed) {
             throw new WorkflowConfigurationException("WorkflowRegistry is immutable after initialization");
@@ -52,6 +64,13 @@ public class WorkflowRegistry implements WorkflowPlanRegistry {
         }
     }
 
+    /**
+     * Returns the workflow descriptor for the given ID.
+     * 
+     * @param id the workflow ID
+     * @return the workflow descriptor
+     * @throws UnknownWorkflowException if the ID is not found
+     */
     public WorkflowDescriptor get(String id) {
         WorkflowDescriptor descriptor = workflows.get(id);
         if (descriptor == null) {
@@ -60,10 +79,18 @@ public class WorkflowRegistry implements WorkflowPlanRegistry {
         return descriptor;
     }
 
+    /**
+     * Returns all registered workflow descriptors.
+     * 
+     * @return an unmodifiable collection of all descriptors
+     */
     public Collection<WorkflowDescriptor> all() {
         return Collections.unmodifiableCollection(workflows.values());
     }
 
+    /**
+     * Seals the registry, making it immutable for future registrations.
+     */
     public void seal() {
         this.sealed = true;
     }

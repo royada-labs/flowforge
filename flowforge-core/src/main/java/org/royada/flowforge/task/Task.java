@@ -14,21 +14,29 @@ import java.util.Set;
 public interface Task<I, O> {
 
     /**
+     * Returns the unique task identifier.
+     * 
      * @return task identifier
      */
     TaskId id();
 
     /**
+     * Returns the expected input type for this task.
+     * 
      * @return task input type
      */
     Class<I> inputType();
 
     /**
+     * Returns the expected output type for this task.
+     * 
      * @return task output type
      */
     Class<O> outputType();
 
     /**
+     * Returns the set of task IDs that this task depends on.
+     * 
      * @return upstream task dependencies
      */
     default Set<TaskId> dependencies() {
@@ -36,6 +44,9 @@ public interface Task<I, O> {
     }
 
     /**
+     * Returns whether this task is optional. If true, failure will not stop
+     * the workflow execution; downstream tasks depending on it will be skipped.
+     * 
      * @return whether task failure is optional/skippable
      */
     default boolean optional() {
@@ -52,7 +63,10 @@ public interface Task<I, O> {
     Mono<O> execute(I input, ReactiveExecutionContext context);
 
     /**
-     * @return typed output key for storing/retrieving task result in context
+     * Returns a typed key used to store and retrieve the task's output in
+     * the execution context.
+     * 
+     * @return typed output key
      */
     default FlowKey<O> outputKey() {
         return new FlowKey<>(id(), outputType());

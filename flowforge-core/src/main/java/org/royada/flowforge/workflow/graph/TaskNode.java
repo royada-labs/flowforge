@@ -12,20 +12,38 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a node in the workflow execution graph.
+ */
 public final class TaskNode {
 
     private final TaskDescriptor descriptor;
     private final Set<TaskNode> dependencies = new HashSet<>();
     private final Set<TaskNode> dependents = new HashSet<>();
 
+    /**
+     * Creates a new node with the given task descriptor.
+     * 
+     * @param descriptor the task descriptor
+     */
     public TaskNode(TaskDescriptor descriptor) {
         this.descriptor = Objects.requireNonNull(descriptor, "descriptor");
     }
 
+    /**
+     * Returns the ID of the task in this node.
+     * 
+     * @return the task ID
+     */
     public TaskId id() {
         return descriptor.id();
     }
 
+    /**
+     * Returns the task descriptor.
+     * 
+     * @return the descriptor
+     */
     public TaskDescriptor descriptor() {
         return descriptor;
     }
@@ -40,22 +58,49 @@ public final class TaskNode {
         dependents.add(dependent);
     }
 
+    /**
+     * Returns the set of dependency nodes.
+     * 
+     * @return an unmodifiable set of dependency nodes
+     */
     public Set<TaskNode> dependencies() {
         return Collections.unmodifiableSet(dependencies);
     }
 
+    /**
+     * Returns the set of dependent nodes.
+     * 
+     * @return an unmodifiable set of dependent nodes
+     */
     public Set<TaskNode> dependents() {
         return Collections.unmodifiableSet(dependents);
     }
 
+    /**
+     * Returns whether this node is a root (has no dependencies).
+     * 
+     * @return {@code true} if root, {@code false} otherwise
+     */
     public boolean isRoot() {
         return dependencies.isEmpty();
     }
 
+    /**
+     * Returns whether this node is a leaf (has no dependents).
+     * 
+     * @return {@code true} if leaf, {@code false} otherwise
+     */
     public boolean isLeaf() {
         return dependents.isEmpty();
     }
 
+    /**
+     * Executes the task node with the given input and context.
+     * 
+     * @param input the input object
+     * @param context the execution context
+     * @return a Mono that completes with the task result
+     */
     public Mono<Object> execute(Object input, ReactiveExecutionContext context) {
         Mono<Object> raw = executeTyped(descriptor.task(), input, context);
         return descriptor.policy().apply(raw);
@@ -66,6 +111,13 @@ public final class TaskNode {
         return task.execute(typedInput, context).map(result -> (Object) result);
     }
 
+    /**
+     * Executes the task node and wraps the result in a {@link TaskResult}.
+     * 
+     * @param input the input object
+     * @param context the execution context
+     * @return a Mono that completes with the {@link TaskResult}
+     */
     public Mono<TaskResult> executeWithResult(
             Object input,
             ReactiveExecutionContext context

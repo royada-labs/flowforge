@@ -55,6 +55,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the final status of each task in the workflow.
+   * 
    * @return final status map
    */
   public Map<TaskId, TaskStatus> getFinalStatuses() {
@@ -62,6 +64,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the recorded duration for all tasks.
+   * 
    * @return task durations map
    */
   public Map<TaskId, Duration> getDurations() {
@@ -69,6 +73,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns all recorded errors from task executions.
+   * 
    * @return task errors map
    */
   public Map<TaskId, Throwable> getErrors() {
@@ -76,6 +82,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the duration for a specific task.
+   * 
    * @param taskId task id
    * @return duration for task if available
    */
@@ -84,6 +92,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the error for a specific task, if it failed.
+   * 
    * @param taskId task id
    * @return error for task if available
    */
@@ -92,6 +102,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the total number of tasks in the workflow.
+   * 
    * @return total tasks in workflow
    */
   public int getTotalTasks() {
@@ -99,6 +111,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the count of successfully completed tasks.
+   * 
    * @return completed tasks count
    */
   public int getCompletedTasks() {
@@ -106,6 +120,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the count of failed tasks.
+   * 
    * @return failed tasks count
    */
   public int getFailedTasks() {
@@ -113,6 +129,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the count of skipped tasks.
+   * 
    * @return skipped tasks count
    */
   public int getSkippedTasks() {
@@ -120,6 +138,8 @@ public final class ExecutionReport {
   }
 
   /**
+   * Returns the maximum number of tasks executing concurrently.
+   * 
    * @return maximum tasks in flight observed
    */
   public int getMaxInFlight() {

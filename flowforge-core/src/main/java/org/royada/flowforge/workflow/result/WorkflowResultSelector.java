@@ -7,6 +7,9 @@ import org.royada.flowforge.workflow.ReactiveExecutionContext;
 import org.royada.flowforge.workflow.graph.TaskNode;
 import org.royada.flowforge.workflow.plan.WorkflowExecutionPlan;
 
+/**
+ * Helper class for selecting the final output of a workflow execution.
+ */
 public final class WorkflowResultSelector {
 
   private WorkflowResultSelector() {
@@ -22,6 +25,10 @@ public final class WorkflowResultSelector {
    * <li>Otherwise (multiple terminals or none), return the full execution
    * context.</li>
    * </ul>
+   * 
+   * @param plan the workflow execution plan
+   * @param ctx the execution context
+   * @return the selected result object
    */
   public static Object select(WorkflowExecutionPlan plan, ReactiveExecutionContext ctx) {
     Objects.requireNonNull(plan, "plan");

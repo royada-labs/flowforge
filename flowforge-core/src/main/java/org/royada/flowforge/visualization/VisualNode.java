@@ -18,6 +18,15 @@ public record VisualNode(
         boolean isRoot,
         boolean isTerminal
 ) {
+    /**
+     * Creates a new visual node and validates its fields.
+     * 
+     * @param taskId the unique identifier of the task
+     * @param inputType the declared input type
+     * @param outputType the declared output type
+     * @param isRoot whether this task is a starting point
+     * @param isTerminal whether this task has no downstream dependencies
+     */
     public VisualNode {
         Objects.requireNonNull(taskId, "taskId");
         Objects.requireNonNull(inputType, "inputType");

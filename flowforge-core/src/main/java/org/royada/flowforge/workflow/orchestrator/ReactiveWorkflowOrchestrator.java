@@ -58,6 +58,11 @@ public final class ReactiveWorkflowOrchestrator {
     private final ExecutionTracerFactory tracerFactory;
     private final ExecutionLimits limits;
 
+    /**
+     * Creates a new {@link Builder} to configure and create an orchestrator instance.
+     * 
+     * @return a new builder
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -71,15 +76,40 @@ public final class ReactiveWorkflowOrchestrator {
         this.limits = builder.limits;
     }
 
+    /**
+     * Executes a workflow plan with the given initial input.
+     * 
+     * @param workflowId the ID of the workflow to execute
+     * @param plan the execution plan
+     * @param initialInput the initial input for the workflow
+     * @return a Mono that completes with the final execution context
+     */
     public Mono<ReactiveExecutionContext> execute(String workflowId, WorkflowExecutionPlan plan, Object initialInput) {
         return execute(WorkflowRunMetadata.of(workflowId), plan, initialInput);
     }
 
+    /**
+     * Executes a workflow plan with the given metadata and initial input.
+     * 
+     * @param metadata the run metadata
+     * @param plan the execution plan
+     * @param initialInput the initial input for the workflow
+     * @return a Mono that completes with the final execution context
+     */
     public Mono<ReactiveExecutionContext> execute(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
             Object initialInput) {
         return execute(metadata, plan, initialInput, tracerFactory.create(plan.typeMetadata()));
     }
 
+    /**
+     * Executes a workflow plan with the given metadata, initial input, and custom tracer.
+     * 
+     * @param metadata the run metadata
+     * @param plan the execution plan
+     * @param initialInput the initial input for the workflow
+     * @param tracer the tracer to use for this execution
+     * @return a Mono that completes with the final execution context
+     */
     public Mono<ReactiveExecutionContext> execute(WorkflowRunMetadata metadata, WorkflowExecutionPlan plan,
             Object initialInput, ExecutionTracer tracer) {
         
@@ -109,6 +139,14 @@ public final class ReactiveWorkflowOrchestrator {
                 .thenReturn(context);
     }
 
+    /**
+     * Executes a workflow plan and returns an execution trace.
+     * 
+     * @param plan the execution plan
+     * @param initialInput the initial input
+     * @param typeMetadata the type metadata for the tasks
+     * @return a Mono that completes with the execution trace
+     */
     public Mono<ExecutionTrace> executeWithTrace(WorkflowExecutionPlan plan, Object initialInput,
             Map<TaskId, TypeMetadata> typeMetadata) {
         ExecutionTracer internalTracer = new DefaultExecutionTracer(typeMetadata);
@@ -119,10 +157,25 @@ public final class ReactiveWorkflowOrchestrator {
                 .then(Mono.fromCallable(composite::build));
     }
 
+    /**
+     * Executes a workflow plan with default metadata.
+     * 
+     * @param plan the execution plan
+     * @param initialInput the initial input
+     * @return a Mono that completes with the final execution context
+     */
     public Mono<ReactiveExecutionContext> execute(WorkflowExecutionPlan plan, Object initialInput) {
         return execute("UNKNOWN", plan, initialInput);
     }
 
+    /**
+     * Executes a workflow plan with a timeout.
+     * 
+     * @param plan the execution plan
+     * @param initialInput the initial input
+     * @param timeout the execution timeout
+     * @return a Mono that completes with the final execution context or errors with a timeout
+     */
     public Mono<ReactiveExecutionContext> execute(WorkflowExecutionPlan plan, Object initialInput,
             java.time.Duration timeout) {
         return execute(plan, initialInput).timeout(timeout);
@@ -350,9 +403,14 @@ public final class ReactiveWorkflowOrchestrator {
         );
     }
 
+    /** Internal event for coordination. */
     protected sealed interface Event permits TaskDone {}
+    /** Event for task completion. */
     private record TaskDone(TaskNode node, TaskResult result) implements Event {}
 
+    /**
+     * Builder for {@link ReactiveWorkflowOrchestrator}.
+     */
     public static final class Builder {
         private Scheduler taskScheduler = Schedulers.boundedElastic();
         private Scheduler stateScheduler = Schedulers.newSingle("wf-state");
@@ -363,41 +421,88 @@ public final class ReactiveWorkflowOrchestrator {
 
         private Builder() {}
 
+        /**
+         * Sets the scheduler used for task execution.
+         * 
+         * @param taskScheduler the task scheduler
+         * @return this builder
+         */
         public Builder taskScheduler(Scheduler taskScheduler) {
             this.taskScheduler = Objects.requireNonNull(taskScheduler, "taskScheduler");
             return this;
         }
 
+        /**
+         * Sets the scheduler used for state management.
+         * 
+         * @param stateScheduler the state scheduler
+         * @return this builder
+         */
         public Builder stateScheduler(Scheduler stateScheduler) {
             this.stateScheduler = Objects.requireNonNull(stateScheduler, "stateScheduler");
             return this;
         }
 
+        /**
+         * Sets the workflow monitor.
+         * 
+         * @param monitor the monitor
+         * @return this builder
+         */
         public Builder monitor(WorkflowMonitor monitor) {
             this.monitor = Objects.requireNonNull(monitor, "monitor");
             return this;
         }
 
+        /**
+         * Sets the task input resolver.
+         * 
+         * @param inputResolver the input resolver
+         * @return this builder
+         */
         public Builder inputResolver(TaskInputResolver inputResolver) {
             this.inputResolver = Objects.requireNonNull(inputResolver, "inputResolver");
             return this;
         }
 
+        /**
+         * Sets the execution tracer factory.
+         * 
+         * @param tracerFactory the tracer factory
+         * @return this builder
+         */
         public Builder tracerFactory(ExecutionTracerFactory tracerFactory) {
             this.tracerFactory = Objects.requireNonNull(tracerFactory, "tracerFactory");
             return this;
         }
 
+        /**
+         * Sets the execution limits.
+         * 
+         * @param limits the limits
+         * @return this builder
+         */
         public Builder limits(ExecutionLimits limits) {
             this.limits = Objects.requireNonNull(limits, "limits");
             return this;
         }
 
+        /**
+         * Sets the maximum concurrency for task execution.
+         * 
+         * @param maxConcurrency the maximum concurrency
+         * @return this builder
+         */
         public Builder maxConcurrency(int maxConcurrency) {
             this.limits = new ExecutionLimits(maxConcurrency, 1000, BackpressureStrategy.BLOCK);
             return this;
         }
 
+        /**
+         * Builds the {@link ReactiveWorkflowOrchestrator} instance.
+         * 
+         * @return the orchestrator
+         */
         public ReactiveWorkflowOrchestrator build() {
             return new ReactiveWorkflowOrchestrator(this);
         }

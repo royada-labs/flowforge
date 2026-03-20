@@ -12,6 +12,12 @@ import java.util.Objects;
  * @param to   the destination taskId
  */
 public record VisualEdge(String from, String to) {
+    /**
+     * Creates a new visual edge and validates its fields.
+     * 
+     * @param from the source taskId
+     * @param to the destination taskId
+     */
     public VisualEdge {
         Objects.requireNonNull(from, "from");
         Objects.requireNonNull(to, "to");

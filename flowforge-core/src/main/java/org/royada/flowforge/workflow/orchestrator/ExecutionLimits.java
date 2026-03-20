@@ -20,6 +20,8 @@ public record ExecutionLimits(
     BackpressureStrategy backpressureStrategy
 ) {
     /**
+     * Returns the default execution limits.
+     * 
      * @return default execution limits
      */
     public static ExecutionLimits defaultLimits() {

@@ -31,6 +31,12 @@ public final class OpenTelemetryExecutionTracer implements ExecutionTracer {
 
     private static final int MAX_ATTRIBUTE_LENGTH = 128;
 
+    /**
+     * Creates a new OpenTelemetry execution tracer.
+     * 
+     * @param tracer the OpenTelemetry tracer instance
+     * @param typeInfo the type information for the workflow tasks
+     */
     public OpenTelemetryExecutionTracer(Tracer tracer, Map<TaskId, TypeMetadata> typeInfo) {
         this.tracer = tracer;
         this.typeInfo = Map.copyOf(typeInfo != null ? typeInfo : Collections.emptyMap());
