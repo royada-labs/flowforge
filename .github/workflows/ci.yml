@@ -45,7 +45,7 @@ jobs:
         if: github.ref == 'refs/heads/develop-v2'
         run: |
           curl -X POST "https://central.sonatype.com/api/v1/publisher/upload" \
-            -u "${{ secrets.MAVEN_CENTRAL_USERNAME }}:${{ secrets.MAVEN_CENTRAL_PASSWORD }}" \
+            -H "Authorization: Bearer ${{ secrets.MAVEN_CENTRAL_TOKEN }}" \
             -F "bundle=@bundle.zip"
 
       # -----------------------------
