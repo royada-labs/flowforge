@@ -128,11 +128,17 @@ subprojects {
     }
 
     // Signing requerido por Central
-    signing {
-        useInMemoryPgpKeys(
-                findProperty("signing.key"),
-                findProperty("signing.password")
-        )
+   signing {
+    def isRelease = !project.version.toString().endsWith("SNAPSHOT")
+
+    required { isRelease }
+
+    if (isRelease) {
+        def signingKey = findProperty("signingKey") ?: System.getenv("SIGNING_KEY")
+        def signingPassword = findProperty("signingPassword") ?: System.getenv("SIGNING_PASSWORD")
+
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign publishing.publications.mavenJava
     }
+}
 }
