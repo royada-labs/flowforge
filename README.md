@@ -190,6 +190,8 @@ Execution Model
 
 Advanced Usage
 
+Troubleshooting Guide (`docs/troubleshooting.md`)
+
 💡 Final Thought
 
 Most workflow engines try to hide complexity.

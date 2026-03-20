@@ -42,6 +42,8 @@ FlowForge provides several layers of protection:
 *   **Execution Policies**: You can attach `RetryPolicy` or `TimeoutPolicy` to tasks to handle transient failures or slow operations.
 *   **Client Timeouts**: You can also apply a client-side timeout via `FlowForgeClient.execute(workflowId, input, timeout)` to cancel slow runs.
 
+For practical diagnosis steps and remediation patterns, see the [Troubleshooting Guide](../troubleshooting.md).
+
 ## 5. Observability
 
 FlowForge is "observability-first". 

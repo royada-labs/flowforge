@@ -112,3 +112,63 @@ TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
 ```
 
 This ensures retries/timeout are applied to the task at runtime.
+
+---
+
+## 5. Retry Exhausted Example
+
+**Context**: A downstream dependency remains unavailable beyond the retry budget.
+
+```java
+TaskDescriptor descriptor = new TaskDescriptor(task, RetryPolicy.fixed(3));
+```
+
+**Observed behavior**:
+- The task runs once and then retries up to 3 additional attempts.
+- If all attempts fail, the final error is propagated and the branch fails.
+- Dependent tasks are not executed unless modeled as optional/fallback paths.
+
+---
+
+## 6. Timeout Example
+
+**Context**: A task calls a slow API and must fail fast after 2 seconds.
+
+```java
+TaskDescriptor descriptor = new TaskDescriptor(task, TimeoutPolicy.of(Duration.ofSeconds(2)));
+```
+
+**Observed behavior**:
+- If the task takes longer than 2 seconds, it fails with timeout.
+- This is task-level timeout and is independent from client-level execution timeout.
+- Use `client.execute(..., timeout)` when you need a global cap for the entire workflow run.
+
+---
+
+## 7. Optional Tasks Example
+
+**Context**: A best-effort notification should not block order finalization.
+
+```java
+@TaskHandler
+class CheckoutTasks {
+    @FlowTask(id = "chargeCard")
+    Mono<String> chargeCard(Void in) { ... }
+
+    @FlowTask(id = "sendReceipt", optional = true)
+    Mono<Void> sendReceipt(String paymentId) { ... }
+
+    @FlowTask(id = "finalizeOrder")
+    Mono<String> finalizeOrder(String paymentId) { ... }
+}
+
+dsl.flow(CheckoutTasks::chargeCard)
+   .then(CheckoutTasks::sendReceipt)
+   .then(CheckoutTasks::finalizeOrder)
+   .build();
+```
+
+**Observed behavior**:
+- If `sendReceipt` fails, it can be skipped because it is optional.
+- Critical tasks continue according to dependency constraints.
+- Use optional tasks for non-critical side effects such as notifications/analytics.
