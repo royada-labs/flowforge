@@ -8,6 +8,6 @@ javaPlatform {
 dependencies {
     constraints {
         // Fijamos la versión del core para que coincida con la del BOM
-        api "io.flowforge:flowforge-core:${project.version}"
+        api "org.royada.flowforge:flowforge-core:${project.version}"
     }
 }

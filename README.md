@@ -139,10 +139,10 @@ Keep tasks pure by default.
 
 📦 Installation
 Gradle
-implementation("io.flowforge:flowforge-spring-boot-starter:1.1.0")
+implementation("org.royada.flowforge:flowforge-spring-boot-starter:1.1.0")
 Maven
 <dependency>
-  <groupId>io.flowforge</groupId>
+  <groupId>org.royada.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
   <version>1.1.0</version>
 </dependency>
