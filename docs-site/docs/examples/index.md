@@ -106,3 +106,11 @@ dsl.flow(CheckoutTasks::chargeCard)
 - If `sendReceipt` fails, it can be skipped because it is optional.
 - Critical tasks continue according to dependency constraints.
 - Use optional tasks for non-critical side effects such as notifications/analytics.
+ 
++ ---
++ 
++ ## 🚀 Full Sample Application
++ 
++ For a complete, runnable application demonstrating all these features together, check out our official **Basic Demo**:
++ 
++ [**FlowForge Samples on GitHub**](https://github.com/royada-labs/flowforge-samples/tree/main/spring-boot/basic-demo)
