@@ -30,6 +30,16 @@ const sidebars = {
         'tutorial/level5-advanced',
       ],
     },
+    {
+      type: 'category',
+      label: 'Advanced Guides',
+      items: [
+        'guides/observability',
+        'guides/testing',
+        'guides/configuration',
+        'guides/visualization',
+      ],
+    },
   ],
 };
 

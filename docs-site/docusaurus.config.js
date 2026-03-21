@@ -7,20 +7,17 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://tu-usuario.gitlab.io',
-  // Set the /<projectName>/ for GitLab Pages
+  url: 'https://rrguez.github.io',
+  // Set the /<projectName>/ for GitHub Pages
   baseUrl: '/flowforge/',
 
-  // GitLab pages config
-  organizationName: 'tu-usuario', // Usually your GitLab user/group name.
-  projectName: 'flowforge', // Usually your repo name.
+  // GitHub pages config
+  organizationName: 'rrguez', // GitHub user/group name.
+  projectName: 'flowforge', // repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
 
-  // Even if you don't use internalization, you can use this field to set useful
-  // metadata like html lang. For example, if your site is Chinese, you may want
-  // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -32,12 +29,10 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          path: 'docs', // Ahora es la carpeta real, vinculada a la raíz por symlink inverso
+          path: 'docs',
           sidebarPath: './sidebars.js',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://gitlab.com/tu-usuario/flowforge/-/tree/main/',
+            'https://github.com/rrguez/flowforge/tree/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -71,8 +66,8 @@ const config = {
             label: 'Tutorial',
           },
           {
-            href: 'https://gitlab.com/tu-usuario/flowforge',
-            label: 'GitLab',
+            href: 'https://github.com/rrguez/flowforge',
+            label: 'GitHub',
             position: 'right',
           },
         ],
@@ -97,8 +92,8 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'GitLab',
-                href: 'https://gitlab.com/tu-usuario/flowforge',
+                label: 'GitHub',
+                href: 'https://github.com/rrguez/flowforge',
               },
             ],
           },
