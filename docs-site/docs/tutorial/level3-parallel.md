@@ -79,6 +79,14 @@ public class OrderProcessWorkflow implements WorkflowDefinition {
 }
 ```
 
+> [!TIP]
+> **💡 Deep Dive: `fork()` vs `parallel()`**
+> FlowForge provides two ways to run tasks concurrently:
+> *   **`fork()`**: Use this when your branches are **complex**. Each branch is a `FlowBranch` where you can chain multiple tasks (`branch -> branch.then(A).then(B)`).
+> *   **`parallel()`**: This is a **shorthand** for when each branch is just **one single task**. It's much more concise for simple scenarios: `.parallel(NotificationTasks::notifyResult, AuditTasks::archiveAuditLog)`.
+>
+> Internally, `parallel()` is just an alias that wraps each task in a `fork()` branch for you.
+
 ### Step 3: Update the Service
 When your plan ends with a `.join()`, the return type of the service method must match the output of the task passed to the join method. In this case, `finalNotification` returns `Void`.
 
