@@ -5,15 +5,15 @@ Thank you for your interest in contributing to FlowForge! This document provides
 ## Quick Links
 
 - [Code of Conduct](./CODE_OF_CONDUCT.md)
-- [Issue Tracker](https://github.com/flowforge/flowforge/issues)
-- [Discussions](https://github.com/flowforge/flowforge/discussions)
+- [Issue Tracker](https://github.com/royada-labs/flowforge/issues)
+- [Discussions](https://github.com/royada-labs/flowforge/discussions)
 
 ## How Can I Contribute?
 
 ### Reporting Bugs
 
 Before submitting a bug report:
-1. Check the [existing issues](https://github.com/flowforge/flowforge/issues)
+1. Check the [existing issues](https://github.com/royada-labs/flowforge/issues)
 2. Upgrade to the latest version - the bug might already be fixed
 3. Gather relevant information (Java version, Spring Boot version, workflow configuration)
 
@@ -151,7 +151,7 @@ void handle_concurrent_access_gracefully() { }
 ## Questions?
 
 Feel free to:
-- Open a [discussion](https://github.com/flowforge/flowforge/discussions)
+- Open a [discussion](https://github.com/royada-labs/flowforge/discussions)
 - Ask in our community channels
 - Email the maintainers
 

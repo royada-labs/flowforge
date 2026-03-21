@@ -7,12 +7,12 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://rrguez.github.io',
+  url: 'https://royada-labs.github.io',
   // Set the /<projectName>/ for GitHub Pages
   baseUrl: '/flowforge/',
 
   // GitHub pages config
-  organizationName: 'rrguez', // GitHub user/group name.
+  organizationName: 'royada-labs', // GitHub user/group name.
   projectName: 'flowforge', // repo name.
 
   onBrokenLinks: 'throw',
@@ -32,7 +32,7 @@ const config = {
           path: 'docs',
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/rrguez/flowforge/tree/main/',
+            'https://github.com/royada-labs/flowforge/tree/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -66,7 +66,7 @@ const config = {
             label: 'Tutorial',
           },
           {
-            href: 'https://github.com/rrguez/flowforge',
+            href: 'https://github.com/royada-labs/flowforge',
             label: 'GitHub',
             position: 'right',
           },
@@ -93,7 +93,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/rrguez/flowforge',
+                href: 'https://github.com/royada-labs/flowforge',
               },
             ],
           },

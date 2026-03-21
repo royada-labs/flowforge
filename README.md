@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rrguez/flowforge/actions"><img src="https://github.com/rrguez/flowforge/workflows/CI/badge.svg" alt="Build Status"></a>
-  <a href="https://github.com/rrguez/flowforge/blob/main/LICENSE"><img src="https://img.shields.io/github/license/rrguez/flowforge" alt="License"></a>
+  <a href="https://github.com/royada-labs/flowforge/actions"><img src="https://github.com/royada-labs/flowforge/workflows/CI/badge.svg" alt="Build Status"></a>
+  <a href="https://github.com/royada-labs/flowforge/blob/main/LICENSE"><img src="https://img.shields.io/github/license/royada-labs/flowforge" alt="License"></a>
   <a href="https://central.sonatype.com/artifact/org.royada.flowforge/flowforge-spring-boot-starter"><img src="https://img.shields.io/maven-central/v/org.royada.flowforge/flowforge-spring-boot-starter" alt="Maven Central"></a>
 </p>
 
@@ -19,7 +19,7 @@
 ## 📖 Complete Documentation & Tutorial
 Everything you need to know, from the basic setup to advanced parallel orchestration, is available in our official site:
 
-### 🔗 [https://rrguez.github.io/flowforge/](https://rrguez.github.io/flowforge/)
+### 🔗 [https://royada-labs.github.io/flowforge/](https://royada-labs.github.io/flowforge/)
 
 ---
 
@@ -99,7 +99,7 @@ implementation("org.royada.flowforge:flowforge-spring-boot-starter:1.1.0")
 ## ⭐ Support the Project
 If you find FlowForge useful, consider giving it a ⭐ on GitHub! 
 
-[Learn more at the official docs](https://rrguez.github.io/flowforge/)
+[Learn more at the official docs](https://royada-labs.github.io/flowforge/)
 
 ---
 📄 **License**: Apache 2.0
