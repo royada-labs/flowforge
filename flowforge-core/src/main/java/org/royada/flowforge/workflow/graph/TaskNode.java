@@ -122,8 +122,9 @@ public final class TaskNode {
             Object input,
             ReactiveExecutionContext context
     ) {
-        return execute(input, context) // <- aquí debe estar la policy aplicada
+        return execute(input, context)
                 .map(result -> (TaskResult) new TaskResult.Success(result))
+                .defaultIfEmpty(new TaskResult.Success(null))
                 .onErrorResume(error ->
                         Mono.just(
                                 descriptor.optional()

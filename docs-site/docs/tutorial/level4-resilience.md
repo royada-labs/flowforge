@@ -37,4 +37,11 @@ return dsl.flow(tasks::processPayment)
 ```
 
 
+> [!TIP]
+> **Check the Code**: You can see the full source code for this level in our Sample Repository using the tag:
+> ```bash
+> git checkout level-4
+> ```
+
+
 **[Next Level: Mastering the Flow (Advanced Features) >>](./level5-advanced.md)**

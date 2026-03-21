@@ -33,9 +33,10 @@ class MixedWorkflowIntegrationTest {
     void should_register_and_execute_bean_and_class_based_workflows() {
         runner.run(ctx -> {
             WorkflowRegistry registry = ctx.getBean(WorkflowRegistry.class);
-            assertEquals(2, registry.all().size());
+            assertEquals(3, registry.all().size());
             assertTrue(registry.contains("legacy-flow"));
             assertTrue(registry.contains("new-flow"));
+            assertTrue(registry.contains("void-flow"));
 
             FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
 
@@ -46,6 +47,9 @@ class MixedWorkflowIntegrationTest {
             StepVerifier.create(client.executeResult("new-flow", null))
                     .expectNext("new-11")
                     .verifyComplete();
+
+            StepVerifier.create(client.executeResult("void-flow", null))
+                    .verifyComplete(); // Should complete without producing Next signals
         });
     }
 
@@ -76,8 +80,27 @@ class MixedWorkflowIntegrationTest {
         }
 
         @Bean
+        @FlowWorkflow(id = "void-flow")
+        WorkflowExecutionPlan voidFlow(FlowDsl dsl) {
+            return dsl.startTyped(TaskDefinition.of("void-task", Void.class, Void.class))
+                    .build();
+        }
+
+        @Bean
+        VoidTask voidTask() {
+            return new VoidTask();
+        }
+        @Bean
         NewFlow newFlow() {
             return new NewFlow();
+        }
+    }
+
+    @FlowTask(id = "void-task")
+    static class VoidTask implements FlowTaskHandler<Void, Void> {
+        @Override
+        public Mono<Void> execute(Void input, ReactiveExecutionContext ctx) {
+            return Mono.empty();
         }
     }
 

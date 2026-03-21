@@ -21,15 +21,14 @@ import reactor.test.StepVerifier;
 class TaskResultContractTest {
 
   @Test
-  void should_convert_empty_task_result_to_failure_and_finish() {
-    // Task returns Mono.empty()
+  void should_convert_empty_task_result_to_success_and_continue() {
+    // Task returns Mono.empty() - now supported as Success(null)
     TaskId A = TaskId.of("A");
 
     Task<?, ?> taskA = new BasicTask<Object, Object>(A, Object.class, Object.class) {
-
       @Override
       protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
-        return Mono.empty(); // Violates contract
+        return Mono.empty(); // Valid for side-effect/void tasks
       }
     };
 
@@ -37,12 +36,10 @@ class TaskResultContractTest {
     ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectErrorSatisfies(err -> {
-          // Task A should have failed (no output in context)
-          // We can't easily check the context here unless we capture it, 
-          // but the error itself is proof of failure.
+        .assertNext(ctx -> {
+            // Task A successfully finished (with null result)
         })
-        .verify();
+        .verifyComplete();
   }
 
   @Test
@@ -67,27 +64,24 @@ class TaskResultContractTest {
   }
 
   @Test
-  void should_not_execute_dependents_if_required_task_returns_empty() {
-    // A (required, returns empty) -> B
+  void should_execute_dependents_even_if_required_task_returns_empty() {
+    // A (required, returns empty) -> B (should execute anyway)
     TaskId A = TaskId.of("A");
     TaskId B = TaskId.of("B");
     AtomicInteger bCounter = new AtomicInteger(0);
 
     List<Task<?, ?>> tasks = List.of(
         new BasicTask<Object, Object>(A, Object.class, Object.class) {
-
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             return Mono.empty();
           }
         },
         new BasicTask<Object, Object>(B, Object.class, Object.class) {
-
           @Override
           public Set<TaskId> dependencies() {
             return Set.of(A);
           }
-
           @Override
           protected Mono<Object> doExecute(Object input, ReactiveExecutionContext context) {
             bCounter.incrementAndGet();
@@ -99,10 +93,12 @@ class TaskResultContractTest {
     ReactiveWorkflowOrchestrator orchestrator = ReactiveWorkflowOrchestrator.builder().build();
 
     StepVerifier.create(orchestrator.execute(plan, null))
-        .expectError()
-        .verify();
+        .assertNext(ctx -> {
+            assertEquals("B", ctx.get(TaskDefinition.of(B, Object.class, String.class).outputKey()).orElse(null));
+        })
+        .verifyComplete();
 
-    assertEquals(0, bCounter.get(), "B should not execute when required A returns empty");
+    assertEquals(1, bCounter.get(), "B should execute when required A returns empty (success)");
   }
 
   @Test

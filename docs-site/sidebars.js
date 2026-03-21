@@ -6,6 +6,7 @@ const sidebars = {
     'project-structure',
     'core-concepts/index',
     'api-reference/index',
+    'api-reference/annotations',
     'observability/index',
     'examples/index',
     'troubleshooting',

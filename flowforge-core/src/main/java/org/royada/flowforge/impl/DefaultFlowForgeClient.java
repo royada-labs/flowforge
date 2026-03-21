@@ -70,8 +70,8 @@ public final class DefaultFlowForgeClient implements FlowForgeClient {
         validateInitialInput(workflowId, plan, input);
 
         return orchestrator.execute(workflowId, plan, input)
-                .map(ctx -> org.royada.flowforge.workflow.result.WorkflowResultSelector
-                        .select(plan, ctx))
+                .flatMap(ctx -> Mono.justOrEmpty(org.royada.flowforge.workflow.result.WorkflowResultSelector
+                        .select(plan, ctx)))
                 .onErrorMap(e -> new WorkflowExecutionException(workflowId, e));
     }
 

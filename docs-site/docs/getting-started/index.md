@@ -31,6 +31,34 @@ dependencies {
 ```
 
 
+
+## 2. Define Task and Flow
+
+Create your tasks and orchestration using annotations. FlowForge will handle the registration during Spring's startup scanning.
+
+```java
+@Component
+@TaskHandler
+public class MyTasks {
+    @FlowTask(id = "calculate")
+    public Mono<Integer> calculate(Integer input) {
+        return Mono.just(input * 2);
+    }
+}
+
+@Component
+@FlowWorkflow(id = "order-process")
+public class OrderProcessWorkflow implements WorkflowDefinition {
+    @Override
+    public WorkflowExecutionPlan define(FlowDsl dsl) {
+        // High-level orchestration for the E-Commerce pipeline
+        return dsl.flow(MyTasks::calculate)
+                  .build();
+    }
+}
+```
+
+
 ## 3. Executing the Workflow
 
 Inject `FlowForgeClient` and trigger the execution.
@@ -45,7 +73,7 @@ public class MyService {
     }
 
     public Mono<Integer> process() {
-        return client.executeResult("first-flow", null)
+        return client.executeResult("order-process", null)
                      .cast(Integer.class);
     }
 }
@@ -54,7 +82,7 @@ public class MyService {
 You can also execute with a client-side timeout:
 
 ```java
-client.execute("first-flow", null, Duration.ofMillis(500));
+client.execute("order-process", null, Duration.ofMillis(500));
 ```
 
 Input contract:

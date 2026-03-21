@@ -17,8 +17,10 @@ In FlowForge, tasks are simple methods annotated with `@FlowTask`. No complex in
 ```java
 import org.royada.flowforge.annotation.TaskHandler;
 import org.royada.flowforge.annotation.FlowTask;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+@Component
 @TaskHandler("order-tasks")
 public class OrderTasks {
 
@@ -36,38 +38,36 @@ public class OrderTasks {
 
 
 ## 🔗 Step 2: Orchestrate the Flow
-Once the tasks are ready, use the `FlowDsl` to create your workflow blueprint. This is where you connect the tasks into a process.
+Once the tasks are ready, define your workflow using the **`@FlowWorkflow`** annotation. This allows FlowForge to automatically discover and register your blueprint.
 
 ```java
-import org.royada.flowforge.api.dsl.FlowDsl;
-import org.royada.flowforge.api.model.FlowDefinition;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.royada.flowforge.spring.annotations.FlowWorkflow;
+import org.royada.flowforge.spring.workflow.WorkflowDefinition;
+import org.royada.flowforge.spring.dsl.FlowDsl;
+import org.royada.flowforge.workflow.plan.WorkflowExecutionPlan;
+import org.springframework.stereotype.Component;
 
-@Configuration
-public class MyWorkflows {
+@Component
+@FlowWorkflow(id = "order-process")
+public class OrderProcessWorkflow implements WorkflowDefinition {
 
-    @Bean
-    public FlowDefinition getOrderFlow(FlowDsl dsl) {
-        return dsl.create("get-order-flow")
-                  .task("fetchOrder") // Connect to our task by its ID
+    @Override
+    public WorkflowExecutionPlan define(FlowDsl dsl) {
+        // High-level orchestration for the E-Commerce pipeline
+        return dsl.flow(OrderTasks::fetchOrder)
                   .build();
     }
 }
 ```
 
 > [!TIP]
-> **Task IDs**: The name you pass to `.task("id")` MUST match the ID defined in the `@FlowTask` annotation in Step 1.
+> **Component Scanning**: By using `@Component` and `@FlowWorkflow`, you don't need to manually register Beans. FlowForge will find your workflow at startup.
 
 
 ## ▶️ Step 3: Run the Workflow
 Finally, use the `FlowForgeClient` to trigger the execution from any service in your app.
 
 ```java
-import org.springframework.stereotype.Service;
-import org.royada.flowforge.api.FlowForgeClient;
-import reactor.core.publisher.Mono;
-
 @Service
 public class OrderService {
 
@@ -78,8 +78,8 @@ public class OrderService {
     }
 
     public Mono<Order> getOrderDetails(String orderId) {
-        // Execute the flow by ID, passing the required initial input
-        return client.executeResult("get-order-flow", orderId)
+        // Execute the "order-process" flow
+        return client.executeResult("order-process", orderId)
                      .cast(Order.class);
     }
 }
@@ -89,6 +89,13 @@ public class OrderService {
 > **Casting Results**: When using `executeResult`, you should always cast the result to the output type of the **last task** executed in your workflow plan. In this case, `fetchOrder` returns `Order`, so we cast to `Order.class`.
 >
 > If your final task returns `Void` (`Mono<Void>`), the resulting `Mono<Object>` will complete by emitting `null`. In that case, you can cast to `Void.class` or simply use `.then()` to trigger subsequent logic.
+
+
+> [!TIP]
+> **Check the Code**: You can see the full source code for this level in our Sample Repository using the tag:
+> ```bash
+> git checkout level-1
+> ```
 
 
 **[Next Level: Connecting the Dots (Sequential Flows) >>](./level2-sequential.md)**
