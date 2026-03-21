@@ -60,12 +60,12 @@ subprojects {
                 pom {
                     name = project.name
                     description = 'Type-safe, reactive workflow orchestration for Java'
-                    url = 'https://github.com/flowforge/flowforge'
+                    url = 'https://github.com/royada-labs/flowforge'
                     inceptionYear = '2024'
                     scm {
-                        url = 'https://github.com/flowforge/flowforge'
-                        connection = 'scm:git:https://github.com/flowforge/flowforge.git'
-                        developerConnection = 'scm:git:https://github.com/flowforge/flowforge.git'
+                        url = 'https://github.com/royada-labs/flowforge'
+                        connection = 'scm:git:https://github.com/royada-labs/flowforge.git'
+                        developerConnection = 'scm:git:https://github.com/royada-labs/flowforge.git'
                     }
                     licenses {
                         license {

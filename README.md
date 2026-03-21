@@ -1,207 +1,105 @@
-🚀 FlowForge
+# 🚀 FlowForge
 
-Forge reactive workflows with precision.
+<p align="center">
+  <img src="docs-site/static/img/flowforge-logo.png" alt="FlowForge Logo" width="200"/>
+</p>
 
-Build type-safe, reactive workflows in Java — without boilerplate, without runtime surprises.
+<p align="center">
+  <strong>The Code-First Reactive Workflow Engine for Java & Spring Boot</strong>
+</p>
 
-⚡ The Problem
+<p align="center">
+  <a href="https://github.com/royada-labs/flowforge/actions"><img src="https://github.com/royada-labs/flowforge/workflows/CI/badge.svg" alt="Build Status"></a>
+  <a href="https://github.com/royada-labs/flowforge/blob/main/LICENSE"><img src="https://img.shields.io/github/license/royada-labs/flowforge" alt="License"></a>
+  <a href="https://central.sonatype.com/artifact/org.royada.flowforge/flowforge-spring-boot-starter"><img src="https://img.shields.io/maven-central/v/org.royada.flowforge/flowforge-spring-boot-starter" alt="Maven Central"></a>
+</p>
 
-Most workflow engines force you into:
+---
 
-❌ Map<String, Object> everywhere
+## 📖 Complete Documentation & Tutorial
+Everything you need to know, from the basic setup to advanced parallel orchestration, is available in our official site:
 
-❌ Runtime casting (ClassCastException)
+### 🔗 [https://royada-labs.github.io/flowforge/](https://royada-labs.github.io/flowforge/)
 
-❌ Hidden coupling between steps
+---
 
-❌ Reflection-heavy execution
+## 🔥 Why FlowForge?
 
-❌ Debugging nightmares
+Most workflow engines force you into complex XML files or fragile `Map<String, Object>` contexts. **FlowForge flips the model.**
 
-Even “modern” solutions still leak complexity.
+*   **🛡️ Type-Safe by Default**: If types don't match, your workflow fails at **startup**, not at 3 AM in production.
+*   **⚡ Reactive-First**: Built on Project Reactor. Non-blocking, backpressure-aware, and highly concurrent.
+*   **🔗 Zero Glue Code**: The output of one task automatically becomes the input of the next.
+*   **🧠 High Performance**: Uses pre-resolved `MethodHandles` instead of heavy runtime reflection.
 
-✅ The FlowForge Approach
+---
 
-FlowForge flips the model:
+## 🛠️ Quick Start
 
-Workflows are just type-safe function composition.
-
-dsl.flow(CustomerTasks::getUser)
-   .then(CustomerTasks::getOrders)
-   .then(CustomerTasks::calculateDiscount);
-
-That’s it.
-
-🔥 Why This Is Different
-1. 🛡️ Type-Safe DSL
-Mono<User> getUser(Void in)
-Mono<OrderSummary> getOrders(User in)
-
-If types don't match → your workflow fails at startup.
-
-Catch type errors early. No runtime surprises.
-
-2. 🔗 Automatic Data Propagation
-
-Output of one task becomes input of the next.
-
-No mapping. No glue code. No context passing.
-
-.then(CustomerTasks::getOrders) // receives User automatically
-3. ⚡ Reactive by Design
-
-Built on Project Reactor:
-
-Non-blocking
-
-Backpressure-aware
-
-High concurrency
-
-4. 💥 Fail-Fast at Startup
-
-Duplicate tasks → ❌ startup fails
-
-Ambiguous mappings → ❌ startup fails
-
-Invalid DAG → ❌ startup fails
-
-If your app starts, your workflow is valid.
-
-5. 🧠 Pre-Resolved Method Handles
-
-Resolution happens once at startup using MethodHandles
-
-Task execution uses precompiled plans — no reflection during execution
-
-👉 Predictable, fast, debuggable.
-
-🧩 Define Tasks (Annotation-First)
+### 1. Define your Tasks
+```java
+@Component
 @TaskHandler
-class CustomerTasks {
-
-  @FlowTask(id = "getUser")
-  Mono<User> getUser(Void in) {
-      return Mono.just(...);
-  }
-
-  @FlowTask(id = "getOrders")
-  Mono<OrderSummary> getOrders(User user) {
-      return Mono.just(...);
-  }
-
-  @FlowTask(id = "discount")
-  Mono<Discount> calculateDiscount(OrderSummary summary) {
-      return Mono.just(...);
-  }
+public class OrderTasks {
+    @FlowTask(id = "validate")
+    public Mono<Boolean> validate(Order order) {
+        return Mono.just(order.getAmount() > 0);
+    }
 }
+```
 
-No interfaces. No boilerplate. Just methods.
-
-🏗️ Define a Workflow
+### 2. Compose the Workflow
+```java
 @Bean
-@FlowWorkflow(id = "customer-flow")
-WorkflowExecutionPlan customerFlow(FlowDsl dsl) {
-    return dsl.flow(CustomerTasks::getUser)
-              .then(CustomerTasks::getOrders)
-              .then(CustomerTasks::calculateDiscount)
+@FlowWorkflow(id = "order-flow")
+public WorkflowExecutionPlan plan(FlowDsl dsl) {
+    return dsl.flow(OrderTasks::fetch)
+              .then(OrderTasks::validate)
               .build();
 }
-▶️ Execute
-client.executeResult("customer-flow", null);
+```
 
-Or get full execution context:
+### 3. Execute!
+```java
+client.executeResult("order-flow", orderRequest);
+```
 
-client.execute("customer-flow", null);
-🧠 How It Works (Simplified)
+---
 
-@TaskHandler classes are scanned at startup
+## 📊 Visual Inspection
+FlowForge includes built-in tools to export your designs to **Mermaid** or **JSON**:
 
-Each @FlowTask is registered using full JVM signature
+```mermaid
+graph TD
+    fetch[Fetch Order] --> validate[Validate Amount]
+    validate --> audit[Audit Log]
+    validate --> notify[Send Notification]
+```
 
-DSL builds a typed DAG (execution plan)
+---
 
-Runtime executes using precompiled MethodHandles
+## 📦 Installation
 
-🧬 Advanced Composition
-Parallel
-dsl.flow(A::task)
-   .parallel(B::task, C::task)
-Fork / Join
-dsl.flow(A::task)
-   .fork(B::task, C::task)
-   .join(D::task)
-🧰 Optional Context (Only When Needed)
-Mono<Discount> discount(OrderSummary in, ReactiveExecutionContext ctx)
-
-Use context only when necessary.
-Keep tasks pure by default.
-
-📦 Installation
-Gradle
+### Gradle
+```gradle
 implementation("org.royada.flowforge:flowforge-spring-boot-starter:1.1.0")
-Maven
+```
+
+### Maven
+```xml
 <dependency>
   <groupId>org.royada.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
   <version>1.1.0</version>
 </dependency>
-🧭 Philosophy
+```
 
-FlowForge is built on a few strict principles:
+---
 
-Types over strings
+## ⭐ Support the Project
+If you find FlowForge useful, consider giving it a ⭐ on GitHub! 
 
-Build-time over runtime
+[Learn more at the official docs](https://royada-labs.github.io/flowforge/)
 
-Explicit over magic
-
-Simplicity over flexibility
-
-🆚 When to Use FlowForge
-
-Use it when:
-
-You orchestrate multiple async steps
-
-You care about correctness
-
-You want predictable behavior
-
-You are already using Reactor / WebFlux
-
-🚫 When NOT to Use It
-
-Long-running workflows (days/weeks)
-
-BPMN / business-user-driven flows
-
-Human-in-the-loop processes
-
-📚 Documentation
-
-Getting Started
-
-Core Concepts
-
-DSL Reference
-
-Execution Model
-
-Advanced Usage
-
-Troubleshooting Guide (`docs/troubleshooting.md`)
-
-💡 Final Thought
-
-Most workflow engines try to hide complexity.
-
-FlowForge removes it.
-
-⭐ Contribute
-
-PRs, ideas, and feedback are welcome.
-
-📄 License
-
-Apache 2.0
+---
+📄 **License**: Apache 2.0
