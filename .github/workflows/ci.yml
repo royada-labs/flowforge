@@ -1,0 +1,50 @@
+name: Publish to Maven Central
+
+on:
+  push:
+    branches:
+      - develop-v2
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      # 🔹 Build + publish to local Maven (genera artifacts correctos)
+      - name: Build and publish locally
+        run: ./gradlew clean publishToMavenLocal --no-daemon
+
+      # 🔹 Crear bundle desde publications (NO desde .m2)
+      - name: Create Maven Central bundle
+        run: |
+          mkdir -p bundle
+
+          # Copiar todos los publications de todos los módulos
+          find . -type d -path "*/build/publications/mavenJava" | while read dir; do
+            cp -r "$dir"/* bundle/
+          done
+
+          cd bundle
+          zip -r ../bundle.zip .
+          cd ..
+
+      # 🔹 Upload a Maven Central (nuevo API)
+      - name: Upload bundle to Maven Central
+        run: |
+          curl -X POST "https://central.sonatype.com/api/v1/publisher/upload" \
+            -H "Authorization: Bearer $MAVEN_CENTRAL_TOKEN" \
+            -F "bundle=@bundle.zip"
+        env:
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}

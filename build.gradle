@@ -1,9 +1,10 @@
 plugins {
-    id 'base'
+    id "maven-publish"
+    id "signing"
 }
 
 allprojects {
-    group = project.group
+    group = "org.royada.flowforge"
     version = project.version
 
     repositories {
@@ -12,17 +13,142 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
 
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(
-                    project.findProperty('javaVersion') as int
-            )
+    if (project.name == "flowforge-bom") {
+        apply plugin: 'java-platform'
+    } else {
+        apply plugin: 'java'
+        if (project.name != "flowforge-stress-harness") {
+            apply plugin: 'java-library'
         }
     }
 
-    tasks.withType(Test).configureEach {
-        useJUnitPlatform()
+    if (project.name == "flowforge-stress-harness") return
+
+    if (project.name != "flowforge-bom") {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(project.findProperty('javaVersion') as int ?: 17)
+            }
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+
+    dependencies {
+        if (project.name != "flowforge-bom") {
+            if (configurations.findByName("api")) {
+                api platform(libs.spring.boot.dependencies.bom)
+            }
+            implementation platform(libs.spring.boot.dependencies.bom)
+            annotationProcessor platform(libs.spring.boot.dependencies.bom)
+            testAnnotationProcessor platform(libs.spring.boot.dependencies.bom)
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                if (project.name == "flowforge-bom") {
+                    from components.javaPlatform
+                } else {
+                    from components.java
+                }
+
+                pom {
+                    name = project.name
+                    description = 'Type-safe, reactive workflow orchestration for Java'
+                    url = 'https://github.com/flowforge/flowforge'
+                    inceptionYear = '2024'
+                    scm {
+                        url = 'https://github.com/flowforge/flowforge'
+                        connection = 'scm:git:https://github.com/flowforge/flowforge.git'
+                        developerConnection = 'scm:git:https://github.com/flowforge/flowforge.git'
+                    }
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'flowforge'
+                            name = 'FlowForge Team'
+                            email = 'team@flowforge.io'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        def isRelease = !project.version.toString().endsWith("SNAPSHOT")
+        required = isRelease
+        def signingKey = findProperty("signingKey") ?: System.getenv("SIGNING_KEY")
+        def signingPassword = findProperty("signingPassword") ?: System.getenv("SIGNING_PASSWORD")
+        if (signingKey && signingPassword) {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign publishing.publications.mavenJava
+        }
+    }
+
+    // Tarea para generar Checksums (MD5 y SHA1) requeridos por Sonatype
+    tasks.register('generateChecksums') {
+        dependsOn tasks.withType(Sign), tasks.withType(Jar), "publishMavenJavaPublicationToMavenLocal"
+        doLast {
+            def filesToChecksum = fileTree(layout.buildDirectory.dir("libs")) { include "*.jar*" } +
+                                 fileTree(layout.buildDirectory.dir("publications/mavenJava")) { include "pom-default.xml*" }
+            
+            filesToChecksum.each { file ->
+                // No generar checksums de checksums
+                if (file.name.endsWith(".md5") || file.name.endsWith(".sha1")) return
+                
+                ['md5', 'sha1'].each { algo ->
+                    def checksumFile = new File(file.absolutePath + "." + algo)
+                    def digest = java.security.MessageDigest.getInstance(algo.toUpperCase())
+                    file.eachByte(4096) { buffer, length -> digest.update(buffer, 0, length) }
+                    checksumFile.text = digest.digest().encodeHex().toString()
+                }
+            }
+        }
+    }
+
+    // Tarea para generar el bundle ZIP con estructura Maven CORRECTA
+    tasks.register('generateCentralBundle', Zip) {
+        group = "publishing"
+        dependsOn "generateChecksums"
+
+        archiveFileName = "${project.name}-${project.version}-bundle.zip"
+        destinationDirectory = layout.buildDirectory.dir("bundles")
+
+        // IMPORTANTE: Usar project.group para la ruta, no el group de la tarea
+        def groupPath = project.group.toString().replace('.', '/')
+        def mavenPath = "${groupPath}/${project.name}/${project.version}"
+
+        // 1. POM, firmas y sus checksums
+        from(layout.buildDirectory.dir("publications/mavenJava")) {
+            include "pom-default.xml*"
+            rename { String name -> name.replace("pom-default.xml", "${project.name}-${project.version}.pom") }
+            into mavenPath
+        }
+
+        // 2. JARs, firmas y sus checksums
+        from(layout.buildDirectory.dir("libs")) {
+            include "*.jar*"
+            exclude "*-plain.jar*"
+            into mavenPath
+        }
+
+        // EXCLUIR BASURA (Gradle metadata)
+        exclude "**/module.json*"
+        
+        includeEmptyDirs = false
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 }
+
+tasks.withType(GenerateModuleMetadata).configureEach { enabled = false }
