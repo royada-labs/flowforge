@@ -1,17 +1,16 @@
----
-title: "Level 4: Resilience"
-sidebar_label: "L4: Resilience"
----
+# Level 4: Resilient Workflows (Retries & Timeouts)
 
-# Level 4: Building Resilient Workflows 🛡️
+At this level, we address one of the most common issues in distributed systems: **instability**. What happens if an external notification service is down? Or if the auditing process is too slow?
 
-In the real world, systems fail, APIs time out, and networks are unstable. This level is a **hands-on lab** where you will learn to handle these situations like a pro.
+FlowForge provides a suite of **Resilience Policies** to handle these failures gracefully without cluttering your business logic.
 
 ---
 
-## 🏗️ The Base Scenario: The "Flaky" Notifier
+## 🏗️ The Base Scenario: A Flaky Service
 
-Let's modify our `NotificationTasks` to simulate an unstable external service that fails **70% of the time**.
+Imagine our `notifyResult` task depends on an unstable external API. Sometimes it works, but 70% of the time, it throws a `RuntimeException`.
+
+1.  **Modify your `NotificationTasks.java`** to simulate this instability:
 
 ```java title="NotificationTasks.java"
 @Component
@@ -20,28 +19,27 @@ public class NotificationTasks {
 
     @FlowTask(id = "notifyResult")
     public Mono<Void> notifyResult(ValidationResult result) {
-        // 🧪 Lab Scenario: Randomly fail with a network error
+        // 🎲 70% chance of failure!
         if (Math.random() < 0.7) {
             System.err.println("⚠ [ERROR] Failed to send notification (Simulated)");
             return Mono.error(new RuntimeException("External Service Timeout!"));
         }
         
-        System.out.println("✅ Notification sent successfully!");
+        System.out.println("💌 Notification sent successfully!");
         return Mono.empty();
     }
 }
 ```
 
-> [!CAUTION]
-> **Try it out!** Run your application and trigger the order process. You'll likely see the whole workflow fail.
+2.  **Run the demo**. You'll likely see the workflow crash with an exception.
 
 ---
 
-## 🔧 Challenge 1: The "Persistent" Notifier (Retries)
+## 🔁 Challenge 1: The Persistent Notifier (Retries)
 
-**Mission**: Don't let a temporary network glitch stop the order. Make the notification try up to **3 times** before giving up.
+**Mission**: We don't want to fail just because of a transient network glitch. We want to **retry up to 3 times** before giving up.
 
-**Solution**: You don't need to change your logic. Just configure the task:
+**Solution**: You can configure retries directly in the annotation.
 
 ```java title="Update NotificationTasks.java"
 @FlowTask(id = "notifyResult", retryMaxRetries = 3) // 🔁 Add retries here!
@@ -52,13 +50,34 @@ public Mono<Void> notifyResult(ValidationResult result) {
 
 **What happens?** FlowForge will catch the error and automatically retry the task. You'll see several error logs in your console, followed by a final success.
 
+> [!TIP]
+> **🎲 Resilience is a numbers game!**
+> Since we use `Math.random() < 0.7`, there is a 70% chance of failure per attempt. Even with 3 retries (4 total attempts), there's a small (~24%) chance it fails 4 times in a row. 
+> If you still see a `WorkflowExecutionException`, just **run the demo again** or increase `retryMaxRetries` until your "luck" improves!
+
 ---
 
 ## ⏲️ Challenge 2: Racing against Time (Timeouts)
 
-**Mission**: The auditing process is taking too long. If it doesn't finish in **500ms**, we want to cancel it and stop waiting.
+**Mission**: The auditing process is taking too long. If it doesn't finish in **500ms**, we want to cancel it and stop waiting for safety.
 
-**Solution**: You can apply policies directly in the Orchestrator for centralized control.
+1.  **Create a slow task** in a new file `AuditTasks.java`:
+
+```java title="AuditTasks.java"
+@Component
+@TaskHandler("audit")
+public class AuditTasks {
+
+    @FlowTask(id = "archiveAuditLog")
+    public Mono<Void> archiveAuditLog(ValidationResult result) {
+        return Mono.delay(Duration.ofMillis(1000)) // 🐌 Simulated slowness (1s)
+                .doOnTerminate(() -> System.err.println("Audit process interrupted?"))
+                .then();
+    }
+}
+```
+
+2.  **Apply the timeout** in your `OrderProcessWorkflow.java`:
 
 ```java title="OrderProcessWorkflow.java"
 @Override
@@ -67,37 +86,23 @@ public WorkflowExecutionPlan define(FlowDsl dsl) {
               .then(OrderTasks::validateOrder)
               .fork(
                   branch -> branch.then(NotificationTasks::notifyResult)
-                                  .withRetry(RetryPolicy.of(3)), // Also possible via DSL!
+                                  .withRetry(RetryPolicy.fixed(3)),
                   
                   // ⏱ Set a strict deadline for the audit
                   branch -> branch.then(AuditTasks::archiveAuditLog)
                                   .withTimeout(Duration.ofMillis(500)) 
               )
-              .join(OrderTasks::finalNotification)
               .build();
 }
 ```
 
+**What happens?** Since `archiveAuditLog` takes 1000ms but we only wait 500ms, the workflow will **fail with a `TimeoutException`**. This is correct for business-critical steps!
+
 ---
-
-## 🛡️ Challenge 3: Keeping the Ship Afloat (Optional Tasks)
-
-**Mission**: The notification is still a bit slow, but it's **not critical**. Even if it fails after all retries or timeouts, we want the order to be processed successfully.
-
-**Solution**: Mark it as **optional**.
-
-```java title="Update NotificationTasks.java"
-@FlowTask(id = "notifyResult", retryMaxRetries = 3, optional = true) // 🛡 Mark as optional
-public Mono<Void> notifyResult(ValidationResult result) {
-    // ...
-}
-```
-
-**The result**: If the notification fails definitely, FlowForge will log the event as `SKIPPED` or `FAILED`, but it **will not stop** the execution. The workflow will continue to the final join.
 
 ## 🛠️ Handling Fatal Errors
 
-If a **Required** task fails even after all retries, FlowForge follows the **Fail-Fast** principle: it stops the entire workflow to avoid inconsistent states.
+By default, if a **Required** task fails even after all retries, or hits a timeout, FlowForge follows the **Fail-Fast** principle: it stops the entire workflow to avoid inconsistent states.
 
 When this happens, the `client.execute()` or `client.executeResult()` methods will emit an **error signal**. You can handle it in two ways:
 
@@ -109,20 +114,21 @@ try {
     client.executeResult("order-process", orderId).block();
 } catch (WorkflowExecutionException e) {
     System.err.println("Workflow failed: " + e.getMessage());
-    // The causing error is available via e.getCause()
 }
 ```
 
-> [!NOTE]
-> **Why choose?** Use **Required** tasks for business-critical steps (like charging a credit card) and **Optional** tasks for "nice-to-have" side effects (como analytics or notifications).
+> [!IMPORTANT]
+> **🚀 Next Steps: What if the task is NOT critical?**
+> If you don't want a slow notification or a failed log to break your entire order process, you need **Optional Tasks**. We will learn how to handle partial results and non-critical steps in **Level 5: Advanced Features**.
 
 ---
 
-## 🎉 Summary of Resilience
+## 🎉 Summary of Level 4
 
-You've learned the three pillars of robust orchestration:
-1.  **Retries**: Recover from temporary errors.
-2.  **Timeouts**: Avoid hanging resources.
-3.  **Optional Tasks**: Degrade gracefully when non-critical parts fail.
+1.  **Retries**: Auto-recovery for transient errors (random failures, network blips).
+2.  **Timeouts**: Setting strict boundaries for slow external systems.
+3.  **Fail-Fast**: Understanding how FlowForge protects your state by stopping on fatal errors.
 
-**Ready for the final level? [Level 5: Advanced Features](./level5-advanced.md) awaits!**
+---
+
+[⬅ Level 3: Parallel & Forking](./level3-parallel.md) | [Level 5: Advanced Features ➡](./level5-advanced.md)
