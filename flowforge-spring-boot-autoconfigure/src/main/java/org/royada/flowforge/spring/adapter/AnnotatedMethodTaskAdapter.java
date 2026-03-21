@@ -100,21 +100,23 @@ public final class AnnotatedMethodTaskAdapter<I, O> implements Task<I, O> {
     @Override
     @SuppressWarnings("unchecked")
     public Mono<O> execute(I input, ReactiveExecutionContext ctx) {
-        try {
-            Object out = switch (kind) {
-                case NO_ARGS -> handle.invokeWithArguments();
-                case INPUT_ONLY -> handle.invokeWithArguments(input);
-                case CONTEXT_ONLY -> handle.invokeWithArguments(ctx);
-                case INPUT_AND_CONTEXT -> handle.invokeWithArguments(input, ctx);
-            };
+        return Mono.defer(() -> {
+            try {
+                Object out = switch (kind) {
+                    case NO_ARGS -> handle.invokeWithArguments();
+                    case INPUT_ONLY -> handle.invokeWithArguments(input);
+                    case CONTEXT_ONLY -> handle.invokeWithArguments(ctx);
+                    case INPUT_AND_CONTEXT -> handle.invokeWithArguments(input, ctx);
+                };
 
-            if (monoReturn) {
-                return (Mono<O>) out;
+                if (monoReturn) {
+                    return (Mono<O>) out;
+                }
+                return Mono.justOrEmpty((O) out);
+            } catch (Throwable e) {
+                return Mono.error(e);
             }
-            return Mono.justOrEmpty((O) out);
-        } catch (Throwable e) {
-            return Mono.error(e);
-        }
+        });
     }
 }
 

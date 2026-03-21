@@ -102,8 +102,9 @@ public final class TaskNode {
      * @return a Mono that completes with the task result
      */
     public Mono<Object> execute(Object input, ReactiveExecutionContext context) {
-        Mono<Object> raw = executeTyped(descriptor.task(), input, context);
-        return descriptor.policy().apply(raw);
+        return descriptor.policy().apply(
+                Mono.defer(() -> executeTyped(descriptor.task(), input, context))
+        );
     }
 
     private static <I, O> Mono<Object> executeTyped(Task<I, O> task, Object input, ReactiveExecutionContext context) {

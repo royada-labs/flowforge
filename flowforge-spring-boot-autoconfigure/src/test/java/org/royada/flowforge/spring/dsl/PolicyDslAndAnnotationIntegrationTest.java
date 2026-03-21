@@ -62,14 +62,36 @@ class PolicyDslAndAnnotationIntegrationTest {
         });
     }
 
+    @Test
+    void should_reexecute_method_on_retry_automatic_defer() {
+        contextRunner.run(ctx -> {
+            FlowForgeClient client = ctx.getBean(FlowForgeClient.class);
+            AtomicInteger calls = ctx.getBean("annotatedCalls", AtomicInteger.class);
+            calls.set(0);
+
+            // Task defined with retryMaxRetries=2, should call method 3 times total (1 orig + 2 retries)
+            StepVerifier.create(client.executeResult("annotated-retry-flow", null))
+                    .expectNext("Success after 3")
+                    .verifyComplete();
+
+            assertEquals(3, calls.get(), "Method should have been invoked 3 times by FlowForge motor");
+        });
+    }
+
     @Configuration(proxyBeanMethods = false)
     static class PolicyConfig {
 
         private static final AtomicInteger FLAKY_ATTEMPTS = new AtomicInteger();
+        private static final AtomicInteger FLAKY_ANNOTATED_CALLS = new AtomicInteger();
 
         @Bean("flakyAttempts")
         AtomicInteger flakyAttempts() {
             return FLAKY_ATTEMPTS;
+        }
+
+        @Bean("annotatedCalls")
+        AtomicInteger annotatedCalls() {
+            return FLAKY_ANNOTATED_CALLS;
         }
 
         @Bean
@@ -110,6 +132,25 @@ class PolicyDslAndAnnotationIntegrationTest {
                     .withRetry(RetryPolicy.fixed(3))
                     .then(PolicyConfig::format)
                     .build();
+        }
+
+        @FlowWorkflow(id = "annotated-retry-flow")
+        @Bean
+        WorkflowExecutionPlan annotatedRetryFlow(FlowDsl dsl) {
+            return dsl.flow(PolicyConfig::annotatedFlaky)
+                    .build();
+        }
+
+        @Bean
+        @FlowTask(id = "annotatedFlaky", retryMaxRetries = 2)
+        FlowTaskHandler<Void, String> annotatedFlaky() {
+            return (input, ctx) -> {
+                int count = FLAKY_ANNOTATED_CALLS.incrementAndGet();
+                if (count < 3) {
+                    return Mono.error(new RuntimeException("Fail " + count));
+                }
+                return Mono.just("Success after " + count);
+            };
         }
     }
 }
