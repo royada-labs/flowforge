@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>The Code-First Reactive Workflow Engine for Java & Spring Boot</strong>
+  <strong>The Code-First Reactive Workflow Engine for Java 17+ & Spring Boot</strong>
 </p>
 
 <p align="center">
@@ -84,7 +84,7 @@ graph TD
 
 ### Gradle
 ```gradle
-implementation("org.royada.flowforge:flowforge-spring-boot-starter:1.1.0")
+implementation("org.royada.flowforge:flowforge-spring-boot-starter:1.2.0")
 ```
 
 ### Maven
@@ -92,7 +92,7 @@ implementation("org.royada.flowforge:flowforge-spring-boot-starter:1.1.0")
 <dependency>
   <groupId>org.royada.flowforge</groupId>
   <artifactId>flowforge-spring-boot-starter</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 

@@ -33,7 +33,7 @@ Use the [feature request template](./.github/ISSUE_TEMPLATE/feature_request.md).
 #### Development Setup
 
 1. **Prerequisites**
-   - JDK 21 or later
+   - JDK 17 or later
    - Gradle (wrapper included)
 
 2. **Fork and Clone**
