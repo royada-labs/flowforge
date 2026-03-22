@@ -47,9 +47,9 @@ class ExecutionTraceTest {
 
         ExecutionTrace trace = tracer.build();
         assertEquals(1, trace.tasks().size());
-        assertEquals("A", trace.tasks().getFirst().taskId());
-        assertEquals(ExecutionStatus.SUCCESS, trace.tasks().getFirst().status());
-        assertEquals("Void", trace.tasks().getFirst().inputType());
-        assertEquals("Integer", trace.tasks().getFirst().outputType());
+        assertEquals("A", trace.tasks().get(0).taskId());
+        assertEquals(ExecutionStatus.SUCCESS, trace.tasks().get(0).status());
+        assertEquals("Void", trace.tasks().get(0).inputType());
+        assertEquals("Integer", trace.tasks().get(0).outputType());
     }
 }

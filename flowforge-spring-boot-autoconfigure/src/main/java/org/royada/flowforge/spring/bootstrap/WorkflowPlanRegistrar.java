@@ -8,7 +8,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -156,8 +155,8 @@ public final class WorkflowPlanRegistrar
     private WorkflowDefinition instantiateDefinition(ClassWorkflowCandidate candidate, Exception cause) {
         try {
             Object instance = candidate.sourceClass().getDeclaredConstructor().newInstance();
-            if (beanFactory instanceof AutowireCapableBeanFactory autowireCapableBeanFactory) {
-                autowireCapableBeanFactory.autowireBean(instance);
+            if (beanFactory != null) {
+                beanFactory.autowireBean(instance);
             }
             if (!(instance instanceof WorkflowDefinition definition)) {
                 throw new WorkflowConfigurationException("Class does not implement WorkflowDefinition: "
