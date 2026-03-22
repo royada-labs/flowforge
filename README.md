@@ -21,6 +21,8 @@ Everything you need to know, from the basic setup to advanced parallel orchestra
 
 ### 🔗 [https://royada-labs.github.io/flowforge/](https://royada-labs.github.io/flowforge/)
 
+### 🚀 [Sample Application (Basic Demo)](https://github.com/royada-labs/flowforge-samples/tree/main/spring-boot/basic-demo)
+
 ---
 
 ## 🔥 Why FlowForge?
