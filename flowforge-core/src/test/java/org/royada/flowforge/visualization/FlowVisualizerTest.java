@@ -55,14 +55,14 @@ class FlowVisualizerTest {
 
         // Edges
         assertEquals(1, viz.edges().size());
-        assertEquals("A", viz.edges().getFirst().from());
-        assertEquals("B", viz.edges().getFirst().to());
+        assertEquals("A", viz.edges().get(0).from());
+        assertEquals("B", viz.edges().get(0).to());
 
         // Errors
         assertEquals(1, viz.errors().size());
-        assertEquals("UNUSED_OUTPUT", viz.errors().getFirst().code());
-        assertEquals("B", viz.errors().getFirst().taskId());
-        assertEquals("WARNING", viz.errors().getFirst().severity());
+        assertEquals("UNUSED_OUTPUT", viz.errors().get(0).code());
+        assertEquals("B", viz.errors().get(0).taskId());
+        assertEquals("WARNING", viz.errors().get(0).severity());
     }
 
     @Test

@@ -89,6 +89,6 @@ public final class CompositeExecutionTracer implements ExecutionTracer {
             }
         }
         // Fallback to empty trace from the first one
-        return tracers.isEmpty() ? null : tracers.getFirst().build();
+        return tracers.isEmpty() ? null : tracers.get(0).build();
     }
 }

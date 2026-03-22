@@ -77,7 +77,7 @@ class DefaultFlowValidatorTest {
         assertFalse(result.isValid());
         assertEquals(1, result.errorsOnly().size());
 
-        FlowValidationError error = result.errorsOnly().getFirst();
+        FlowValidationError error = result.errorsOnly().get(0);
         assertEquals(FlowValidationError.TYPE_MISMATCH, error.code());
         assertEquals("B", error.taskId());
         assertTrue(error.message().contains("Boolean"), "should mention expected type");

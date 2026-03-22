@@ -6,23 +6,46 @@ on:
       - main
 
 jobs:
-  publish:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [17, 21]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: ${{ matrix.java }}
 
       - name: Grant execute permission
         run: chmod +x ./gradlew
 
-      # 🔹 Build + generate ZIP bundles for each module (already handles publishToMavenLocal and signing)
+      - name: Build and Test
+        run: ./gradlew clean build --no-daemon
+
+  publish:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      # 🔹 Build + generate ZIP bundles (handles publishToMavenLocal and signing)
       - name: Generate Central Bundles
         run: ./gradlew clean generateCentralBundle --no-daemon
         env:
